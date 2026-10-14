@@ -98,4 +98,72 @@ class SlackTest extends TestCase
 
         $this->actingAs(User::factory()->admin()->create())->post('/slack/channels', ['name' => 'nope'])->assertSessionHas('error');
     }
+
+    private ?string $latest = null;
+
+    private bool $latestFaked = false;
+
+    /** Fake Slack whose newest message is $ts; later calls just move the timestamp. */
+    private function fakeLatest(string $ts): void
+    {
+        config(['services.slack_app.bot_token' => 'xoxb-test']);
+        \Illuminate\Support\Facades\Cache::flush();
+        $this->latest = $ts;
+        if ($this->latestFaked) {
+            return;
+        }
+        $this->latestFaked = true;
+        Http::fake([
+            'slack.com/api/auth.test*' => Http::response(['ok' => true, 'url' => 'https://39dg.slack.com/']),
+            'slack.com/api/users.list*' => Http::response(['ok' => true, 'members' => []]),
+            'slack.com/api/conversations.history*' => fn () => Http::response(['ok' => true, 'messages' => [['ts' => $this->latest, 'user' => 'U1', 'text' => 'hi']]]),
+        ]);
+    }
+
+    public function test_unread_flags_new_messages_until_the_channel_is_opened(): void
+    {
+        $ch = SlackChannel::create(['channel_id' => 'C1', 'name' => 'reddit-monitor']);
+        $pat = User::factory()->create();
+
+        // First check: starts caught up, no flood of old messages.
+        $this->fakeLatest('1792000000.000100');
+        $this->actingAs($pat)->getJson('/slack/unread')->assertJson(['total' => 0]);
+
+        // A new message arrives.
+        $this->fakeLatest('1792000500.000200');
+        $this->actingAs($pat)->getJson('/slack/unread')->assertJson(['total' => 1, 'channels' => ['C1' => true]]);
+
+        // The feed for another person is unaffected; opening the channel clears it for Pat.
+        $this->actingAs($pat)->get('/slack/feed?channel=C1')->assertOk();
+        $this->actingAs($pat)->getJson('/slack/unread')->assertJson(['total' => 0]);
+    }
+
+    public function test_channel_chip_shows_asterisk_for_other_unread_channels(): void
+    {
+        $a = SlackChannel::create(['channel_id' => 'C1', 'name' => 'reddit-monitor', 'sort' => 1]);
+        $b = SlackChannel::create(['channel_id' => 'C2', 'name' => 'marketing', 'sort' => 2]);
+        $pat = User::factory()->create();
+        $this->fakeLatest('1792000000.000100');
+        $this->actingAs($pat)->getJson('/slack/unread');
+        $this->fakeLatest('1792009999.000100');
+
+        $html = $this->actingAs($pat)->get('/slack/feed?channel=C1')->getContent();
+        // #marketing is unread and not open: its star is visible.
+        $this->assertMatchesRegularExpression('/data-slack-channel="C2"[^>]*>#marketing<span class="unread-star"\s+aria-label/', $html);
+        // #reddit-monitor is open: its star stays hidden.
+        $this->assertMatchesRegularExpression('/data-slack-channel="C1"[^>]*>#reddit-monitor<span class="unread-star"\s+hidden/', $html);
+    }
+
+    public function test_timestamps_compare_exactly(): void
+    {
+        $this->assertTrue(\App\Support\Slack::tsNewer('1792000000.000200', '1792000000.000199'));
+        $this->assertFalse(\App\Support\Slack::tsNewer('1792000000.000200', '1792000000.000200'));
+        $this->assertTrue(\App\Support\Slack::tsNewer('1792000001.000001', '1792000000.999999'));
+    }
+
+    public function test_unread_is_empty_when_slack_not_connected(): void
+    {
+        config(['services.slack_app.bot_token' => null]);
+        $this->actingAs(User::factory()->create())->getJson('/slack/unread')->assertExactJson(['total' => 0, 'channels' => []]);
+    }
 }

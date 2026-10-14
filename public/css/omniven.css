@@ -370,3 +370,7 @@ table.feed{min-width:720px}
 .sl-chlist li{display:flex;gap:8px;align-items:center}
 .sl-chlist form{margin:0}
 .slack-setup code,.sl-admin code{background:var(--sunk);padding:0 4px;border-radius:4px}
+
+/* Unread Slack marker */
+.unread-star{color:var(--bad);font-weight:800;font-size:1.25em;line-height:0;margin-left:3px;position:relative;top:.2em}
+.chip[aria-pressed="true"] .unread-star{color:#ff8a80}

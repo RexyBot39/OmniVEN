@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SlackChannel;
+use App\Models\SlackRead;
 use App\Support\Activity;
 use App\Support\Slack;
 use Carbon\Carbon;
@@ -35,7 +36,15 @@ class SlackController extends Controller
             try {
                 $team = Slack::team();
                 $users = Slack::users();
-                $messages = collect(Slack::history($current->channel_id))->map(fn ($m) => $this->present($m, $users, $current->channel_id))->all();
+                $history = Slack::history($current->channel_id);
+                $messages = collect($history)->map(fn ($m) => $this->present($m, $users, $current->channel_id))->all();
+                // Opening a channel marks it read up to its newest message.
+                $newest = $history ? end($history)['ts'] : null;
+                $latest = Slack::latestTs($current->channel_id);
+                $newest = Slack::tsNewer($latest, $newest) ? $latest : $newest;
+                if ($newest) {
+                    $this->markRead($request->user()->id, $current, $newest);
+                }
             } catch (Throwable $e) {
                 $error = $this->explain($e->getMessage(), $current->name);
                 Log::warning('Slack feed failed', ['channel' => $current->name, 'error' => $e->getMessage()]);
@@ -45,7 +54,56 @@ class SlackController extends Controller
         return view('slack.feed', [
             'state' => 'ok', 'channels' => $channels, 'current' => $current,
             'messages' => $messages, 'error' => $error, 'team' => $team,
+            'unread' => $this->unreadFor($request->user()->id, $channels),
         ]);
+    }
+
+    /** Which channels have messages this person hasn't seen. Polled by every page once a minute. */
+    public function unread(Request $request): JsonResponse
+    {
+        if (! Slack::configured()) {
+            return response()->json(['total' => 0, 'channels' => []]);
+        }
+        $unread = $this->unreadFor($request->user()->id, SlackChannel::all());
+
+        return response()->json(['total' => count($unread), 'channels' => array_fill_keys($unread, true)]);
+    }
+
+    /** @return string[] Slack channel ids with something newer than this person's last read. */
+    private function unreadFor(int $userId, $channels): array
+    {
+        $reads = SlackRead::where('user_id', $userId)->pluck('last_read_ts', 'slack_channel_id');
+        $out = [];
+        foreach ($channels as $c) {
+            try {
+                $latest = Slack::latestTs($c->channel_id);
+            } catch (Throwable) {
+                continue;
+            }
+            if ($latest === null) {
+                continue;
+            }
+            if (! isset($reads[$c->id])) {
+                // First time we see this channel for this person: start them caught up, no flood of old messages.
+                SlackRead::create(['user_id' => $userId, 'slack_channel_id' => $c->id, 'last_read_ts' => $latest]);
+
+                continue;
+            }
+            if (Slack::tsNewer($latest, $reads[$c->id])) {
+                $out[] = $c->channel_id;
+            }
+        }
+
+        return $out;
+    }
+
+    private function markRead(int $userId, SlackChannel $channel, string $ts): void
+    {
+        $read = SlackRead::firstOrNew(['user_id' => $userId, 'slack_channel_id' => $channel->id]);
+        if (! $read->exists || Slack::tsNewer($ts, $read->last_read_ts)) {
+            $read->last_read_ts = $ts;
+            $read->save();
+        }
     }
 
     public function post(Request $request, SlackChannel $channel): JsonResponse

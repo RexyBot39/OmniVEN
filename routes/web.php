@@ -51,6 +51,7 @@ Route::middleware('auth')->group(function () {
 
     // Slack tab.
     Route::get('/slack/feed', [SlackController::class, 'feed'])->name('slack.feed');
+    Route::get('/slack/unread', [SlackController::class, 'unread'])->name('slack.unread');
     Route::post('/slack/channels/{channel}/post', [SlackController::class, 'post'])->middleware('throttle:20,1')->name('slack.post');
 
     // Admins only.

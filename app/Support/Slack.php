@@ -80,6 +80,39 @@ class Slack
         });
     }
 
+    /** Timestamp of a channel's newest message (or null). One shared call per channel every 45 seconds. */
+    public static function latestTs(string $channelId): ?string
+    {
+        return Cache::remember("slack.latest.{$channelId}", now()->addSeconds(45), function () use ($channelId) {
+            $res = self::call('conversations.history', ['channel' => $channelId, 'limit' => 5]);
+            foreach ($res['messages'] ?? [] as $m) {
+                if (! in_array($m['subtype'] ?? '', ['channel_join', 'channel_leave', 'channel_purpose', 'channel_topic'], true)) {
+                    return $m['ts'];
+                }
+            }
+
+            return null;
+        });
+    }
+
+    /** Slack timestamps ("1792000000.000200") compared exactly, without float rounding. */
+    public static function tsNewer(?string $a, ?string $b): bool
+    {
+        if ($a === null) {
+            return false;
+        }
+        if ($b === null) {
+            return true;
+        }
+        [$ai, $af] = array_pad(explode('.', $a, 2), 2, '0');
+        [$bi, $bf] = array_pad(explode('.', $b, 2), 2, '0');
+        if ((int) $ai !== (int) $bi) {
+            return (int) $ai > (int) $bi;
+        }
+
+        return strcmp(str_pad($af, 6, '0'), str_pad($bf, 6, '0')) > 0;
+    }
+
     /** Map of Slack user id => [name, avatar]. */
     public static function users(): array
     {
@@ -112,6 +145,7 @@ class Slack
             'unfurl_links' => false,
         ]), true);
         Cache::forget("slack.history.{$channelId}");
+        Cache::forget("slack.latest.{$channelId}");
     }
 
     public static function permalink(string $channelId, string $ts): string

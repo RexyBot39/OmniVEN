@@ -11,7 +11,8 @@
     <div class="slack-bar">
         <div class="slack-channels" role="tablist" aria-label="Slack channels">
             @forelse($channels as $c)
-                <button type="button" class="chip" data-slack-channel="{{ $c->channel_id }}" aria-pressed="{{ $current && $current->is($c) ? 'true' : 'false' }}">#{{ $c->name }}</button>
+                @php($isNew = in_array($c->channel_id, $unread, true) && ! ($current && $current->is($c)))
+                <button type="button" class="chip" data-slack-channel="{{ $c->channel_id }}" aria-pressed="{{ $current && $current->is($c) ? 'true' : 'false' }}">#{{ $c->name }}<span class="unread-star" @unless($isNew) hidden @endunless aria-label="new messages">*</span></button>
             @empty
                 <span class="sub">No channels yet.{{ auth()->user()->is_admin ? ' Add one below.' : ' Ask an admin to add one.' }}</span>
             @endforelse

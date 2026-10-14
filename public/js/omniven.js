@@ -44,9 +44,11 @@
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
   let slackChannel = store.get('slackChannel') || '';
   let slackBusy = false;
+  let lastSlackLoad = 0;
   async function loadSlack(keepDraft) {
     if (!slackBox || slackBusy) return;
     slackBusy = true;
+    lastSlackLoad = Date.now();
     const draft = keepDraft ? slackBox.querySelector('#sl-text')?.value : '';
     try {
       const url = slackBox.dataset.url + (slackChannel ? '?channel=' + encodeURIComponent(slackChannel) : '');
@@ -56,13 +58,38 @@
       const list = slackBox.querySelector('.sl-list');
       if (list) list.scrollTop = list.scrollHeight;
       if (draft) { const t = slackBox.querySelector('#sl-text'); if (t) t.value = draft; }
+      checkUnread();
     } catch {
       slackBox.innerHTML = '<div class="empty">Couldn\'t reach Slack. Check your connection and try again.</div>';
     } finally { slackBusy = false; }
   }
+  // Unread asterisks: on the Slack tab and next to each channel. Checked on load and every minute.
+  const slackStar = document.getElementById('slack-star');
+  const baseTitle = document.title.replace(/^\* /, '');
+  async function checkUnread() {
+    if (!slackBox?.dataset.unreadUrl) return;
+    try {
+      const res = await fetch(slackBox.dataset.unreadUrl, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const viewing = state.tab === 'slack' && document.visibilityState === 'visible';
+      const current = slackBox.querySelector('.slack-pane')?.dataset.channel;
+      // The channel on screen is being read right now, so it doesn't count.
+      const others = Object.keys(data.channels || {}).filter((id) => !(viewing && id === current));
+      if (slackStar) slackStar.hidden = others.length === 0;
+      document.title = (others.length ? '* ' : '') + baseTitle;
+      slackBox.querySelectorAll('[data-slack-channel]').forEach((b) => {
+        const star = b.querySelector('.unread-star');
+        if (star) star.hidden = !others.includes(b.dataset.slackChannel);
+      });
+      if (viewing && current && data.channels?.[current] && !slackBox.querySelector('#sl-text')?.value && Date.now() - lastSlackLoad > 50000) loadSlack();
+    } catch { /* offline: try again next minute */ }
+  }
   setInterval(() => {
-    if (state.tab === 'slack' && document.visibilityState === 'visible' && !slackBox?.querySelector('#sl-text')?.value) loadSlack();
+    if (document.visibilityState !== 'visible') return;
+    if (state.tab === 'slack' && !slackBox?.querySelector('#sl-text')?.value) loadSlack(); else checkUnread();
   }, 60000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUnread(); });
   slackBox?.addEventListener('click', (e) => {
     const b = e.target.closest('[data-slack-channel]');
     if (!b) return;
@@ -166,6 +193,7 @@
 
   setTab(location.hash.slice(1) || store.get('tab') || 'tools', false);
   apply();
+  checkUnread();
   filterTasks(store.get('taskfilter') || 'all');
 
   // Daily Hotlist popup.
