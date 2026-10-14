@@ -1,0 +1,94 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Socialite\Contracts\Factory as Socialite;
+use Laravel\Socialite\Two\User as GoogleUser;
+use Tests\TestCase;
+
+class GoogleLoginTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function fakeGoogle(string $email, string $hd = '39dollarglasses.com', bool $verified = true, string $id = 'g-123'): void
+    {
+        $gUser = (new GoogleUser)->map(['id' => $id, 'name' => 'Pat Lee', 'email' => $email, 'avatar' => 'https://lh3.googleusercontent.com/a/x'])
+            ->setRaw(['email' => $email, 'email_verified' => $verified, 'hd' => $hd]);
+
+        $provider = new class($gUser) {
+            public function __construct(private $u) {}
+            public function user() { return $this->u; }
+        };
+        $factory = new class($provider) implements Socialite {
+            public function __construct(private $p) {}
+            public function driver($driver = null) { return $this->p; }
+        };
+        $this->app->instance(Socialite::class, $factory);
+    }
+
+    public function test_guests_are_sent_to_login(): void
+    {
+        $this->get('/')->assertRedirect('/login');
+        $this->get('/login')->assertOk()->assertSee('Sign in with Google');
+    }
+
+    public function test_company_account_can_sign_in(): void
+    {
+        $this->fakeGoogle('pat@39dollarglasses.com');
+        $this->get('/auth/google/callback')->assertRedirect('/');
+        $this->assertAuthenticated();
+        $user = User::first();
+        $this->assertSame('pat@39dollarglasses.com', $user->email);
+        $this->assertFalse($user->is_admin);
+    }
+
+    public function test_configured_admin_email_becomes_admin(): void
+    {
+        $this->fakeGoogle('drmarcweinstein@39dollarglasses.com');
+        $this->get('/auth/google/callback');
+        $this->assertTrue(User::first()->is_admin);
+    }
+
+    public function test_gmail_account_is_rejected(): void
+    {
+        $this->fakeGoogle('someone@gmail.com', hd: '');
+        $this->get('/auth/google/callback')->assertRedirect('/login')->assertSessionHas('error');
+        $this->assertGuest();
+        $this->assertSame(0, User::count());
+    }
+
+    public function test_lookalike_domain_is_rejected(): void
+    {
+        $this->fakeGoogle('pat@evil39dollarglasses.com', hd: 'evil39dollarglasses.com');
+        $this->get('/auth/google/callback')->assertRedirect('/login');
+        $this->assertGuest();
+    }
+
+    public function test_email_must_match_hosted_domain_claim(): void
+    {
+        // Email on our domain but token not issued by our Workspace (no hd claim).
+        $this->fakeGoogle('pat@39dollarglasses.com', hd: '');
+        $this->get('/auth/google/callback')->assertRedirect('/login');
+        $this->assertGuest();
+    }
+
+    public function test_unverified_email_is_rejected(): void
+    {
+        $this->fakeGoogle('pat@39dollarglasses.com', verified: false);
+        $this->get('/auth/google/callback')->assertRedirect('/login');
+        $this->assertGuest();
+    }
+
+    public function test_turned_off_user_cannot_sign_in_or_keep_session(): void
+    {
+        $user = User::factory()->create(['email' => 'pat@39dollarglasses.com', 'google_id' => 'g-123', 'is_active' => false]);
+        $this->fakeGoogle('pat@39dollarglasses.com');
+        $this->get('/auth/google/callback')->assertRedirect('/login');
+        $this->assertGuest();
+
+        $this->actingAs($user)->get('/')->assertRedirect('/login');
+        $this->assertGuest();
+    }
+}

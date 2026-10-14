@@ -1,0 +1,231 @@
+@extends('layouts.app')
+
+@php
+    $isAdmin = auth()->user()->can('admin');
+    $due = $routines->reject->isDone()->count();
+@endphp
+
+@section('content')
+<section class="hero wrap">
+    <div class="eyebrow">
+        <span>Marketing control center</span>
+        <span><b>{{ $brands->count() }}</b> brands</span>
+        <span><b>{{ $tools->count() }}</b> tools</span>
+        <span><b>{{ $due }}</b> routines due</span>
+        <span>{{ now()->format('D, M j, Y') }}</span>
+    </div>
+    <h1>Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ auth()->user()->firstName() }}.</h1>
+</section>
+
+<div class="bar">
+    <div class="wrap bar-in">
+        <div class="row1">
+            <div class="tabs" role="tablist">
+                <button class="tab" role="tab" data-tab="tools" aria-selected="true">Tools<span class="n">{{ $tools->count() }}</span></button>
+                <button class="tab" role="tab" data-tab="brands" aria-selected="false">Brands<span class="n">{{ $brands->count() }}</span></button>
+                <button class="tab" role="tab" data-tab="routines" aria-selected="false">Routines<span class="n">{{ $due }} due</span></button>
+                <button class="tab" role="tab" data-tab="access" aria-selected="false">Access</button>
+            </div>
+            <label class="search">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <input id="q" type="search" placeholder="Search tools, logins, routines…" autocomplete="off" aria-label="Search">
+            </label>
+        </div>
+        <div class="chips" aria-label="Filter by brand">
+            <button class="chip" data-brand="all" aria-pressed="true">All brands</button>
+            @foreach($brands as $b)
+                <button class="chip" data-brand="{{ $b->slug }}" aria-pressed="false"><span class="dot" style="background:var(--c{{ $b->colorSlot() }})"></span>{{ $b->name }}</button>
+            @endforeach
+        </div>
+    </div>
+</div>
+
+<main class="wrap main">
+
+{{-- ================= TOOLS ================= --}}
+<div data-view="tools">
+    <section>
+        <div class="h2row">
+            <h2>Bulletin</h2>
+            <button class="btn ghost" type="button" data-toggle="note-form">+ Post a note</button>
+        </div>
+        <form method="POST" action="{{ route('notes.store') }}" class="note-form card" id="note-form" hidden>
+            @csrf
+            <div class="fld"><label for="n-title">Headline</label><input id="n-title" name="title" type="text" required maxlength="160"></div>
+            <div class="fld"><label for="n-body">Details</label><textarea id="n-body" name="body" maxlength="4000"></textarea></div>
+            <div class="form-actions">
+                @if($isAdmin)<label class="inline"><input type="checkbox" name="pinned" value="1"> Pin to top</label>@endif
+                <span class="spacer"></span>
+                <button class="btn" type="button" data-toggle="note-form">Cancel</button>
+                <button class="btn primary" type="submit">Post</button>
+            </div>
+        </form>
+        @if($notes->isEmpty())
+            <div class="empty">No notes yet. Post the first announcement or campaign update.</div>
+        @else
+            <div class="notes">
+                @foreach($notes as $n)
+                    <article class="note {{ $n->pinned ? 'pinned' : '' }}">
+                        <div class="meta">
+                            <span>{{ $n->pinned ? 'Pinned · ' : '' }}{{ $n->created_at->format('M j') }}{{ $n->user ? ' · '.$n->user->firstName() : '' }}</span>
+                            @can('manage-note', $n)<a href="{{ route('notes.edit', $n) }}" class="mini">Edit</a>@endcan
+                        </div>
+                        <h3>{{ $n->title }}</h3>
+                        @if($n->body)<p>{{ $n->body }}</p>@endif
+                    </article>
+                @endforeach
+            </div>
+        @endif
+    </section>
+
+    <section>
+        <div class="h2row"><h2>Platform consoles</h2><span class="sub">The ad, shopping and search accounts we open most</span></div>
+        <div class="consoles">
+            @forelse($tools->where('featured', true) as $t)
+                <a class="console" href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->description.' '.$t->category) }}">
+                    <span class="mono" style="--c:var(--c{{ $t->categorySlot() }})">{{ $t->initials() }}</span>
+                    <span class="name">{{ $t->name }}</span>
+                    <span class="d">{{ $t->description }}</span>
+                    <span class="go">{{ $t->host() }} ↗</span>
+                </a>
+            @empty
+                <div class="empty">No consoles pinned yet. Admins can tick “Show in Platform consoles” on any tool.</div>
+            @endforelse
+        </div>
+    </section>
+
+    <section>
+        <div class="h2row">
+            <h2>Tool directory</h2>
+            @if($isAdmin)<a class="btn primary" href="{{ route('tools.create') }}">+ Add tool</a>@endif
+        </div>
+        <div class="empty filter-empty" hidden>No tools match. Clear the search or pick All brands.</div>
+        <div class="dir">
+            @foreach($categories as $cat)
+                <div class="cat" data-group>
+                    <div class="cat-h"><span class="sq" style="background:var(--c{{ $cat['tools']->first()->categorySlot() }})"></span>{{ $cat['name'] }}</div>
+                    <div class="grid">
+                        @foreach($cat['tools'] as $t) @include('partials.tool-card', ['t' => $t]) @endforeach
+                    </div>
+                </div>
+            @endforeach
+            @if($uncategorized->isNotEmpty())
+                <div class="cat" data-group><div class="cat-h">Other</div><div class="grid">@foreach($uncategorized as $t) @include('partials.tool-card', ['t' => $t]) @endforeach</div></div>
+            @endif
+        </div>
+    </section>
+</div>
+
+{{-- ================= BRANDS ================= --}}
+<section data-view="brands" hidden>
+    <div class="h2row"><h2>Brands</h2>@if($isAdmin)<a class="btn primary" href="{{ route('brands.create') }}">+ Add brand</a>@endif</div>
+    <div class="brands">
+        @foreach($brands as $b)
+            @php($count = $tools->filter(fn ($t) => $t->all_brands || $t->brands->contains('id', $b->id))->count())
+            <article class="brand" data-brand-card="{{ $b->slug }}" data-search="{{ strtolower($b->name.' '.$b->focus.' '.$b->channels.' '.$b->notes) }}">
+                <div class="band" style="background:var(--c{{ $b->colorSlot() }})"></div>
+                <div class="in">
+                    <div>
+                        <h3>{{ $b->name }}</h3>
+                        @if($b->site)
+                            <a class="site" href="{{ $b->site }}" target="_blank" rel="noopener noreferrer">{{ preg_replace('#^https?://(www\.)?#', '', rtrim($b->site, '/')) }} ↗</a>
+                        @else
+                            <span class="site missing">No site added</span>
+                        @endif
+                    </div>
+                    <dl class="kv">
+                        <dt>Focus</dt><dd>{!! $b->focus ? e($b->focus) : '<span class="missing">Not described yet</span>' !!}</dd>
+                        <dt>Channels</dt><dd>{!! $b->channels ? e($b->channels) : '<span class="missing">Not listed</span>' !!}</dd>
+                        <dt>Social</dt>
+                        <dd>
+                            @forelse($b->socials ?? [] as $s)
+                                @if(!empty($s['url']))<a href="{{ $s['url'] }}" target="_blank" rel="noopener noreferrer">{{ $s['label'] ?: parse_url($s['url'], PHP_URL_HOST) }}</a>@else{{ $s['label'] }}@endif{{ !$loop->last ? ' · ' : '' }}
+                            @empty
+                                <span class="missing">No handles added</span>
+                            @endforelse
+                        </dd>
+                        @if($b->notes)<dt>Notes</dt><dd>{{ $b->notes }}</dd>@endif
+                    </dl>
+                    <div class="brand-actions">
+                        <button class="btn" type="button" data-showtools="{{ $b->slug }}">{{ $count }} tools →</button>
+                        <span class="spacer"></span>
+                        @if($isAdmin)<a class="btn ghost" href="{{ route('brands.edit', $b) }}">Edit</a>@endif
+                    </div>
+                </div>
+            </article>
+        @endforeach
+    </div>
+</section>
+
+{{-- ================= ROUTINES ================= --}}
+<section data-view="routines" hidden>
+    <div class="h2row">
+        <h2>Routines</h2>
+        <span class="sub">Ticks reset each day, week or month (Eastern time).</span>
+        @if($isAdmin)<a class="btn primary" href="{{ route('routines.create') }}">+ Add routine</a>@endif
+    </div>
+    <div class="routines">
+        @foreach(config('omniven.cadences') as $key => $label)
+            @php($rs = $routines->where('cadence', $key))
+            <div class="rcol">
+                <h3>{{ $label }}<small>{{ $rs->filter->isDone()->count() }}/{{ $rs->count() }} done</small></h3>
+                @forelse($rs as $r)
+                    @php($done = $r->isDone())
+                    <div class="r {{ $done ? 'done' : '' }}" data-brands="{{ $r->brandFilterAttr() }}" data-search="{{ strtolower($r->title.' '.$r->description) }}">
+                        <form method="POST" action="{{ route('routines.toggle', $r) }}">
+                            @csrf
+                            <button class="tick" type="submit" aria-pressed="{{ $done ? 'true' : 'false' }}" aria-label="{{ $done ? 'Mark not done' : 'Mark done' }}: {{ $r->title }}">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
+                            </button>
+                        </form>
+                        <div class="rbody">
+                            <div class="rt">{{ $r->title }}</div>
+                            @if($r->description)<div class="rd">{{ $r->description }}</div>@endif
+                            <div class="rm">
+                                @if($r->link)<a href="{{ $r->link }}" target="_blank" rel="noopener noreferrer">Open {{ preg_replace('/^www\./', '', parse_url($r->link, PHP_URL_HOST)) }} ↗</a>@endif
+                                @if($done)
+                                    <span class="ok">✓ {{ $r->latestCompletion->completed_at->format('M j, g:ia') }}{{ $r->latestCompletion->user ? ' · '.$r->latestCompletion->user->firstName() : '' }}</span>
+                                @elseif($r->latestCompletion)
+                                    <span>Last done {{ $r->latestCompletion->completed_at->format('M j') }}</span>
+                                @endif
+                                <span>{{ implode(', ', $r->brandLabels()) }}</span>
+                            </div>
+                        </div>
+                        @if($isAdmin)<a class="mini" href="{{ route('routines.edit', $r) }}">Edit</a>@endif
+                    </div>
+                @empty
+                    <div class="r"><span></span><span class="sub">No {{ strtolower($label) }} routines yet.</span></div>
+                @endforelse
+            </div>
+        @endforeach
+    </div>
+</section>
+
+{{-- ================= ACCESS ================= --}}
+<section data-view="access" hidden>
+    <div class="h2row"><h2>Access &amp; owners</h2><span class="sub">Which account each tool lives under and how to get in</span></div>
+    <div class="callout">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <div>Never put passwords or 2FA codes in OmniVEN. List the login account and who grants access; credentials stay in the password manager.</div>
+    </div>
+    <div class="tablewrap">
+        <table>
+            <thead><tr><th>Tool</th><th>Status</th><th>Login account</th><th>Owner</th><th>How to get access</th><th>Brands</th></tr></thead>
+            <tbody>
+                @foreach($tools->sortBy(fn ($t) => [array_search($t->category, config('omniven.categories')) ?: 99, $t->name]) as $t)
+                    <tr data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->login.' '.$t->owner.' '.$t->access_note.' '.$t->category) }}">
+                        <td>@if($t->url)<a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer">{{ $t->name }}</a>@else{{ $t->name }}@endif<div class="sub">{{ $t->category }}</div></td>
+                        <td><span class="pill {{ $t->status }}">{{ $t->statusLabel() }}</span></td>
+                        <td>{!! $t->login ? e($t->login) : '<span class="missing">Add</span>' !!}</td>
+                        <td>{!! $t->owner ? e($t->owner) : '<span class="missing">Add</span>' !!}</td>
+                        <td>{!! $t->access_note ? e($t->access_note) : '<span class="missing">—</span>' !!}</td>
+                        <td>{{ implode(', ', $t->brandLabels()) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</section>
+
+</main>
+@endsection

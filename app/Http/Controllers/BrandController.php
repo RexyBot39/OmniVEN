@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Brand;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
+
+class BrandController extends Controller
+{
+    public function create(): View
+    {
+        return view('brands.form', ['brand' => new Brand(['sort' => Brand::max('sort') + 1])]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $this->validated($request);
+        $base = Str::slug($data['name'], '') ?: 'brand';
+        $slug = $base;
+        for ($i = 2; Brand::where('slug', $slug)->exists(); $i++) {
+            $slug = $base.$i;
+        }
+        $brand = Brand::create($data + ['slug' => $slug]);
+
+        return redirect()->route('dashboard', ['#brands'])->with('status', "Added {$brand->name}.");
+    }
+
+    public function edit(Brand $brand): View
+    {
+        return view('brands.form', compact('brand'));
+    }
+
+    public function update(Request $request, Brand $brand): RedirectResponse
+    {
+        $brand->update($this->validated($request));
+
+        return redirect()->route('dashboard')->with('status', "Saved {$brand->name}.");
+    }
+
+    public function destroy(Brand $brand): RedirectResponse
+    {
+        $brand->delete();
+
+        return redirect()->route('dashboard')->with('status', "Removed {$brand->name}.");
+    }
+
+    private function validated(Request $request): array
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'site' => ['nullable', 'url:http,https', 'max:1024'],
+            'focus' => ['nullable', 'string', 'max:1000'],
+            'channels' => ['nullable', 'string', 'max:1000'],
+            'socials_text' => ['nullable', 'string', 'max:4000'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'sort' => ['nullable', 'integer', 'min:0', 'max:9999'],
+        ]);
+
+        $socials = [];
+        foreach (preg_split('/\R/', (string) ($data['socials_text'] ?? '')) as $line) {
+            if (trim($line) === '') {
+                continue;
+            }
+            [$label, $url] = array_pad(array_map('trim', explode('|', $line, 2)), 2, '');
+            if ($url !== '' && ! filter_var($url, FILTER_VALIDATE_URL) || ($url !== '' && ! preg_match('#^https?://#i', $url))) {
+                throw ValidationException::withMessages(['socials_text' => "\"{$url}\" isn't a valid https:// link."]);
+            }
+            $socials[] = ['label' => $label, 'url' => $url];
+        }
+        unset($data['socials_text']);
+        $data['socials'] = $socials;
+        $data['sort'] ??= 100;
+
+        return $data;
+    }
+}
