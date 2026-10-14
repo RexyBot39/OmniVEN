@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 use Throwable;
 
 class GoogleController extends Controller
@@ -27,8 +28,12 @@ class GoogleController extends Controller
     {
         try {
             $google = Socialite::driver('google')->user();
+        } catch (InvalidStateException $e) {
+            Log::warning('Google sign-in state mismatch (session expired or started on another domain)');
+
+            return $this->fail('Your sign-in took too long or started on a different address. Please try again.');
         } catch (Throwable $e) {
-            Log::warning('Google sign-in failed', ['error' => $e->getMessage()]);
+            Log::warning('Google sign-in failed', ['exception' => $e::class, 'error' => $e->getMessage()]);
 
             return $this->fail('Google sign-in didn\'t complete. Please try again.');
         }

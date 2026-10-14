@@ -12,9 +12,9 @@ class GoogleLoginTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function fakeGoogle(string $email, string $hd = '39dollarglasses.com', bool $verified = true, string $id = 'g-123'): void
+    private function fakeGoogle(string $email, string $hd = '39dollarglasses.com', bool $verified = true, string $id = 'g-123', string $avatar = 'https://lh3.googleusercontent.com/a/x'): void
     {
-        $gUser = (new GoogleUser)->map(['id' => $id, 'name' => 'Pat Lee', 'email' => $email, 'avatar' => 'https://lh3.googleusercontent.com/a/x'])
+        $gUser = (new GoogleUser)->map(['id' => $id, 'name' => 'Pat Lee', 'email' => $email, 'avatar' => $avatar])
             ->setRaw(['email' => $email, 'email_verified' => $verified, 'hd' => $hd]);
 
         $provider = new class($gUser) {
@@ -90,5 +90,23 @@ class GoogleLoginTest extends TestCase
 
         $this->actingAs($user)->get('/')->assertRedirect('/login');
         $this->assertGuest();
+    }
+
+    public function test_very_long_google_avatar_url_is_stored(): void
+    {
+        $long = 'https://lh3.googleusercontent.com/a-/'.str_repeat('A', 1500).'=s96-c';
+        $this->fakeGoogle('pat@39dollarglasses.com', avatar: $long);
+        $this->get('/auth/google/callback')->assertRedirect('/');
+        $this->assertSame($long, User::first()->avatar);
+    }
+
+    public function test_other_hostnames_redirect_to_app_url_in_production(): void
+    {
+        config(['app.url' => 'https://omniven.cc']);
+        $this->app['env'] = 'production';
+        $this->get('https://omniven-production.up.railway.app/login?x=1')
+            ->assertRedirect('https://omniven.cc/login?x=1');
+        $this->get('https://omniven-production.up.railway.app/up')->assertOk();
+        $this->app['env'] = 'testing';
     }
 }

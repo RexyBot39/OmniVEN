@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\ForceCanonicalHost;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Railway terminates TLS at its edge proxy.
         $middleware->trustProxies(at: '*');
-        $middleware->web(append: [SecurityHeaders::class, EnsureUserIsActive::class]);
+        $middleware->web(prepend: [ForceCanonicalHost::class], append: [SecurityHeaders::class, EnsureUserIsActive::class]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));
     })
