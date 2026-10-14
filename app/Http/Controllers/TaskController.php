@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Activity;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,7 @@ class TaskController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $task = Task::create($this->validated($request) + ['created_by' => $request->user()->id]);
+        Activity::log('task.assigned', "Assigned “{$task->title}” to {$task->assignee->name}".($task->hot ? ' (Hotlist)' : ''), $task);
 
         return $this->back("Assigned “{$task->title}” to {$task->assignee->firstName()}.");
     }
@@ -28,12 +30,14 @@ class TaskController extends Controller
     public function update(Request $request, Task $task): RedirectResponse
     {
         $task->update($this->validated($request));
+        Activity::log('task.updated', "Edited task “{$task->title}”", $task);
 
         return $this->back('Task saved.');
     }
 
     public function destroy(Task $task): RedirectResponse
     {
+        Activity::log('task.deleted', "Deleted task “{$task->title}”", $task);
         $task->delete();
 
         return $this->back('Task removed.');
@@ -46,9 +50,12 @@ class TaskController extends Controller
 
         if ($task->isDone()) {
             $task->update(['completed_at' => null, 'completed_by' => null]);
+            Activity::log('task.reopened', "Reopened task “{$task->title}”", $task);
             $msg = "Reopened “{$task->title}”.";
         } else {
             $task->update(['completed_at' => now(), 'completed_by' => $request->user()->id]);
+            $late = $task->due_on && $task->due_on->lt(today()) ? ' (late, due '.$task->due_on->format('M j').')' : '';
+            Activity::log('task.completed', "Completed task “{$task->title}”".$late, $task);
             $msg = "Marked “{$task->title}” done.";
         }
 

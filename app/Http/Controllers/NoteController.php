@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Activity;
 use App\Models\Note;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,8 @@ class NoteController extends Controller
     {
         $data = $this->validated($request);
         $data['pinned'] = $request->user()->is_admin && $request->boolean('pinned');
-        Note::create($data + ['user_id' => $request->user()->id]);
+        $note = Note::create($data + ['user_id' => $request->user()->id]);
+        Activity::log('note.posted', "Posted bulletin note “{$note->title}”", $note);
 
         return redirect()->route('dashboard')->with('status', 'Note posted.');
     }
@@ -32,6 +34,7 @@ class NoteController extends Controller
         $data = $this->validated($request);
         $data['pinned'] = $request->user()->is_admin ? $request->boolean('pinned') : $note->pinned;
         $note->update($data);
+        Activity::log('note.updated', "Edited bulletin note “{$note->title}”", $note);
 
         return redirect()->route('dashboard')->with('status', 'Note saved.');
     }
@@ -39,6 +42,7 @@ class NoteController extends Controller
     public function destroy(Note $note): RedirectResponse
     {
         Gate::authorize('manage-note', $note);
+        Activity::log('note.deleted', "Removed bulletin note “{$note->title}”", $note);
         $note->delete();
 
         return redirect()->route('dashboard')->with('status', 'Note removed.');

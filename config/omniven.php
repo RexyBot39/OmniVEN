@@ -10,6 +10,12 @@ return [
         explode(',', (string) env('OMNIVEN_ADMIN_EMAILS', 'drmarcweinstein@39dollarglasses.com'))
     ))),
 
+    // Only these people can open the Activity report (not tied to admin status).
+    'activity_viewers' => array_values(array_filter(array_map(
+        fn ($e) => strtolower(trim($e)),
+        explode(',', (string) env('OMNIVEN_ACTIVITY_VIEWERS', 'drmarcweinstein@39dollarglasses.com,drmarlow@39dollarglasses.com'))
+    ))),
+
     // Everyone is signed out this many hours after signing in, whatever their activity.
     'session_hours' => (int) env('OMNIVEN_SESSION_HOURS', 16),
 

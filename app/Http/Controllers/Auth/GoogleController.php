@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Activity;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -74,12 +75,14 @@ class GoogleController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->put('signed_in_at', now()->timestamp);
+        Activity::log('signed_in', 'Signed in', null, $user);
 
         return redirect()->intended(route('dashboard'));
     }
 
     public function logout(Request $request): RedirectResponse
     {
+        Activity::log('signed_out', 'Signed out');
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

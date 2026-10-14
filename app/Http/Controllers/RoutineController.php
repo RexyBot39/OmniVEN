@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Activity;
 use App\Http\Controllers\Concerns\SyncsBrands;
 use App\Models\Brand;
 use App\Models\Routine;
@@ -21,6 +22,7 @@ class RoutineController extends Controller
 
         if ($existing) {
             $existing->delete();
+            Activity::log('routine.undone', "Unticked routine “{$routine->title}”", $routine);
             $msg = "Unmarked “{$routine->title}”.";
         } else {
             $routine->completions()->create([
@@ -28,6 +30,7 @@ class RoutineController extends Controller
                 'period_key' => $key,
                 'completed_at' => now(),
             ]);
+            Activity::log('routine.done', "Ticked routine “{$routine->title}”", $routine);
             $msg = "Marked “{$routine->title}” done.";
         }
 
@@ -43,6 +46,7 @@ class RoutineController extends Controller
     {
         $routine = new Routine($this->validated($request));
         $this->applyBrands($routine, $request);
+        Activity::log('routine.created', "Added routine “{$routine->title}”", $routine);
 
         return redirect()->to(route('dashboard').'#routines')->with('status', 'Routine added.');
     }
@@ -56,12 +60,14 @@ class RoutineController extends Controller
     {
         $routine->fill($this->validated($request));
         $this->applyBrands($routine, $request);
+        Activity::log('routine.updated', "Edited routine “{$routine->title}”", $routine);
 
         return redirect()->to(route('dashboard').'#routines')->with('status', 'Routine saved.');
     }
 
     public function destroy(Routine $routine): RedirectResponse
     {
+        Activity::log('routine.deleted', "Removed routine “{$routine->title}”", $routine);
         $routine->delete();
 
         return redirect()->to(route('dashboard').'#routines')->with('status', 'Routine removed.');

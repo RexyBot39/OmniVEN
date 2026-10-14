@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\DashboardController;
@@ -40,6 +41,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/postits/{postit}/clear', [PostItController::class, 'clearDone'])->name('postits.clear');
     Route::post('/postit-items/{item}/toggle', [PostItController::class, 'toggleItem'])->name('postits.items.toggle');
     Route::delete('/postit-items/{item}', [PostItController::class, 'destroyItem'])->name('postits.items.destroy');
+
+    // Activity report: only the people named in OMNIVEN_ACTIVITY_VIEWERS.
+    Route::middleware('can:view-activity')->group(function () {
+        Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
+        Route::get('/activity/export', [ActivityController::class, 'export'])->name('activity.export');
+    });
 
     // Admins only.
     Route::middleware('can:admin')->group(function () {

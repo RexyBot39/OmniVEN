@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Activity;
 use App\Models\Brand;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,7 @@ class BrandController extends Controller
             $slug = $base.$i;
         }
         $brand = Brand::create($data + ['slug' => $slug]);
+        Activity::log('brand.created', "Added brand “{$brand->name}”", $brand);
 
         return redirect()->route('dashboard', ['#brands'])->with('status', "Added {$brand->name}.");
     }
@@ -37,12 +39,14 @@ class BrandController extends Controller
     public function update(Request $request, Brand $brand): RedirectResponse
     {
         $brand->update($this->validated($request));
+        Activity::log('brand.updated', "Edited brand “{$brand->name}”", $brand);
 
         return redirect()->route('dashboard')->with('status', "Saved {$brand->name}.");
     }
 
     public function destroy(Brand $brand): RedirectResponse
     {
+        Activity::log('brand.deleted', "Removed brand “{$brand->name}”", $brand);
         $brand->delete();
 
         return redirect()->route('dashboard')->with('status', "Removed {$brand->name}.");

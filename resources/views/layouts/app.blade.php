@@ -25,6 +25,9 @@
             </picture>
         </a>
         <nav class="who">
+            @can('view-activity')
+                <a href="{{ route('activity.index') }}" class="btn ghost">Activity</a>
+            @endcan
             @can('admin')
                 <a href="{{ route('people.index') }}" class="btn ghost">People</a>
             @endcan

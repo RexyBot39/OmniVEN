@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Activity;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,8 @@ class UserController extends Controller
             'is_active' => true,
         ]);
 
+        Activity::log('person.added', "Added {$user->name} ({$user->email})".($user->is_admin ? ' as admin' : ''), $user);
+
         return back()->with('status', "Added {$user->name}. They can sign in with Google now.");
     }
 
@@ -49,6 +52,8 @@ class UserController extends Controller
         }
 
         $user->update($data);
+        $what = array_key_exists('is_admin', $data) ? ($data['is_admin'] ? 'made admin' : 'made staff') : ($data['is_active'] ? 'access restored' : 'access turned off');
+        Activity::log('person.updated', "{$user->name}: {$what}", $user);
 
         return back()->with('status', "Updated {$user->name}.");
     }

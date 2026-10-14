@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Activity;
 use App\Models\Brand;
 use App\Models\Note;
 use App\Models\Routine;
@@ -16,6 +17,7 @@ class DashboardController extends Controller
     public function index(Request $request): View
     {
         $me = $request->user();
+        Activity::visit($me);
 
         $brands = Brand::orderBy('sort')->orderBy('name')->get();
         $tools = Tool::with('brands')->orderBy('sort')->orderBy('name')->get();

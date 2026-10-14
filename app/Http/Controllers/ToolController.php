@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Activity;
 use App\Http\Controllers\Concerns\SyncsBrands;
 use App\Models\Brand;
 use App\Models\Tool;
@@ -23,6 +24,7 @@ class ToolController extends Controller
     {
         $tool = new Tool($this->validated($request));
         $this->applyBrands($tool, $request);
+        Activity::log('tool.created', "Added tool “{$tool->name}”", $tool);
 
         return redirect()->route('dashboard')->with('status', "Added {$tool->name}.");
     }
@@ -36,12 +38,14 @@ class ToolController extends Controller
     {
         $tool->fill($this->validated($request));
         $this->applyBrands($tool, $request);
+        Activity::log('tool.updated', "Edited tool “{$tool->name}”", $tool);
 
         return redirect()->route('dashboard')->with('status', "Saved {$tool->name}.");
     }
 
     public function destroy(Tool $tool): RedirectResponse
     {
+        Activity::log('tool.deleted', "Removed tool “{$tool->name}”", $tool);
         $tool->delete();
 
         return redirect()->route('dashboard')->with('status', "Removed {$tool->name}.");
