@@ -5,17 +5,17 @@
     set(k, v) { try { localStorage.setItem('omniven:' + k, v); } catch {} },
   };
 
-  // Two-step delete buttons (no browser confirm dialog).
-  document.querySelectorAll('form[data-confirm]').forEach((f) => {
-    f.addEventListener('submit', (e) => {
-      const b = f.querySelector('button');
-      if (!f.dataset.armed) {
-        e.preventDefault();
-        f.dataset.armed = '1';
-        b.textContent = 'Click again to confirm';
-        setTimeout(() => { delete f.dataset.armed; b.textContent = b.dataset.label; }, 4000);
-      }
-    });
+  // Two-step delete buttons (no browser confirm dialog). Delegated so loaded fragments work too.
+  document.addEventListener('submit', (e) => {
+    const f = e.target.closest('form[data-confirm]');
+    if (!f) return;
+    const b = f.querySelector('button');
+    if (!f.dataset.armed) {
+      e.preventDefault();
+      f.dataset.armed = '1';
+      b.textContent = 'Click again to confirm';
+      setTimeout(() => { delete f.dataset.armed; b.textContent = b.dataset.label; }, 4000);
+    }
   });
 
   // Show/hide toggles (e.g. the note form).
@@ -39,14 +39,69 @@
   const q = document.getElementById('q');
   const state = { tab: 'tools', brand: store.get('brand') || 'all', q: '' };
 
+  // ---- Slack tab ----
+  const slackBox = document.getElementById('slack-feed');
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+  let slackChannel = store.get('slackChannel') || '';
+  let slackBusy = false;
+  async function loadSlack(keepDraft) {
+    if (!slackBox || slackBusy) return;
+    slackBusy = true;
+    const draft = keepDraft ? slackBox.querySelector('#sl-text')?.value : '';
+    try {
+      const url = slackBox.dataset.url + (slackChannel ? '?channel=' + encodeURIComponent(slackChannel) : '');
+      const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+      if (res.redirected || res.status === 401) { location.reload(); return; }
+      slackBox.innerHTML = await res.text();
+      const list = slackBox.querySelector('.sl-list');
+      if (list) list.scrollTop = list.scrollHeight;
+      if (draft) { const t = slackBox.querySelector('#sl-text'); if (t) t.value = draft; }
+    } catch {
+      slackBox.innerHTML = '<div class="empty">Couldn\'t reach Slack. Check your connection and try again.</div>';
+    } finally { slackBusy = false; }
+  }
+  setInterval(() => {
+    if (state.tab === 'slack' && document.visibilityState === 'visible' && !slackBox?.querySelector('#sl-text')?.value) loadSlack();
+  }, 60000);
+  slackBox?.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-slack-channel]');
+    if (!b) return;
+    slackChannel = b.dataset.slackChannel; store.set('slackChannel', slackChannel); loadSlack();
+  });
+  slackBox?.addEventListener('keydown', (e) => {
+    if (e.target.id === 'sl-text' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.form.requestSubmit(); }
+  });
+  slackBox?.addEventListener('submit', async (e) => {
+    const f = e.target.closest('form[data-slack-post]');
+    if (!f) return;
+    e.preventDefault();
+    const btn = f.querySelector('button'); const status = f.querySelector('.sl-status');
+    const text = f.querySelector('textarea').value.trim();
+    if (!text) return;
+    btn.disabled = true; status.textContent = 'Sending…';
+    try {
+      const res = await fetch(f.dataset.slackPost, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+        body: JSON.stringify({ text }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.message || 'Message not sent. Try again.');
+      await loadSlack();
+    } catch (err) {
+      status.textContent = err.message; btn.disabled = false;
+    }
+  });
+
   function setTab(t, push) {
     if (!views.some((v) => v.dataset.view === t)) t = 'tools';
+    if (t === 'slack') loadSlack();
     state.tab = t;
     tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
     views.forEach((v) => { v.hidden = v.dataset.view !== t; });
     // Brand chips only filter tools, brands, routines and access.
     const chips = document.querySelector('.chips');
-    if (chips) chips.hidden = t === 'tasks' || t === 'postit';
+    if (chips) chips.hidden = t === 'tasks' || t === 'postit' || t === 'slack';
     store.set('tab', t);
     if (push) history.replaceState(null, '', t === 'tools' ? location.pathname : '#' + t);
   }
@@ -78,7 +133,7 @@
 
   tabs.forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab, true)));
   document.addEventListener('click', (e) => {
-    const chip = e.target.closest('.chip');
+    const chip = e.target.closest('.chip[data-brand]');
     if (chip) { state.brand = chip.dataset.brand; store.set('brand', state.brand); apply(); return; }
     const show = e.target.closest('[data-showtools]');
     if (show) { state.brand = show.dataset.showtools; store.set('brand', state.brand); setTab('tools', true); apply(); window.scrollTo({ top: 0 }); }

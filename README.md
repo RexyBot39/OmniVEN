@@ -47,6 +47,16 @@ The marketing control center for 39DollarGlasses, Ocusafe, Neurolux, Ocusleep, O
 5. **Settings → Networking → Generate domain** (or add a custom one like `omniven.39dollarglasses.com`), then make sure `APP_URL`, `GOOGLE_REDIRECT_URI` and the Google redirect URI all use it.
 6. Deploy. Before each release goes live, `bin/predeploy.sh` runs migrations and loads the starter brands, tools and routines **only if the database is empty**.
 
+## 3. Connect Slack (optional)
+
+The **Slack** tab shows recent messages from chosen channels and lets people post into them. Posts appear as "Name (via OmniVEN)".
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From an app manifest** → pick your workspace → paste `slack-app-manifest.yml` from this repo → **Create**.
+2. **Install to Workspace** and allow it.
+3. Copy the **Bot User OAuth Token** (starts with `xoxb-`) from **OAuth & Permissions**.
+4. In Railway, add `SLACK_BOT_TOKEN=xoxb-…` (and optionally `OMNIVEN_SLACK_CHANNELS=reddit-monitor,marketing`, the channels loaded the first time).
+5. Open the Slack tab. Public channels are joined automatically. For a private channel, type `/invite @OmniVEN` in it, then add it under **Manage channels**.
+
 ## Local development
 
 ```bash
@@ -55,7 +65,7 @@ cp .env.example .env && php artisan key:generate
 touch database/database.sqlite
 php artisan migrate --seed
 php artisan serve          # http://localhost:8000
-php artisan test           # 17 feature tests: domain lock, roles, routines, notes
+php artisan test           # feature tests: sign-in, roles, tasks, activity, Slack
 ```
 
 Run `composer update` once locally and commit the generated `composer.lock` so Railway builds are repeatable.

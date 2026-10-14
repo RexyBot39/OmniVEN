@@ -35,6 +35,13 @@ return [
         ],
     ],
 
+    'slack_app' => [
+        // Bot token from your Slack app (starts with xoxb-). Leave empty to hide the Slack feed.
+        'bot_token' => env('SLACK_BOT_TOKEN'),
+        // Channel names loaded the first time the Slack tab opens, if none are set up yet.
+        'default_channels' => env('OMNIVEN_SLACK_CHANNELS', 'reddit-monitor,marketing'),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

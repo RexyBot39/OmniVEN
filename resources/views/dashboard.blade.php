@@ -30,6 +30,7 @@
                 <button class="tab" role="tab" data-tab="routines" aria-selected="false">Routines<span class="n">{{ $due }} due</span></button>
                 <button class="tab" role="tab" data-tab="tasks" aria-selected="false">Tasks<span class="n">{{ $myOpen ? $myOpen.' yours' : $openTasks->count() }}</span></button>
                 <button class="tab" role="tab" data-tab="postit" aria-selected="false">PostIT Notes</button>
+                <button class="tab" role="tab" data-tab="slack" aria-selected="false">Slack</button>
                 <button class="tab" role="tab" data-tab="access" aria-selected="false">Access</button>
             </div>
             <label class="search">
@@ -209,6 +210,12 @@
 
 @include('partials.tasks-tab')
 @include('partials.postit-tab')
+
+{{-- ================= SLACK ================= --}}
+<section data-view="slack" hidden>
+    <div class="h2row"><h2>Slack</h2><span class="sub">Recent messages from our channels. Updates every minute while this tab is open.</span></div>
+    <div id="slack-feed" data-url="{{ route('slack.feed') }}"><div class="empty">Loading Slack…</div></div>
+</section>
 
 {{-- ================= ACCESS ================= --}}
 <section data-view="access" hidden>

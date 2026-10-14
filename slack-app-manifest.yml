@@ -1,0 +1,24 @@
+# Paste this at https://api.slack.com/apps → Create New App → From an app manifest
+display_information:
+  name: OmniVEN
+  description: Shows marketing channels inside OmniVEN and lets the team reply from there.
+  background_color: "#04264e"
+features:
+  bot_user:
+    display_name: OmniVEN
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - channels:read
+      - channels:history
+      - channels:join
+      - groups:read
+      - groups:history
+      - chat:write
+      - chat:write.customize
+      - users:read
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

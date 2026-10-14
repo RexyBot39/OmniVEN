@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PostItController;
 use App\Http\Controllers\RoutineController;
+use App\Http\Controllers\SlackController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ToolController;
 use App\Http\Controllers\UserController;
@@ -48,6 +49,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/activity/export', [ActivityController::class, 'export'])->name('activity.export');
     });
 
+    // Slack tab.
+    Route::get('/slack/feed', [SlackController::class, 'feed'])->name('slack.feed');
+    Route::post('/slack/channels/{channel}/post', [SlackController::class, 'post'])->middleware('throttle:20,1')->name('slack.post');
+
     // Admins only.
     Route::middleware('can:admin')->group(function () {
         Route::resource('tools', ToolController::class)->except(['index', 'show']);
@@ -58,6 +63,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
         Route::post('/people', [UserController::class, 'store'])->name('people.store');
+        Route::post('/slack/channels', [SlackController::class, 'store'])->name('slack.channels.store');
+        Route::delete('/slack/channels/{channel}', [SlackController::class, 'destroy'])->name('slack.channels.destroy');
         Route::get('/people', [UserController::class, 'index'])->name('people.index');
         Route::patch('/people/{user}', [UserController::class, 'update'])->name('people.update');
     });
