@@ -4,7 +4,9 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\PostItController;
 use App\Http\Controllers\RoutineController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ToolController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -27,11 +29,28 @@ Route::middleware('auth')->group(function () {
     Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update');
     Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
 
+    // Tasks: the assignee (or an admin) marks them done.
+    Route::post('/tasks/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
+
+    // PostIT notes: personal to-do lists.
+    Route::post('/postits', [PostItController::class, 'store'])->name('postits.store');
+    Route::put('/postits/{postit}', [PostItController::class, 'update'])->name('postits.update');
+    Route::delete('/postits/{postit}', [PostItController::class, 'destroy'])->name('postits.destroy');
+    Route::post('/postits/{postit}/items', [PostItController::class, 'addItem'])->name('postits.items.store');
+    Route::post('/postits/{postit}/clear', [PostItController::class, 'clearDone'])->name('postits.clear');
+    Route::post('/postit-items/{item}/toggle', [PostItController::class, 'toggleItem'])->name('postits.items.toggle');
+    Route::delete('/postit-items/{item}', [PostItController::class, 'destroyItem'])->name('postits.items.destroy');
+
     // Admins only.
     Route::middleware('can:admin')->group(function () {
         Route::resource('tools', ToolController::class)->except(['index', 'show']);
         Route::resource('brands', BrandController::class)->except(['index', 'show']);
         Route::resource('routines', RoutineController::class)->except(['index', 'show']);
+        Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+        Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
+        Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+        Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+        Route::post('/people', [UserController::class, 'store'])->name('people.store');
         Route::get('/people', [UserController::class, 'index'])->name('people.index');
         Route::patch('/people/{user}', [UserController::class, 'update'])->name('people.update');
     });

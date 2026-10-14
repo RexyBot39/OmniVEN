@@ -3,6 +3,8 @@
 @php
     $isAdmin = auth()->user()->can('admin');
     $due = $routines->reject->isDone()->count();
+    $me = auth()->user();
+    $myOpen = $openTasks->where('assignee_id', $me->id)->count();
 @endphp
 
 @section('content')
@@ -17,6 +19,8 @@
     <h1>Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ auth()->user()->firstName() }}.</h1>
 </section>
 
+@include('partials.hotlist')
+
 <div class="bar">
     <div class="wrap bar-in">
         <div class="row1">
@@ -24,6 +28,8 @@
                 <button class="tab" role="tab" data-tab="tools" aria-selected="true">Tools<span class="n">{{ $tools->count() }}</span></button>
                 <button class="tab" role="tab" data-tab="brands" aria-selected="false">Brands<span class="n">{{ $brands->count() }}</span></button>
                 <button class="tab" role="tab" data-tab="routines" aria-selected="false">Routines<span class="n">{{ $due }} due</span></button>
+                <button class="tab" role="tab" data-tab="tasks" aria-selected="false">Tasks<span class="n">{{ $myOpen ? $myOpen.' yours' : $openTasks->count() }}</span></button>
+                <button class="tab" role="tab" data-tab="postit" aria-selected="false">PostIT Notes</button>
                 <button class="tab" role="tab" data-tab="access" aria-selected="false">Access</button>
             </div>
             <label class="search">
@@ -201,6 +207,9 @@
     </div>
 </section>
 
+@include('partials.tasks-tab')
+@include('partials.postit-tab')
+
 {{-- ================= ACCESS ================= --}}
 <section data-view="access" hidden>
     <div class="h2row"><h2>Access &amp; owners</h2><span class="sub">Which account each tool lives under and how to get in</span></div>
@@ -228,4 +237,7 @@
 </section>
 
 </main>
+
+<span id="session-expiry" data-ends="{{ $sessionEndsAt }}" data-me="{{ auth()->id() }}" hidden></span>
+@include('partials.hotlist-popup')
 @endsection

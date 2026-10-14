@@ -39,8 +39,8 @@ class GoogleLoginTest extends TestCase
         $this->fakeGoogle('pat@39dollarglasses.com');
         $this->get('/auth/google/callback')->assertRedirect('/');
         $this->assertAuthenticated();
-        $user = User::first();
-        $this->assertSame('pat@39dollarglasses.com', $user->email);
+        $user = User::where('email', 'pat@39dollarglasses.com')->first();
+        $this->assertNotNull($user);
         $this->assertFalse($user->is_admin);
     }
 
@@ -48,7 +48,7 @@ class GoogleLoginTest extends TestCase
     {
         $this->fakeGoogle('drmarcweinstein@39dollarglasses.com');
         $this->get('/auth/google/callback');
-        $this->assertTrue(User::first()->is_admin);
+        $this->assertTrue(User::where('email', 'drmarcweinstein@39dollarglasses.com')->first()->is_admin);
     }
 
     public function test_gmail_account_is_rejected(): void
@@ -56,7 +56,7 @@ class GoogleLoginTest extends TestCase
         $this->fakeGoogle('someone@gmail.com', hd: '');
         $this->get('/auth/google/callback')->assertRedirect('/login')->assertSessionHas('error');
         $this->assertGuest();
-        $this->assertSame(0, User::count());
+        $this->assertSame(0, User::where('email', 'someone@gmail.com')->count());
     }
 
     public function test_lookalike_domain_is_rejected(): void
@@ -97,7 +97,7 @@ class GoogleLoginTest extends TestCase
         $long = 'https://lh3.googleusercontent.com/a-/'.str_repeat('A', 1500).'=s96-c';
         $this->fakeGoogle('pat@39dollarglasses.com', avatar: $long);
         $this->get('/auth/google/callback')->assertRedirect('/');
-        $this->assertSame($long, User::first()->avatar);
+        $this->assertSame($long, User::where('email', 'pat@39dollarglasses.com')->first()->avatar);
     }
 
     public function test_other_hostnames_redirect_to_app_url_in_production(): void
@@ -108,5 +108,15 @@ class GoogleLoginTest extends TestCase
             ->assertRedirect('https://omniven.cc/login?x=1');
         $this->get('https://omniven-production.up.railway.app/up')->assertOk();
         $this->app['env'] = 'testing';
+    }
+
+    public function test_preloaded_admin_keeps_admin_on_first_sign_in(): void
+    {
+        $this->fakeGoogle('leona.p@39dollarglasses.com', id: 'g-leona');
+        $this->get('/auth/google/callback')->assertRedirect('/');
+        $leona = User::where('email', 'leona.p@39dollarglasses.com')->first();
+        $this->assertSame('g-leona', $leona->google_id);
+        $this->assertTrue($leona->is_admin);
+        $this->assertSame(1, User::where('email', 'leona.p@39dollarglasses.com')->count());
     }
 }

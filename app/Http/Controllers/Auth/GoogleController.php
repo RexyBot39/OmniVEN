@@ -70,8 +70,10 @@ class GoogleController extends Controller
         }
         $user->save();
 
-        Auth::login($user, remember: true);
+        // No "remember me": sessions end 16 hours after sign-in (see EnforceSessionLimit).
+        Auth::login($user);
         $request->session()->regenerate();
+        $request->session()->put('signed_in_at', now()->timestamp);
 
         return redirect()->intended(route('dashboard'));
     }

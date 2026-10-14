@@ -26,6 +26,13 @@
     if (!el.hidden) el.querySelector('input,textarea')?.focus();
   }));
 
+  // Sign the page out on its own when the 16-hour session ends, even if left open.
+  const exp = document.getElementById('session-expiry');
+  if (exp) {
+    const ms = Number(exp.dataset.ends) * 1000 - Date.now();
+    if (ms > 0 && ms < 2147483647) setTimeout(() => location.reload(), ms + 2000);
+  }
+
   const tabs = [...document.querySelectorAll('.tab')];
   if (!tabs.length) return;
   const views = [...document.querySelectorAll('[data-view]')];
@@ -37,6 +44,9 @@
     state.tab = t;
     tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
     views.forEach((v) => { v.hidden = v.dataset.view !== t; });
+    // Brand chips only filter tools, brands, routines and access.
+    const chips = document.querySelector('.chips');
+    if (chips) chips.hidden = t === 'tasks' || t === 'postit';
     store.set('tab', t);
     if (push) history.replaceState(null, '', t === 'tools' ? location.pathname : '#' + t);
   }
@@ -76,6 +86,34 @@
   let t;
   q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { state.q = q.value.trim().toLowerCase(); apply(); }, 100); });
 
+  // Buttons that jump to a tab (Hotlist "See all", popup "Open Tasks").
+  document.querySelectorAll('[data-goto]').forEach((b) => b.addEventListener('click', () => {
+    setTab(b.dataset.goto, true);
+    document.querySelector('.bar')?.scrollIntoView({ block: 'start' });
+  }));
+
+  // Tasks: Mine / Everyone.
+  const me = exp?.dataset.me;
+  function filterTasks(mode) {
+    store.set('taskfilter', mode);
+    document.querySelectorAll('[data-taskfilter]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.taskfilter === mode)));
+    let anyOpen = false;
+    document.querySelectorAll('.task[data-assignee]').forEach((t) => {
+      const show = mode === 'all' || t.dataset.assignee === me;
+      t.hidden = !show || (state.q && !(t.dataset.search || '').includes(state.q));
+      if (!t.hidden && !t.classList.contains('done')) anyOpen = true;
+    });
+    const none = document.querySelector('.task-none');
+    if (none) none.hidden = anyOpen || mode === 'all';
+  }
+  document.querySelectorAll('[data-taskfilter]').forEach((b) => b.addEventListener('click', () => filterTasks(b.dataset.taskfilter)));
+  q.addEventListener('input', () => setTimeout(() => filterTasks(store.get('taskfilter') || 'all'), 150));
+
   setTab(location.hash.slice(1) || store.get('tab') || 'tools', false);
   apply();
+  filterTasks(store.get('taskfilter') || 'all');
+
+  // Daily Hotlist popup.
+  const pop = document.getElementById('hotlist-popup');
+  if (pop && typeof pop.showModal === 'function') pop.showModal();
 })();

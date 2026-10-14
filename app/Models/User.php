@@ -11,7 +11,7 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'email', 'google_id', 'avatar', 'is_admin', 'is_active', 'last_login_at'];
+    protected $fillable = ['name', 'email', 'google_id', 'avatar', 'is_admin', 'is_active', 'last_login_at', 'hotlist_popup_on'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -20,6 +20,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'hotlist_popup_on' => 'date',
             'password' => 'hashed',
             'is_admin' => 'boolean',
             'is_active' => 'boolean',
@@ -29,6 +30,16 @@ class User extends Authenticatable
     public function isConfiguredAdmin(): bool
     {
         return in_array(strtolower($this->email), config('omniven.admin_emails'), true);
+    }
+
+    public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Task::class, 'assignee_id');
+    }
+
+    public function postits(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PostIt::class)->orderBy('id');
     }
 
     public function firstName(): string

@@ -10,6 +10,17 @@ return [
         explode(',', (string) env('OMNIVEN_ADMIN_EMAILS', 'drmarcweinstein@39dollarglasses.com'))
     ))),
 
+    // Everyone is signed out this many hours after signing in, whatever their activity.
+    'session_hours' => (int) env('OMNIVEN_SESSION_HOURS', 16),
+
+    'postit_colors' => [
+        'yellow' => 'Yellow',
+        'pink' => 'Pink',
+        'blue' => 'Blue',
+        'green' => 'Green',
+        'orange' => 'Orange',
+    ],
+
     'categories' => [
         'Advertising',
         'Shopping & Feeds',

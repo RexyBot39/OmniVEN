@@ -14,6 +14,25 @@ class UserController extends Controller
         return view('people.index', ['users' => User::orderByDesc('is_admin')->orderBy('name')->get()]);
     }
 
+    /** Add someone before their first sign-in, so tasks can be assigned to them. */
+    public function store(Request $request): RedirectResponse
+    {
+        $domain = config('omniven.allowed_domain');
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:255', 'ends_with:@'.$domain, 'unique:users,email'],
+            'name' => ['required', 'string', 'max:120'],
+        ], ['email.ends_with' => "Only @{$domain} addresses can be added."]);
+
+        $user = User::create([
+            'email' => strtolower($data['email']),
+            'name' => $data['name'],
+            'is_admin' => $request->boolean('is_admin'),
+            'is_active' => true,
+        ]);
+
+        return back()->with('status', "Added {$user->name}. They can sign in with Google now.");
+    }
+
     public function update(Request $request, User $user): RedirectResponse
     {
         $data = $request->validate([

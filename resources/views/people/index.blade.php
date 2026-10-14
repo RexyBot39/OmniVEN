@@ -5,6 +5,14 @@
     <a href="{{ route('dashboard') }}" class="back">← Back to OmniVEN</a>
     <h1 class="form-h">People</h1>
     <p class="sub">Anyone with an {{ '@'.config('omniven.allowed_domain') }} Google account can sign in and appears here after their first visit. Admins can edit tools, brands and routines; everyone can tick routines and post notes.</p>
+    @include('partials.form-errors')
+    <form method="POST" action="{{ route('people.store') }}" class="card add-person">
+        @csrf
+        <div class="fld grow"><label for="p-name">Name</label><input id="p-name" name="name" type="text" required maxlength="120" value="{{ old('name') }}"></div>
+        <div class="fld grow"><label for="p-email">Work email</label><input id="p-email" name="email" type="text" inputmode="email" required placeholder="name@{{ config('omniven.allowed_domain') }}" value="{{ old('email') }}"></div>
+        <label class="inline"><input type="checkbox" name="is_admin" value="1"> Admin</label>
+        <button class="btn primary" type="submit">Add person</button>
+    </form>
     <div class="tablewrap">
         <table>
             <thead><tr><th>Person</th><th>Last sign-in</th><th>Role</th><th>Access</th></tr></thead>
@@ -12,7 +20,7 @@
             @foreach($users as $u)
                 <tr>
                     <td><strong>{{ $u->name }}</strong><div class="sub">{{ $u->email }}</div></td>
-                    <td>{{ $u->last_login_at?->format('M j, Y g:ia') ?? '—' }}</td>
+                    <td>{{ $u->last_login_at?->format('M j, Y g:ia') ?? 'Not yet signed in' }}</td>
                     <td>
                         @if($u->is(auth()->user()) || $u->isConfiguredAdmin())
                             <span class="pill active">{{ $u->is_admin ? 'Admin' : 'Staff' }}</span>
