@@ -253,6 +253,6 @@
 
 </main>
 
-<span id="session-expiry" data-ends="{{ $sessionEndsAt }}" data-me="{{ auth()->id() }}" hidden></span>
+<span id="session-expiry" data-ends="{{ $sessionEndsAt }}" data-me="{{ auth()->id() }}" @if($goHome) data-home="1" @endif hidden></span>
 @include('partials.hotlist-popup')
 @endsection

@@ -50,11 +50,14 @@ class DashboardController extends Controller
         $people = User::where('is_active', true)->orderBy('name')->get();
         $postits = $me->postits()->with('items')->get();
 
+        // Fresh sign-in, or the logo link (/?home=1): reset to Routines, all brands.
+        $goHome = $request->session()->get('omniven_home', false) || $request->boolean('home');
+
         $sessionEndsAt = (int) $request->session()->get('signed_in_at', now()->timestamp) + config('omniven.session_hours') * 3600;
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt'
+            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome'
         ));
     }
 }

@@ -37,6 +37,13 @@
   if (!tabs.length) return;
   const views = [...document.querySelectorAll('[data-view]')];
   const q = document.getElementById('q');
+  // Home: right after sign-in, or via the logo, start on Routines for all brands.
+  const goHome = document.getElementById('session-expiry')?.dataset.home === '1';
+  if (goHome) {
+    store.set('tab', 'routines');
+    store.set('brand', 'all');
+    history.replaceState(null, '', location.pathname);
+  }
   const state = { tab: 'routines', brand: store.get('brand') || 'all', q: '' };
 
   // ---- Slack tab ----
@@ -191,7 +198,7 @@
   document.querySelectorAll('[data-taskfilter]').forEach((b) => b.addEventListener('click', () => filterTasks(b.dataset.taskfilter)));
   q.addEventListener('input', () => setTimeout(() => filterTasks(store.get('taskfilter') || 'all'), 150));
 
-  setTab(location.hash.slice(1) || store.get('tab') || 'routines', false);
+  setTab(goHome ? 'routines' : (location.hash.slice(1) || store.get('tab') || 'routines'), false);
   apply();
   checkUnread();
   filterTasks(store.get('taskfilter') || 'all');

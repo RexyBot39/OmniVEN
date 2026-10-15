@@ -18,7 +18,7 @@
 @auth
 <header class="appbar">
     <div class="wrap appbar-in">
-        <a href="{{ route('dashboard') }}" class="logo" aria-label="OmniVEN home">
+        <a href="{{ route('dashboard', ['home' => 1]) }}" class="logo" aria-label="OmniVEN home: Routines for all brands">
             <picture>
                 <source srcset="{{ asset('images/omniven-logo-dark.png') }}" media="(prefers-color-scheme: dark)">
                 <img src="{{ asset('images/omniven-logo.png') }}" alt="OmniVEN" width="174" height="57">

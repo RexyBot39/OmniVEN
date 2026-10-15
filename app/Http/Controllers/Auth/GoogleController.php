@@ -53,7 +53,7 @@ class GoogleController extends Controller
 
         $user = User::where('google_id', $google->getId())->first()
             ?? User::where('email', $email)->first()
-            ?? new User(['email' => $email]);
+            ?? new User(['email' => $email, 'is_active' => true, 'is_admin' => false]);
 
         if ($user->exists && ! $user->is_active) {
             return $this->fail('Your OmniVEN access has been turned off. Ask an admin to turn it back on.');
@@ -75,9 +75,13 @@ class GoogleController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->put('signed_in_at', now()->timestamp);
+        // Land on the Routines tab for all brands right after signing in.
+        $request->session()->flash('omniven_home', true);
         Activity::log('signed_in', 'Signed in', null, $user);
 
-        return redirect()->intended(route('dashboard'));
+        $request->session()->forget('url.intended');
+
+        return redirect()->route('dashboard');
     }
 
     public function logout(Request $request): RedirectResponse

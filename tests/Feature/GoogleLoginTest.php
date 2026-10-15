@@ -119,4 +119,22 @@ class GoogleLoginTest extends TestCase
         $this->assertTrue($leona->is_admin);
         $this->assertSame(1, User::where('email', 'leona.p@39dollarglasses.com')->count());
     }
+
+    public function test_sign_in_always_lands_on_routines_for_all_brands(): void
+    {
+        $this->fakeGoogle('pat@39dollarglasses.com');
+        // Even if they were headed somewhere else before signing in.
+        $this->withSession(['url.intended' => url('/people')])->get('/auth/google/callback')->assertRedirect('/');
+        $this->get('/')->assertSee('data-home="1"', false);
+        // Only the first page after sign-in resets; later visits keep their tab.
+        $this->get('/')->assertDontSee('data-home="1"', false);
+    }
+
+    public function test_logo_link_goes_home(): void
+    {
+        $pat = User::factory()->create();
+        $page = $this->actingAs($pat)->get('/');
+        $page->assertSee('href="'.e(route('dashboard', ['home' => 1])).'" class="logo"', false);
+        $this->actingAs($pat)->get('/?home=1')->assertSee('data-home="1"', false);
+    }
 }
