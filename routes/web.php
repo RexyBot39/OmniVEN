@@ -114,6 +114,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/launchpad/order', [\App\Http\Controllers\LaunchpadController::class, 'order'])->middleware('throttle:60,1')->name('launchpad.order');
     Route::post('/launchpad/open', [\App\Http\Controllers\LaunchpadController::class, 'open'])->middleware('throttle:120,1')->name('launchpad.open');
 
+    // Omni search behind the dashboard search box.
+    Route::get('/search.json', [\App\Http\Controllers\SearchController::class, 'index'])->middleware('throttle:120,1')->name('search');
+
     // Quick launcher index (⌘K).
     Route::get('/launcher.json', [\App\Http\Controllers\LauncherController::class, 'index'])->name('launcher');
 });

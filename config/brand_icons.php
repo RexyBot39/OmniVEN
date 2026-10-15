@@ -34,4 +34,6 @@ return [
     'awin' => ['label' => 'Awin', 'hex' => '#FF5B00', 'multicolor' => true],
     // Traced from the logo Marc supplied: yellow, blue and red "C" on a white tile.
     'contentful' => ['label' => 'Contentful', 'hex' => '#1768E8', 'multicolor' => true],
+    // Traced from the logo Marc supplied: teal pulse and speech bubble, coral lines, on a white tile.
+    'pulsetopost' => ['label' => 'PulseToPost', 'hex' => '#02CFC0', 'multicolor' => true],
 ];
