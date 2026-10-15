@@ -61,6 +61,7 @@ return [
         'clarity' => ['label' => 'Clarity', 'short' => 'CL', 'group' => 'search', 'grid' => false, 'home' => 'https://clarity.microsoft.com'],
         'klaviyo' => ['label' => 'Klaviyo', 'short' => 'KL', 'group' => 'email', 'grid' => true, 'home' => 'https://www.klaviyo.com/login'],
         'google_business' => ['label' => 'Google Business Profile', 'short' => 'GB', 'group' => 'reviews', 'grid' => false, 'home' => 'https://business.google.com'],
+        'shopper_approved' => ['label' => 'Shopper Approved', 'short' => 'SA', 'group' => 'reviews', 'grid' => false, 'home' => 'https://www.shopperapproved.com/account/dashboard'],
         'trustpilot' => ['label' => 'Trustpilot', 'short' => 'TP', 'group' => 'reviews', 'grid' => false, 'home' => 'https://business.trustpilot.com'],
         'other' => ['label' => 'Other', 'short' => '··', 'group' => 'other', 'grid' => false, 'home' => null],
     ],
