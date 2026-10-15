@@ -19,6 +19,11 @@ class Brand extends Model
         return $this->belongsToMany(Tool::class);
     }
 
+    public function accounts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Account::class);
+    }
+
     public function routines(): BelongsToMany
     {
         return $this->belongsToMany(Routine::class);

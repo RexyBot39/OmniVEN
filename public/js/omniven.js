@@ -33,6 +33,83 @@
     if (ms > 0 && ms < 2147483647) setTimeout(() => location.reload(), ms + 2000);
   }
 
+
+  // ---- ⌘K quick launcher (every page) ----
+  (function launcher() {
+    const dlg = document.getElementById('launcher');
+    if (!dlg) return;
+    const input = document.getElementById('ln-q');
+    const list = document.getElementById('ln-list');
+    const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+    document.documentElement.classList.add(isMac ? 'is-mac' : 'is-pc');
+    let items = null, shown = [], sel = 0;
+
+    async function load() {
+      if (items) return;
+      try {
+        const res = await fetch(list.dataset.src, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+        items = (await res.json()).map((it) => ({ ...it, hay: (it.t + ' ' + it.k + ' ' + (it.s || '') + ' ' + (it.a || '')).toLowerCase(), tl: it.t.toLowerCase() }));
+      } catch { items = []; }
+    }
+    const order = { Brand: 0, Account: 1, Page: 2, Tool: 3, Action: 4 };
+    function score(it, words) {
+      let sc = 0;
+      for (const w of words) {
+        const i = it.hay.indexOf(w);
+        if (i < 0) return -1;
+        sc += it.tl.startsWith(w) ? 30 : (it.tl.includes(' ' + w) ? 20 : (it.tl.includes(w) ? 12 : 4));
+      }
+      return sc - order[it.k];
+    }
+    function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    function render() {
+      const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      shown = !words.length
+        ? items.filter((it) => it.k === 'Brand' || it.k === 'Page').slice(0, 15)
+        : items.map((it) => [score(it, words), it]).filter(([sc]) => sc >= 0).sort((a, b) => b[0] - a[0]).slice(0, 12).map(([, it]) => it);
+      sel = 0;
+      list.innerHTML = shown.length ? shown.map((it, i) =>
+        '<li role="option" id="ln-' + i + '" aria-selected="' + (i === sel) + '" data-i="' + i + '"><span class="ln-k ln-' + it.k.toLowerCase() + '">' + it.k + '</span><span class="ln-t"><b>' + esc(it.t) + '</b>' + (it.s ? '<small>' + esc(it.s) + '</small>' : '') + '</span>' + (it.x ? '<span class="ln-ext" aria-hidden="true">↗</span>' : '') + '</li>'
+      ).join('') : '<li class="ln-empty">Nothing matches. Try a brand name or a platform like “instagram”.</li>';
+      input.setAttribute('aria-activedescendant', shown.length ? 'ln-0' : '');
+    }
+    function move(d) {
+      if (!shown.length) return;
+      sel = (sel + d + shown.length) % shown.length;
+      list.querySelectorAll('li[data-i]').forEach((li) => li.setAttribute('aria-selected', String(Number(li.dataset.i) === sel)));
+      list.querySelector('#ln-' + sel)?.scrollIntoView({ block: 'nearest' });
+      input.setAttribute('aria-activedescendant', 'ln-' + sel);
+    }
+    function go(i) {
+      const it = shown[i];
+      if (!it) return;
+      dlg.close();
+      if (it.x) { window.open(it.u, '_blank', 'noopener'); return; }
+      const here = location.origin + location.pathname;
+      if (it.u.split('#')[0] === here && it.u.includes('#')) { location.hash = it.u.split('#')[1]; window.dispatchEvent(new HashChangeEvent('hashchange')); }
+      else location.href = it.u;
+    }
+    async function open() {
+      if (dlg.open) return;
+      dlg.showModal(); input.value = '';
+      await load(); render(); input.focus();
+    }
+    document.getElementById('launch-open')?.addEventListener('click', open);
+    document.addEventListener('keydown', (e) => {
+      const typing = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.target.isContentEditable;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); open(); }
+      else if (e.key === '/' && !typing && !dlg.open) { e.preventDefault(); open(); }
+    });
+    input.addEventListener('input', () => items && render());
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+      else if (e.key === 'Enter') { e.preventDefault(); go(sel); }
+    });
+    list.addEventListener('click', (e) => { const li = e.target.closest('li[data-i]'); if (li) go(Number(li.dataset.i)); });
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  })();
+
   const tabs = [...document.querySelectorAll('.tab')];
   if (!tabs.length) return;
   const views = [...document.querySelectorAll('[data-view]')];
@@ -152,6 +229,9 @@
       return okBrand && okQ;
     };
     document.querySelectorAll('[data-brands]').forEach((el) => { el.hidden = !match(el); });
+    document.querySelectorAll('[data-brand-row]').forEach((el) => {
+      el.hidden = !(state.brand === 'all' || el.dataset.brandRow === state.brand);
+    });
     document.querySelectorAll('[data-brand-card]').forEach((el) => {
       const okBrand = state.brand === 'all' || el.dataset.brandCard === state.brand;
       el.hidden = !(okBrand && (!state.q || el.dataset.search.includes(state.q)));
@@ -198,6 +278,7 @@
   document.querySelectorAll('[data-taskfilter]').forEach((b) => b.addEventListener('click', () => filterTasks(b.dataset.taskfilter)));
   q.addEventListener('input', () => setTimeout(() => filterTasks(store.get('taskfilter') || 'all'), 150));
 
+  window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (t) setTab(t, false); });
   setTab(goHome ? 'routines' : (location.hash.slice(1) || store.get('tab') || 'routines'), false);
   apply();
   checkUnread();

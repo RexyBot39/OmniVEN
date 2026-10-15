@@ -126,6 +126,8 @@
 {{-- ================= BRANDS ================= --}}
 <section data-view="brands" hidden>
     <div class="h2row"><h2>Brands</h2>@if($isAdmin)<a class="btn primary" href="{{ route('brands.create') }}">+ Add brand</a>@endif</div>
+    @include('partials.brand-grid')
+    <div class="h2row" style="margin-top:24px"><h2>Brand details</h2><span class="sub">Open a brand for every account, tool and routine in one place</span></div>
     <div class="brands">
         @foreach($brands as $b)
             @php($count = $tools->filter(fn ($t) => $t->all_brands || $t->brands->contains('id', $b->id))->count())
@@ -133,7 +135,7 @@
                 <div class="band" style="background:var(--c{{ $b->colorSlot() }})"></div>
                 <div class="in">
                     <div>
-                        <h3>{{ $b->name }}</h3>
+                        <h3><a href="{{ route('brands.show', $b) }}" class="brand-link">{{ $b->name }}</a></h3>
                         @if($b->site)
                             <a class="site" href="{{ $b->site }}" target="_blank" rel="noopener noreferrer">{{ preg_replace('#^https?://(www\.)?#', '', rtrim($b->site, '/')) }} ↗</a>
                         @else
@@ -154,7 +156,8 @@
                         @if($b->notes)<dt>Notes</dt><dd>{{ $b->notes }}</dd>@endif
                     </dl>
                     <div class="brand-actions">
-                        <button class="btn" type="button" data-showtools="{{ $b->slug }}">{{ $count }} tools →</button>
+                        <a class="btn primary" href="{{ route('brands.show', $b) }}">Open {{ $b->name }} hub →</a>
+                        <button class="btn" type="button" data-showtools="{{ $b->slug }}">{{ $count }} tools</button>
                         <span class="spacer"></span>
                         @if($isAdmin)<a class="btn ghost" href="{{ route('brands.edit', $b) }}">Edit</a>@endif
                     </div>
@@ -249,6 +252,30 @@
             </tbody>
         </table>
     </div>
+
+    @php($allAccounts = \App\Models\Account::with('brand')->get()->sortBy(fn ($a) => [$a->brand?->sort ?? 0, $a->platform]))
+    <div class="h2row" style="margin-top:28px"><h2>Brand accounts</h2><span class="sub">Each brand's own social, ad, analytics and email accounts</span>@if($isAdmin)<a class="btn" href="{{ route('accounts.create', ['return' => 'access']) }}">+ Add account</a>@endif</div>
+    @if($allAccounts->isEmpty())
+        <div class="empty">No brand accounts yet. Add them from a brand's hub or the grid on the Brands tab.</div>
+    @else
+        <div class="tablewrap">
+            <table>
+                <thead><tr><th>Account</th><th>ID</th><th>Login account</th><th>Owner</th><th>Verified</th>@if($isAdmin)<th><span class="sr">Actions</span></th>@endif</tr></thead>
+                <tbody>
+                    @foreach($allAccounts as $a)
+                        <tr data-brands="{{ $a->brand?->slug ?? 'all' }}" data-search="{{ strtolower($a->title().' '.$a->login.' '.$a->owner.' '.$a->account_ref) }}">
+                            <td>@if($a->openUrl())<a href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer">{{ $a->title() }}</a>@else{{ $a->title() }}@endif</td>
+                            <td class="ts">{{ $a->account_ref ?: '—' }}</td>
+                            <td>{!! $a->login ? e($a->login) : '<span class="missing">Add</span>' !!}</td>
+                            <td>{!! $a->owner ? e($a->owner) : '<span class="missing">Add</span>' !!}</td>
+                            <td class="{{ $a->needsVerify() ? 'warn-t' : 'ok-t' }}">{{ $a->verified_on?->format('M j, Y') ?? 'Never' }}</td>
+                            @if($isAdmin)<td class="row-actions"><a class="mini" href="{{ route('accounts.edit', [$a, 'return' => 'access']) }}">Edit</a></td>@endif
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 </section>
 
 </main>

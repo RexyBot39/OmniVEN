@@ -12,6 +12,23 @@ use Illuminate\View\View;
 
 class BrandController extends Controller
 {
+    /** Brand hub: everything for one brand on one page. Open to everyone signed in. */
+    public function show(Brand $brand): View
+    {
+        $brand->load(['accounts' => fn ($q) => $q->orderBy('platform')]);
+        $tools = \App\Models\Tool::with('brands')->orderBy('sort')->orderBy('name')->get()
+            ->filter(fn ($t) => $t->all_brands || $t->brands->contains('id', $brand->id))->values();
+        $routines = \App\Models\Routine::with(['brands', 'latestCompletion.user'])->orderBy('sort')->get()
+            ->filter(fn ($r) => $r->all_brands || $r->brands->contains('id', $brand->id))->values();
+        $platforms = config('omniven.platforms');
+        $groups = collect(config('omniven.platform_groups'))
+            ->map(fn ($label, $key) => ['label' => $label, 'accounts' => $brand->accounts->filter(fn ($a) => $a->group() === $key)->values()])
+            ->filter(fn ($g) => $g['accounts']->isNotEmpty());
+        $missing = collect($platforms)->filter(fn ($p, $k) => $p['grid'] && ! $brand->accounts->contains('platform', $k));
+
+        return view('brands.show', compact('brand', 'tools', 'routines', 'groups', 'missing'));
+    }
+
     public function create(): View
     {
         return view('brands.form', ['brand' => new Brand(['sort' => Brand::max('sort') + 1])]);
