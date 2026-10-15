@@ -45,7 +45,7 @@ return [
         'youtube' => ['label' => 'YouTube', 'short' => 'YT', 'group' => 'social', 'grid' => false, 'home' => 'https://studio.youtube.com'],
         'pinterest' => ['label' => 'Pinterest', 'short' => 'PI', 'group' => 'social', 'grid' => false, 'home' => 'https://www.pinterest.com'],
         'x' => ['label' => 'X (Twitter)', 'short' => 'X', 'group' => 'social', 'grid' => false, 'home' => 'https://x.com'],
-        'linkedin' => ['label' => 'LinkedIn', 'short' => 'IN', 'group' => 'social', 'grid' => false, 'home' => 'https://www.linkedin.com'],
+        'linkedin' => ['label' => 'LinkedIn', 'short' => 'LI', 'group' => 'social', 'grid' => true, 'home' => 'https://www.linkedin.com'],
         'reddit' => ['label' => 'Reddit', 'short' => 'RD', 'group' => 'social', 'grid' => false, 'home' => 'https://www.reddit.com'],
         'meta_ads' => ['label' => 'Meta Ads', 'short' => 'MA', 'group' => 'ads', 'grid' => true, 'home' => 'https://adsmanager.facebook.com'],
         'tiktok_ads' => ['label' => 'TikTok Ads', 'short' => 'TA', 'group' => 'ads', 'grid' => false, 'home' => 'https://ads.tiktok.com'],

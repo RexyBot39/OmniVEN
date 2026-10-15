@@ -18,22 +18,22 @@ class BrandSocialsTest extends TestCase
     {
         $this->seed(OmniVenSeeder::class);
 
-        $this->assertSame(11, Account::count());
+        $this->assertSame(11, Account::where('platform', '!=', 'linkedin')->count());
         $ocusafe = Brand::where('slug', 'ocusafe')->first();
         $ig = Account::where(['brand_id' => $ocusafe->id, 'platform' => 'instagram'])->firstOrFail();
         $this->assertSame(['@ocusafeglasses', 'https://www.instagram.com/ocusafeglasses'], [$ig->handle, $ig->url]);
         $this->assertNull($ig->verified_on);
 
         $sleep = Brand::where('slug', 'ocusleep')->first();
-        $this->assertEqualsCanonicalizing(['facebook', 'x', 'instagram'], $sleep->accounts()->pluck('platform')->all());
-        $this->assertCount(3, $sleep->socials);
+        $this->assertEqualsCanonicalizing(['facebook', 'x', 'instagram', 'linkedin'], $sleep->accounts()->pluck('platform')->all());
+        $this->assertCount(4, $sleep->socials);
 
         // Brands with no profiles of their own get none.
         $this->assertSame(0, Brand::where('slug', 'lumeo')->first()->accounts()->count());
 
         $trail = Brand::where('slug', 'trailview')->first();
         $this->assertSame('https://trailview.co', $trail->site);
-        $this->assertSame(['instagram'], $trail->accounts()->pluck('platform')->all());
+        $this->assertSame(['instagram'], $trail->accounts()->pluck('platform')->all()); // no LinkedIn page
         $this->assertSame('https://www.instagram.com/trailview.co/', $trail->accounts()->first()->url);
 
         $lumeo = Brand::where('slug', 'lumeo')->first();
@@ -59,7 +59,7 @@ class BrandSocialsTest extends TestCase
         (new BrandSocialsSeeder)->run();
         (new \Database\Seeders\BrandDetailsSeeder)->run();
 
-        $this->assertSame(11, Account::count());
+        $this->assertSame(11, Account::where('platform', '!=', 'linkedin')->count());
         $this->assertSame(['https://lumeo.example.com', 'Admin note'], [$lumeo->fresh()->site, $lumeo->fresh()->notes]);
         $this->assertSame('Edited by admin', $fb->fresh()->handle);
         $this->assertSame('Custom', $brand->fresh()->socials[0]['label']);

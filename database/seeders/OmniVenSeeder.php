@@ -125,6 +125,6 @@ class OmniVenSeeder extends Seeder
             'body' => "Tools marked 'Verify access' were added as likely accounts. Open each one, confirm we have it and who owns it, and send the details to an admin so the card can be set to Active with its login account and owner.",
         ]);
 
-        $this->call([BrandDetailsSeeder::class, BrandSocialsSeeder::class]);
+        $this->call([BrandDetailsSeeder::class, BrandSocialsSeeder::class, BrandLinkedInSeeder::class]);
     }
 }
