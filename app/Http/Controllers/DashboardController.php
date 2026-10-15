@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\Activity;
 use App\Support\Launchpad;
+use App\Models\AccessRequest;
 use App\Models\Account;
 use App\Models\Brand;
 use App\Models\Note;
@@ -57,6 +58,8 @@ class DashboardController extends Controller
         $postits = $me->postits()->with('items')->get();
         $launchpad = Launchpad::forUser($me);
         $favKeys = Launchpad::favoriteKeys($me);
+        $myRequests = AccessRequest::latestFor($me);
+        $openRequests = $me->can('admin') ? AccessRequest::open()->with('user')->oldest()->get() : collect();
 
         // Fresh sign-in, or the logo link (/?home=1): reset to Routines, all brands.
         $goHome = $request->session()->get('omniven_home', false) || $request->boolean('home');
@@ -65,7 +68,7 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys'
+            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests'
         ));
     }
 }

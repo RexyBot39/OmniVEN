@@ -56,6 +56,7 @@ The **Slack** tab shows recent messages from chosen channels and lets people pos
 3. Copy the **Bot User OAuth Token** (starts with `xoxb-`) from **OAuth & Permissions**.
 4. In Railway, add `SLACK_BOT_TOKEN=xoxb-…` (and optionally `OMNIVEN_SLACK_CHANNELS=reddit-monitor,marketing`, the channels loaded the first time).
 5. Open the Slack tab. Public channels are joined automatically. For a private channel, type `/invite @OmniVEN` in it, then add it under **Manage channels**.
+6. Access requests: add `OMNIVEN_ACCESS_SLACK_CHANNEL=<channel name>` in Railway to get a short note there whenever someone clicks **Request access** (their name and the tool only, never their reason). Type `/invite @OmniVEN` in that channel so the bot can post. Leave it unset to see requests only on the Access tab.
 
 ## Local development
 

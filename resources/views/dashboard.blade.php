@@ -32,7 +32,7 @@
                 <button class="tab" role="tab" data-tab="slack" aria-selected="false">Slack<span class="unread-star" id="slack-star" hidden aria-label="new Slack messages">*</span></button>
                 <button class="tab" role="tab" data-tab="brands" aria-selected="false">Brands<span class="n">{{ $brands->count() }}</span></button>
                 <button class="tab" role="tab" data-tab="tools" aria-selected="false">Tools<span class="n">{{ $tools->count() }}</span></button>
-                <button class="tab" role="tab" data-tab="access" aria-selected="false">Access</button>
+                <button class="tab" role="tab" data-tab="access" aria-selected="false">Access @if($openRequests->isNotEmpty())<span class="n req-n">{{ $openRequests->count() }} {{ Str::plural('request', $openRequests->count()) }}</span>@endif</button>
             </div>
             <label class="search">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -172,7 +172,7 @@
 <section data-view="routines">
     <div class="h2row">
         <h2>Routines</h2>
-        <span class="sub">Ticks reset each day, week or month (Eastern time).</span>
+        <span class="sub">Ticks reset each day, week, month or quarter (Eastern time).</span>
         @if($isAdmin)<a class="btn primary" href="{{ route('routines.create') }}">+ Add routine</a>@endif
     </div>
     <div class="routines">
@@ -223,14 +223,15 @@
 
 {{-- ================= ACCESS ================= --}}
 <section data-view="access" hidden>
-    <div class="h2row"><h2>Access &amp; owners</h2><span class="sub">Which account each tool lives under and how to get in</span>@if($isAdmin)<a class="btn primary" href="{{ route('tools.create', ['return' => 'access']) }}">+ Add item</a>@endif</div>
+    @if($isAdmin)@include('partials.access-requests')@endif
+    <div class="h2row"><h2>Access &amp; owners</h2><span class="sub">Which account each tool lives under and how to get in. Need a login? Use Request access.</span>@if($isAdmin)<a class="btn" href="{{ route('access.review') }}">Access review</a><a class="btn primary" href="{{ route('tools.create', ['return' => 'access']) }}">+ Add item</a>@endif</div>
     <div class="callout">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         <div>Never put passwords or 2FA codes in OmniVEN. List the login account and who grants access; credentials stay in the password manager.</div>
     </div>
     <div class="tablewrap">
         <table>
-            <thead><tr><th>Tool</th><th>Status</th><th>Login account</th><th>Owner</th><th>How to get access</th><th>Brands</th>@if($isAdmin)<th class="actions-h"><span class="sr">Actions</span></th>@endif</tr></thead>
+            <thead><tr><th>Tool</th><th>Status</th><th>Login account</th><th>Owner</th><th>How to get access</th><th>Brands</th><th><span class="sr">Request access</span></th>@if($isAdmin)<th class="actions-h"><span class="sr">Actions</span></th>@endif</tr></thead>
             <tbody>
                 @foreach($tools->sortBy(fn ($t) => [array_search($t->category, config('omniven.categories')) ?: 99, $t->name]) as $t)
                     <tr data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->login.' '.$t->owner.' '.$t->access_note.' '.$t->category) }}">
@@ -240,6 +241,7 @@
                         <td>{!! $t->owner ? e($t->owner) : '<span class="missing">Add</span>' !!}</td>
                         <td>{!! $t->access_note ? e($t->access_note) : '<span class="missing">—</span>' !!}</td>
                         <td>{{ implode(', ', $t->brandLabels()) }}</td>
+                        <td>@include('partials.request-access', ['item' => $t])</td>
                         @if($isAdmin)
                             <td class="row-actions">
                                 <a class="mini" href="{{ route('tools.edit', [$t, 'return' => 'access']) }}">Edit</a>
@@ -261,7 +263,7 @@
     @else
         <div class="tablewrap">
             <table>
-                <thead><tr><th>Account</th><th>ID</th><th>Login account</th><th>Owner</th><th>Verified</th>@if($isAdmin)<th><span class="sr">Actions</span></th>@endif</tr></thead>
+                <thead><tr><th>Account</th><th>ID</th><th>Login account</th><th>Owner</th><th>Verified</th><th><span class="sr">Request access</span></th>@if($isAdmin)<th><span class="sr">Actions</span></th>@endif</tr></thead>
                 <tbody>
                     @foreach($allAccounts as $a)
                         <tr data-brands="{{ $a->brand?->slug ?? 'all' }}" data-search="{{ strtolower($a->title().' '.$a->login.' '.$a->owner.' '.$a->account_ref) }}">
@@ -270,6 +272,7 @@
                             <td>{!! $a->login ? e($a->login) : '<span class="missing">Add</span>' !!}</td>
                             <td>{!! $a->owner ? e($a->owner) : '<span class="missing">Add</span>' !!}</td>
                             <td class="{{ $a->needsVerify() ? 'warn-t' : 'ok-t' }}">{{ $a->verified_on?->format('M j, Y') ?? 'Never' }}</td>
+                            <td>@include('partials.request-access', ['item' => $a])</td>
                             @if($isAdmin)<td class="row-actions"><a class="mini" href="{{ route('accounts.edit', [$a, 'return' => 'access']) }}">Edit</a></td>@endif
                         </tr>
                     @endforeach

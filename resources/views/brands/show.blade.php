@@ -54,6 +54,7 @@
                                     </div>
                                     <div class="acct-actions">
                                         @include('partials.star', ['item' => $a])
+                                        @include('partials.request-access', ['item' => $a, 'return' => 'hub:'.$brand->slug])
                                         @if($a->openUrl())
                                             <a class="btn {{ $a->hasDirectLink() ? 'primary' : '' }}" href="{{ $a->openUrl() }}" data-lp="{{ $a->launchKey() }}" target="_blank" rel="noopener noreferrer" title="{{ $a->hasDirectLink() ? 'Opens this account' : 'No direct link yet: opens the platform sign-in' }}">Open ↗</a>
                                         @endif

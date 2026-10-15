@@ -70,7 +70,7 @@ class AccountController extends Controller
 
     private function returnTo(Request $request): string
     {
-        return in_array($request->input('return'), ['hub', 'access', 'brands'], true) ? $request->input('return') : 'hub';
+        return in_array($request->input('return'), ['hub', 'access', 'brands', 'review'], true) ? $request->input('return') : 'hub';
     }
 
     private function back(Request $request, Account $account, string $msg): RedirectResponse
@@ -80,6 +80,7 @@ class AccountController extends Controller
         $url = match (true) {
             $to === 'hub' && $brand !== null => route('brands.show', $brand),
             $to === 'access' => route('dashboard').'#access',
+            $to === 'review' => route('access.review'),
             default => route('dashboard').'#brands',
         };
 

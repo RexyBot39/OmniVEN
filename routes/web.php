@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccessRequestController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\Auth\GoogleController;
@@ -67,6 +68,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/people', [UserController::class, 'store'])->name('people.store');
         Route::resource('accounts', AccountController::class)->except(['index', 'show']);
         Route::post('/accounts/{account}/verify', [AccountController::class, 'verify'])->name('accounts.verify');
+        Route::post('/tools/{tool}/verify', [ToolController::class, 'verify'])->name('tools.verify');
+        Route::get('/access/review', [AccessRequestController::class, 'review'])->name('access.review');
+        Route::post('/access-requests/{accessRequest}/grant', [AccessRequestController::class, 'grant'])->name('access-requests.grant');
+        Route::post('/access-requests/{accessRequest}/decline', [AccessRequestController::class, 'decline'])->name('access-requests.decline');
         Route::post('/slack/channels', [SlackController::class, 'store'])->name('slack.channels.store');
         Route::delete('/slack/channels/{channel}', [SlackController::class, 'destroy'])->name('slack.channels.destroy');
         Route::get('/people', [UserController::class, 'index'])->name('people.index');
@@ -75,6 +80,10 @@ Route::middleware('auth')->group(function () {
 
     // Brand hubs (after the admin routes so /brands/create isn't read as a brand name).
     Route::get('/brands/{brand:slug}', [BrandController::class, 'show'])->name('brands.show');
+
+    // Request access to a tool or brand account (admins are told on the Access tab and in Slack).
+    Route::post('/access-requests', [AccessRequestController::class, 'store'])->middleware('throttle:10,1')->name('access-requests.store');
+    Route::delete('/access-requests/{accessRequest}', [AccessRequestController::class, 'destroy'])->name('access-requests.destroy');
 
     // My launchpad: personal stars and recently opened items.
     Route::post('/launchpad/favorite', [\App\Http\Controllers\LaunchpadController::class, 'favorite'])->middleware('throttle:60,1')->name('launchpad.favorite');
