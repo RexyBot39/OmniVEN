@@ -44,6 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/postits', [PostItController::class, 'store'])->name('postits.store');
     Route::put('/postits/{postit}', [PostItController::class, 'update'])->name('postits.update');
     Route::delete('/postits/{postit}', [PostItController::class, 'destroy'])->name('postits.destroy');
+    Route::post('/postits/{postit}/stick', [PostItController::class, 'stick'])->name('postits.stick');
     Route::post('/postits/{postit}/items', [PostItController::class, 'addItem'])->name('postits.items.store');
     Route::post('/postits/{postit}/clear', [PostItController::class, 'clearDone'])->name('postits.clear');
     Route::post('/postit-items/{item}/toggle', [PostItController::class, 'toggleItem'])->name('postits.items.toggle');

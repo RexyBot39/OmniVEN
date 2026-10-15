@@ -10,7 +10,9 @@ class PostIt extends Model
 {
     protected $table = 'postits';
 
-    protected $fillable = ['user_id', 'title', 'color'];
+    protected $fillable = ['user_id', 'title', 'color', 'stuck'];
+
+    protected $casts = ['stuck' => 'boolean'];
 
     public function user(): BelongsTo
     {

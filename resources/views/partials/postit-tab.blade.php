@@ -2,7 +2,7 @@
 <section data-view="postit" hidden>
     <div class="h2row">
         <h2>PostIT Notes</h2>
-        <span class="sub">Your own to-do lists. Only you can see them.</span>
+        <span class="sub">Your own to-do lists. Only you can see them. New notes stick to the top right of every page until you unstick them.</span>
     </div>
 
     <form method="POST" action="{{ route('postits.store') }}" class="new-postit">
@@ -47,6 +47,7 @@
                         @if($n->items->whereNotNull('done_at')->count())
                             <form method="POST" action="{{ route('postits.clear', $n) }}">@csrf<button class="pi-link" type="submit">Clear done</button></form>
                         @endif
+                        <form method="POST" action="{{ route('postits.stick', $n) }}">@csrf<button class="pi-link" type="submit">{{ $n->stuck ? 'Unstick' : 'Stick to screen' }}</button></form>
                         <span class="spacer"></span>
                         <form method="POST" action="{{ route('postits.destroy', $n) }}" data-confirm>@csrf @method('DELETE')
                             <button class="pi-link" type="submit" data-label="Delete note">Delete note</button>

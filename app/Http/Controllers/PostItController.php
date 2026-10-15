@@ -19,10 +19,11 @@ class PostItController extends Controller
             'title' => ['required', 'string', 'max:80'],
             'color' => ['required', Rule::in(array_keys(config('omniven.postit_colors')))],
         ]);
-        $n = $request->user()->postits()->create($data);
+        // New notes start stuck to the screen; the owner can unstick them any time.
+        $n = $request->user()->postits()->create($data + ['stuck' => true]);
         Activity::log('postit.created', 'Created a PostIT note', $n);
 
-        return $this->back('Note added.');
+        return $this->back('Note added. It stays in the top right of every page until you unstick it.');
     }
 
     public function update(Request $request, PostIt $postit): RedirectResponse
@@ -43,6 +44,18 @@ class PostItController extends Controller
         $postit->delete();
 
         return $this->back('Note removed.');
+    }
+
+    /** Stick a note to the screen, or unstick it back to the PostIT tab. */
+    public function stick(PostIt $postit): RedirectResponse
+    {
+        Gate::authorize('own-postit', $postit);
+        $postit->update(['stuck' => ! $postit->stuck]);
+        $postit->stuck
+            ? Activity::log('postit.stuck', 'Stuck a PostIT note to the screen', $postit)
+            : Activity::log('postit.unstuck', 'Unstuck a PostIT note', $postit);
+
+        return $this->back($postit->stuck ? 'Note stuck to the screen.' : 'Note unstuck. It\'s still on the PostIT tab.');
     }
 
     public function addItem(Request $request, PostIt $postit): RedirectResponse
@@ -84,7 +97,10 @@ class PostItController extends Controller
 
     private function back(?string $msg = null): RedirectResponse
     {
-        $r = redirect()->to(route('dashboard').'#postit');
+        // From the stuck note, stay on whatever page the person was on.
+        $r = request()->boolean('from_sticky')
+            ? redirect()->back(302, [], route('dashboard'))
+            : redirect()->to(route('dashboard').'#postit');
 
         return $msg ? $r->with('status', $msg) : $r;
     }

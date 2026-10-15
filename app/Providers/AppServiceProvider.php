@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Your stuck PostIT notes float on every page. Only ever your own.
+        \Illuminate\Support\Facades\View::composer('layouts.app', function ($view) {
+            $user = auth()->user();
+            $view->with('stuckPostits', $user ? $user->postits()->where('stuck', true)->with('items')->orderBy('id')->get() : collect());
+        });
+
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
