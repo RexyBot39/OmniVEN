@@ -5,7 +5,7 @@
 @section('content')
 <main class="wrap review">
     <a href="{{ route('dashboard') }}#access" class="back">← Back to Access</a>
-    <h1 class="form-h">Access review · {{ $quarter }}</h1>
+    <h1 class="form-h">Access review · {{ $quarter }}@include('partials.star', ['key' => 'page:13', 'label' => 'the Access review'])</h1>
     <p class="sub">Once a quarter, check every login and owner is still right. Overdue and never-verified items are at the top.</p>
 
     <div class="rv-progress" role="img" aria-label="{{ $done }} of {{ $total }} verified this quarter">

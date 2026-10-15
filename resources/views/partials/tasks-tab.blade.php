@@ -1,7 +1,7 @@
 {{-- ================= TASKS ================= --}}
 <section data-view="tasks" hidden>
     <div class="h2row">
-        <h2>Tasks</h2>
+        <h2>Tasks</h2>@include('partials.star', ['key' => 'page:2', 'label' => 'the Tasks tab'])
         <span class="sub">Assigned work. Flag anything urgent for the Hotlist.</span>
         <div class="seg" role="group" aria-label="Show">
             <button type="button" class="seg-b" data-taskfilter="mine" aria-pressed="false">Mine</button>

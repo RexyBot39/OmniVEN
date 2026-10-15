@@ -186,7 +186,7 @@
     },
     // Brand hubs record themselves on the server, so only tools and accounts are sent.
     opened(key) {
-      if (!key || !lpList || key.startsWith('brand:')) return;
+      if (!key || !lpList || !/^(tool|account):/.test(key)) return;
       const [type, id] = key.split(':');
       fetch(lpList.dataset.open, {
         method: 'POST', credentials: 'same-origin', keepalive: true,
@@ -205,6 +205,65 @@
     const a = e.target.closest('a[data-lp]');
     if (a) lp.opened(a.dataset.lp);
   });
+  // Arrange My launchpad: drag a star or use ‹ ›. Each change saves, and Jump to follows the same order.
+  let lpDrag = null;
+  async function lpSave(arranging, focusKey, focusMv) {
+    const strip = document.getElementById('launchpad');
+    if (!strip) return;
+    const keys = [...strip.querySelectorAll('.lp-chip')].map((c) => c.dataset.key || c.dataset.lp).filter(Boolean);
+    const res = await fetch(strip.dataset.order, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': lpCsrf() },
+      body: JSON.stringify({ keys, arranging }),
+    });
+    if (!res.ok) return;
+    strip.outerHTML = (await res.json()).html;
+    const fresh = document.getElementById('launchpad');
+    const chip = focusKey && fresh.querySelector('.lp-chip[data-key="' + focusKey + '"]');
+    const btn = chip && (chip.querySelector('[data-mv="' + focusMv + '"]:not(:disabled)') || chip.querySelector('.lp-mv:not(:disabled)'));
+    (btn || fresh.querySelector('[data-arrange]'))?.focus();
+  }
+  document.addEventListener('click', (e) => {
+    const arr = e.target.closest('[data-arrange]');
+    if (arr) { lpSave(!document.getElementById('launchpad').classList.contains('arranging')); return; }
+    const mv = e.target.closest('.lp-mv');
+    if (!mv) return;
+    const chip = mv.closest('.lp-move');
+    const d = Number(mv.dataset.mv);
+    const other = d < 0 ? chip.previousElementSibling : chip.nextElementSibling;
+    if (!other || !other.classList.contains('lp-move')) return;
+    if (d < 0) other.before(chip); else other.after(chip);
+    lpSave(true, chip.dataset.key, mv.dataset.mv);
+  });
+  document.addEventListener('dragstart', (e) => {
+    const chip = e.target.closest?.('.lp-move');
+    if (!chip) return;
+    lpDrag = chip; chip.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', chip.dataset.key);
+  });
+  document.addEventListener('dragover', (e) => {
+    const over = lpDrag && e.target.closest?.('.lp-move');
+    if (!over) return;
+    e.preventDefault();
+    document.querySelectorAll('.lp-move.over').forEach((c) => c.classList.remove('over'));
+    if (over !== lpDrag) over.classList.add('over');
+  });
+  document.addEventListener('drop', (e) => {
+    const over = lpDrag && e.target.closest?.('.lp-move');
+    if (!over) return;
+    e.preventDefault();
+    if (over !== lpDrag) {
+      const after = e.clientX > over.getBoundingClientRect().left + over.offsetWidth / 2;
+      if (after) over.after(lpDrag); else over.before(lpDrag);
+      lpSave(true, lpDrag.dataset.key);
+    }
+  });
+  document.addEventListener('dragend', () => {
+    document.querySelectorAll('.lp-move.dragging,.lp-move.over').forEach((c) => c.classList.remove('dragging', 'over'));
+    lpDrag = null;
+  });
+
   // Middle-click opens in a new tab without a click event.
   document.addEventListener('auxclick', (e) => {
     const a = e.target.closest('a[data-lp]');
@@ -228,7 +287,7 @@
         items = (await res.json()).map((it) => ({ ...it, hay: (it.t + ' ' + it.k + ' ' + (it.s || '') + ' ' + (it.a || '')).toLowerCase(), tl: it.t.toLowerCase() }));
       } catch { items = []; }
     }
-    const order = { Brand: 0, Account: 1, Page: 2, Tool: 3, Action: 4 };
+    const order = { Brand: 0, Account: 1, Page: 2, Category: 3, Tool: 3, Action: 4 };
     function score(it, words) {
       let sc = 0;
       for (const w of words) {
@@ -277,7 +336,7 @@
       if (it.u.split('#')[0] === here && it.u.includes('#')) { location.hash = it.u.split('#')[1]; window.dispatchEvent(new HashChangeEvent('hashchange')); }
       else location.href = it.u;
     }
-    // ⇧Enter stars or un-stars the highlighted brand, account or tool.
+    // ⇧Enter stars or un-stars the highlighted page, category, brand, account or tool.
     async function star(i) {
       const it = shown[i];
       if (!it?.key) return;
@@ -487,6 +546,16 @@
   apply();
   checkUnread();
   filterTasks(store.get('taskfilter') || 'all');
+
+  // A starred tool category (?cat=affiliate#tools): show every brand and scroll to that section.
+  const catSlug = new URLSearchParams(location.search).get('cat');
+  const catEl = catSlug && document.querySelector('[data-cat="' + CSS.escape(catSlug) + '"]');
+  if (catEl) {
+    if (catEl.hidden) { state.brand = 'all'; state.q = ''; q.value = ''; apply(); }
+    catEl.scrollIntoView({ block: 'start' });
+    catEl.classList.add('flash-cat');
+    setTimeout(() => catEl.classList.remove('flash-cat'), 2200);
+  }
 
   // Daily Hotlist popup.
   const pop = document.getElementById('hotlist-popup');

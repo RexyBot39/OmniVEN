@@ -111,6 +111,7 @@ Route::middleware('auth')->group(function () {
 
     // My launchpad: personal stars and recently opened items.
     Route::post('/launchpad/favorite', [\App\Http\Controllers\LaunchpadController::class, 'favorite'])->middleware('throttle:60,1')->name('launchpad.favorite');
+    Route::post('/launchpad/order', [\App\Http\Controllers\LaunchpadController::class, 'order'])->middleware('throttle:60,1')->name('launchpad.order');
     Route::post('/launchpad/open', [\App\Http\Controllers\LaunchpadController::class, 'open'])->middleware('throttle:120,1')->name('launchpad.open');
 
     // Quick launcher index (⌘K).

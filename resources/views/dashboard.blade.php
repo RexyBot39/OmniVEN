@@ -105,14 +105,14 @@
 
     <section>
         <div class="h2row">
-            <h2>Tool directory</h2>
+            <h2>Tool directory</h2>@include('partials.star', ['key' => 'page:6', 'label' => 'the Tools tab'])
             @if($isAdmin)<a class="btn primary" href="{{ route('tools.create') }}">+ Add tool</a>@endif
         </div>
         <div class="empty filter-empty" hidden>No tools match. Clear the search or pick All brands.</div>
         <div class="dir">
             @foreach($categories as $cat)
-                <div class="cat" data-group>
-                    <div class="cat-h"><span class="sq" style="background:var(--c{{ $cat['tools']->first()->categorySlot() }})"></span>{{ $cat['name'] }}</div>
+                <div class="cat" data-group data-cat="{{ \App\Support\Launchpad::categorySlug($cat['name']) }}">
+                    <div class="cat-h"><span class="sq" style="background:var(--c{{ $cat['tools']->first()->categorySlot() }})"></span>{{ $cat['name'] }}@include('partials.star', ['key' => 'category:'.\App\Support\Launchpad::categoryId($cat['name']), 'label' => 'the '.$cat['name'].' category'])</div>
                     <div class="grid">
                         @foreach($cat['tools'] as $t) @include('partials.tool-card', ['t' => $t]) @endforeach
                     </div>
@@ -127,7 +127,7 @@
 
 {{-- ================= BRANDS ================= --}}
 <section data-view="brands" hidden>
-    <div class="h2row"><h2>Brands</h2>@if($isAdmin)<a class="btn primary" href="{{ route('brands.create') }}">+ Add brand</a>@endif</div>
+    <div class="h2row"><h2>Brands</h2>@include('partials.star', ['key' => 'page:5', 'label' => 'the Brands tab'])@if($isAdmin)<a class="btn primary" href="{{ route('brands.create') }}">+ Add brand</a>@endif</div>
     @include('partials.brand-grid')
     <div class="h2row" style="margin-top:24px"><h2>Brand details</h2><span class="sub">Open a brand for every account, tool and routine in one place</span></div>
     <div class="brands">
@@ -172,7 +172,7 @@
 {{-- ================= ROUTINES ================= --}}
 <section data-view="routines">
     <div class="h2row">
-        <h2>Routines</h2>
+        <h2>Routines</h2>@include('partials.star', ['key' => 'page:1', 'label' => 'the Routines tab'])
         <span class="sub">Ticks reset each day, week, month or quarter (Eastern time).@php($myRoutines = $routines->where('assignee_id', $me->id))@if($myRoutines->isNotEmpty()) <b class="mine-n">{{ $myRoutines->reject->isDone()->count() }} of {{ $myRoutines->count() }} assigned to you still due.</b>@endif</span>
         @if($isAdmin)<a class="btn primary" href="{{ route('work.create', ['type' => 'routine']) }}">+ New routine or task</a>@endif
     </div>
@@ -225,14 +225,14 @@
 
 {{-- ================= SLACK ================= --}}
 <section data-view="slack" hidden>
-    <div class="h2row"><h2>{{ \App\Support\BrandIcon::html('slack', 'md') }} Slack</h2><span class="sub">Recent messages from our channels. Updates every minute while this tab is open.</span></div>
+    <div class="h2row"><h2>{{ \App\Support\BrandIcon::html('slack', 'md') }} Slack</h2>@include('partials.star', ['key' => 'page:4', 'label' => 'the Slack tab'])<span class="sub">Recent messages from our channels. Updates every minute while this tab is open.</span></div>
     <div id="slack-feed" data-url="{{ route('slack.feed') }}" data-unread-url="{{ route('slack.unread') }}"><div class="empty">Loading Slack…</div></div>
 </section>
 
 {{-- ================= ACCESS ================= --}}
 <section data-view="access" hidden>
     @if($isAdmin)@include('partials.access-requests')@include('partials.broken-links')@endif
-    <div class="h2row"><h2>Access &amp; owners</h2><span class="sub">Which account each tool lives under and how to get in. Need a login? Use Request access.</span>@if($isAdmin)<a class="btn" href="{{ route('access.review') }}">Access review</a><a class="btn primary" href="{{ route('tools.create', ['return' => 'access']) }}">+ Add item</a>@endif</div>
+    <div class="h2row"><h2>Access &amp; owners</h2>@include('partials.star', ['key' => 'page:7', 'label' => 'the Access tab'])<span class="sub">Which account each tool lives under and how to get in. Need a login? Use Request access.</span>@if($isAdmin)<a class="btn" href="{{ route('access.review') }}">Access review</a><a class="btn primary" href="{{ route('tools.create', ['return' => 'access']) }}">+ Add item</a>@endif</div>
     <div class="callout">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         <div>Never put passwords or 2FA codes in OmniVEN. List the login account and who grants access; credentials stay in the password manager.</div>

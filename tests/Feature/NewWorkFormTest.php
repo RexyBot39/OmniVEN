@@ -123,7 +123,7 @@ class NewWorkFormTest extends TestCase
 
         // The form is task-only: no type picker, no routine fields, no whole-team option.
         $this->actingAs($this->leona)->get('/work/new?type=routine')->assertOk()
-            ->assertSee('<h1 class="form-h">New task</h1>', false)
+            ->assertSee('<h1 class="form-h">New task', false)
             ->assertSee('name="kind" value="task"', false)
             ->assertDontSee('value="routine"', false)
             ->assertDontSee('name="cadence"', false)

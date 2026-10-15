@@ -818,3 +818,23 @@ a.gap-chip:hover{border-color:var(--teal);color:var(--teal)}
 .stuck-postits footer{padding-top:2px}
 @media (max-width:640px){.stuck-postits{width:min(210px,calc(100vw - 32px));max-height:60vh}}
 @media print{.stuck-postits{display:none}}
+
+/* Stars on page headings and tool categories */
+h1 .star-f,h2 .star-f{margin-left:6px;vertical-align:middle}
+h1 .star{font-size:22px}
+h2 .star{font-size:18px}
+.cat-h .star-f{margin-left:4px}
+.cat-h .star{font-size:14px;padding:0 3px}
+.cat.flash-cat{outline:2px solid var(--teal);outline-offset:6px;border-radius:8px}
+
+/* Arranging My launchpad */
+.lp-arrange{margin-left:4px;border:1px solid var(--line);background:none;border-radius:999px;padding:3px 12px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.lp-arrange:hover,.lp-arrange[aria-pressed="true"]{color:var(--ink);border-color:var(--teal)}
+.arranging .lp-row{flex-wrap:wrap;overflow:visible}
+.lp-move{cursor:grab;padding:3px 4px;border-style:dashed;user-select:none}
+.lp-move.dragging{opacity:.4}
+.lp-move.over{border-color:var(--teal);box-shadow:-3px 0 0 var(--teal)}
+.lp-mv{border:0;background:var(--sunk);color:var(--ink);width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:15px;line-height:1;display:grid;place-items:center;flex:none}
+.lp-mv:disabled{opacity:.3;cursor:default}
+.lp-tip{margin:0}
+.cat[data-cat]{scroll-margin-top:140px}

@@ -10,7 +10,7 @@
 @section('content')
 <main class="wrap formpage">
     <a href="{{ $back }}" class="back">← {{ $fromPerson ? $assignee->name : 'Back to OmniVEN' }}</a>
-    <h1 class="form-h">{{ $isAdmin ? 'New routine or task' : 'New task' }}</h1>
+    <h1 class="form-h">{{ $isAdmin ? 'New routine or task' : 'New task' }}@include('partials.star', ['key' => 'page:10', 'label' => 'the New task form'])</h1>
     @include('partials.form-errors')
     <form method="POST" action="{{ route('work.store') }}" class="card form work-form" id="work-form">
         @csrf
