@@ -63,8 +63,8 @@
         <input id="ln-q" type="text" autocomplete="off" spellcheck="false" placeholder="Brand, account or tool, e.g. ocusafe insta" aria-label="Search brands, accounts and tools" aria-controls="ln-list">
         <kbd>Esc</kbd>
     </div>
-    <ul id="ln-list" class="ln-list" role="listbox" data-src="{{ route('launcher') }}"></ul>
-    <p class="ln-foot sub">↑ ↓ to move · Enter to open · Accounts and tools open in a new tab</p>
+    <ul id="ln-list" class="ln-list" role="listbox" data-src="{{ route('launcher') }}" data-fav="{{ route('launchpad.favorite') }}" data-open="{{ route('launchpad.open') }}"></ul>
+    <p class="ln-foot sub">↑ ↓ to move · Enter to open · ⇧Enter to star · Accounts and tools open in a new tab</p>
 </dialog>
 @endauth
 </body>

@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\OnLaunchpad;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Brand extends Model
 {
+    use OnLaunchpad;
+
     protected $fillable = ['slug', 'name', 'site', 'focus', 'channels', 'socials', 'notes', 'sort'];
 
     protected function casts(): array

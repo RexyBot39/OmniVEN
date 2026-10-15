@@ -76,6 +76,10 @@ Route::middleware('auth')->group(function () {
     // Brand hubs (after the admin routes so /brands/create isn't read as a brand name).
     Route::get('/brands/{brand:slug}', [BrandController::class, 'show'])->name('brands.show');
 
+    // My launchpad: personal stars and recently opened items.
+    Route::post('/launchpad/favorite', [\App\Http\Controllers\LaunchpadController::class, 'favorite'])->middleware('throttle:60,1')->name('launchpad.favorite');
+    Route::post('/launchpad/open', [\App\Http\Controllers\LaunchpadController::class, 'open'])->middleware('throttle:120,1')->name('launchpad.open');
+
     // Quick launcher index (⌘K).
     Route::get('/launcher.json', [\App\Http\Controllers\LauncherController::class, 'index'])->name('launcher');
 });
