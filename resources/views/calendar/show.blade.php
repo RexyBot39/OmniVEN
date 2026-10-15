@@ -15,7 +15,7 @@
     <div class="cal-title">
         <a href="{{ route('dashboard') }}" class="back">← OmniVEN</a>
         <div class="eyebrow"><span>39DollarGlasses · Ocusafe · Neurolux</span></div>
-        <h1>Q4 Action Calendar</h1>
+        <h1>Q4 Action Calendar @include('partials.star', ['key' => 'page:8', 'label' => 'the action calendar'])</h1>
     </div>
     <dl class="cal-metrics">
         <div><dt>This week</dt><dd>W{{ $current->number }}</dd></div>

@@ -11,7 +11,7 @@
     <div class="act-head">
         <div>
             <div class="eyebrow"><span>Admin activity report</span><span>Visible to Marc and Dr. Marlow only</span></div>
-            <h1 class="form-h">Activity</h1>
+            <h1 class="form-h">Activity @include('partials.star', ['key' => 'page:11', 'label' => 'the Activity report'])</h1>
         </div>
         <div class="act-tools">
             <a class="btn" href="{{ route('activity.export', ['week' => $start->format('Y-m-d')]) }}">Download summary (CSV)</a>

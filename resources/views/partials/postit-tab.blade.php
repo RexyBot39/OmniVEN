@@ -1,7 +1,7 @@
 {{-- ================= STICKY NOTES ================= --}}
 <section data-view="postit" hidden>
     <div class="h2row">
-        <h2>Sticky Notes</h2>
+        <h2>Sticky Notes</h2>@include('partials.star', ['key' => 'page:3', 'label' => 'the Sticky Notes tab'])
         <span class="sub">Your own to-do lists. Only you can see them. New notes stick to the top right of every page until you unstick them.</span>
     </div>
 

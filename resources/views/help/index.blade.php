@@ -29,7 +29,7 @@
   <main class="help-main" id="top">
     <header class="help-head">
       <span class="eyebrow">Help · OmniVEN field guide</span>
-      <h1>How to get the most out of OmniVEN</h1>
+      <h1>How to get the most out of OmniVEN @include('partials.star', ['key' => 'page:9', 'label' => 'Help'])</h1>
       <p class="lede">Setup, every tab, shortcuts and the playbooks that save the most time{{ $isAdmin ? ', plus the admin pages for customizing and running OmniVEN' : '' }}.</p>
       <div class="help-search" role="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -47,7 +47,7 @@
         <li><div><h3>Sign in with your work Google account</h3><p>Go to <b>omniven.cc</b> and choose <b>Sign in with Google</b>. Only <b>@39dollarglasses.com</b> accounts get in. Sessions last 16 hours, then you sign in again. If it says you don't have access, ask an admin to add you on the People page.</p></div></li>
         <li><div><h3>Start on Routines</h3><p>You always land on <b>Routines</b> for all brands. Tick what you finish today; ticks reset each day, week, month or quarter (Eastern time) so the list is always current. Click the OmniVEN logo any time to come back here.</p></div></li>
         <li><div><h3>Filter to your brands</h3><p>The brand chips under the tabs (<b>39DollarGlasses, Ocusafe, Neurolux…</b>) filter every tab at once. OmniVEN remembers your choice on this computer.</p></div></li>
-        <li><div><h3>Star the five things you open most</h3><p>Press <b>☆</b> on a tool card, a brand page or an account. Stars appear in <b>My launchpad</b> above the tabs, in the order you starred them, on any device you sign in from. The <b>Recent</b> line under it fills in by itself.</p></div></li>
+        <li><div><h3>Star what you open most, and put it in your order</h3><p>Press <b>☆</b> next to any page title (Routines, Tasks, the action calendar, Help…), a tool category like <b>Affiliate</b>, a tool card, a brand page or an account. Stars appear in <b>My launchpad</b> above the tabs and at the top of <b>Jump to</b> (<kbd>⌘K</kbd>), on any device you sign in from. Press <b>Arrange</b> on My launchpad, then drag a star or use <b>‹ ›</b> to change the order. The <b>Recent</b> line fills in by itself.</p></div></li>
         <li><div><h3>Learn one shortcut: <kbd>⌘K</kbd></h3><p>On Windows it's <kbd>Ctrl K</kbd>. Type a brand and platform, like <b>ocusafe insta</b>, and press Enter. Accounts and tools open in a new tab. Press <kbd>⇧</kbd><kbd>Enter</kbd> to star what's highlighted.</p></div></li>
         <li><div><h3>Ask for the logins you need</h3><p>On the <b>Access</b> tab or a brand page, press <b>Request access</b> on any tool or account and say why. An admin shares it through the password manager and marks it granted. You'll see <b>Requested</b>, then <b>✓ Granted</b>.</p></div></li>
         <li><div><h3>Open this week's action calendar</h3><p>Press <b>Calendar</b> in the top bar, or the progress strip at the top of Routines. It opens on the current week of the Q4 plan: what's due each day, for which brand, and what "done" looks like. Tick items as you finish them; the whole team sees the same checkmarks.</p></div></li>
@@ -82,7 +82,7 @@
         <div class="key"><span>Star or un-star it</span><span><kbd>⇧</kbd><kbd>Enter</kbd></span></div>
         <div class="key"><span>Close the launcher</span><kbd>Esc</kbd></div>
       </div>
-      <p class="lede">Type <b>calendar</b> to jump to the action calendar, or <b>help</b> to come back to this page. Launcher searches understand short codes too: <code>ig</code>, <code>fb</code>, <code>tt</code>, <code>li</code>, <code>ga</code>, <code>mc</code>, and groups like <code>social</code> or <code>ads</code>. With nothing typed, it lists your stars first, then what you opened recently.</p>
+      <p class="lede">Type <b>calendar</b> to jump to the action calendar, or <b>help</b> to come back to this page. Launcher searches understand short codes too: <code>ig</code>, <code>fb</code>, <code>tt</code>, <code>li</code>, <code>ga</code>, <code>mc</code>, and groups like <code>social</code> or <code>ads</code>. With nothing typed, it lists your stars first, in the order you arranged them, then what you opened recently. <kbd>⇧</kbd><kbd>Enter</kbd> stars pages and tool categories too.</p>
     </section>
 
     @can('admin')

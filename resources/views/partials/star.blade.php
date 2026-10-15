@@ -1,12 +1,14 @@
-{{-- ☆/★ toggle for My launchpad. Needs $item (tool, account or brand); $favKeys comes from the page. --}}
+{{-- ☆/★ toggle for My launchpad. Pass $item (tool, account or brand), or $key ("page:6", "category:123") with $label. --}}
 @php
-    $lpKey = $item->launchKey();
-    $lpOn = isset($favKeys) && $favKeys->has($lpKey);
+    $lpKey = isset($item) ? $item->launchKey() : $key;
+    $lpKeys = $favKeys ?? \App\Support\Launchpad::myKeys();
+    $lpOn = $lpKeys->has($lpKey);
     $lpName = $label ?? ($item->name ?? $item->title());
+    [$lpType, $lpId] = explode(':', $lpKey);
 @endphp
 <form method="POST" action="{{ route('launchpad.favorite') }}" class="star-f" data-star="{{ $lpKey }}">
     @csrf
-    <input type="hidden" name="type" value="{{ explode(':', $lpKey)[0] }}">
-    <input type="hidden" name="id" value="{{ $item->getKey() }}">
-    <button type="submit" class="star" aria-pressed="{{ $lpOn ? 'true' : 'false' }}" title="{{ $lpOn ? 'Remove from' : 'Add to' }} My launchpad" aria-label="Star {{ $lpName }}">{{ $lpOn ? '★' : '☆' }}</button>
+    <input type="hidden" name="type" value="{{ $lpType }}">
+    <input type="hidden" name="id" value="{{ $lpId }}">
+    <button type="submit" class="star" aria-pressed="{{ $lpOn ? 'true' : 'false' }}" title="{{ $lpOn ? 'Remove from' : 'Add to' }} My launchpad and Jump to" aria-label="Star {{ $lpName }}">{{ $lpOn ? '★' : '☆' }}</button>
 </form>

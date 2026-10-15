@@ -19,27 +19,26 @@ class LauncherController extends Controller
         $home = route('dashboard');
         $items = collect();
 
-        $pages = [
-            ['Routines', 'routines'], ['Tasks', 'tasks'], ['Sticky Notes', 'postit'], ['Slack', 'slack'],
-            ['Brands', 'brands'], ['Tools', 'tools'], ['Access', 'access'],
+        // Major pages: each can be starred, so it carries a "page:N" key.
+        $aliases = [
+            3 => 'postit post-it postits notes', 8 => 'q4 week runbook boost calendar',
+            9 => 'guide how to faq field guide', 10 => 'add assign todo to-do',
         ];
-        // Old names people may still type.
-        $aliases = ['postit' => 'postit post-it postits notes'];
-        foreach ($pages as [$name, $tab]) {
-            $items->push(['k' => 'Page', 't' => $name, 's' => 'OmniVEN tab', 'u' => $home.'#'.$tab, 'x' => false, 'a' => $aliases[$tab] ?? '']);
+        foreach (Launchpad::PAGES as $id => [$name, $sub, $route, $hash, $gate]) {
+            if ($gate && ! $user->can($gate)) {
+                continue;
+            }
+            $items->push(['k' => 'Page', 'key' => 'page:'.$id, 't' => $name, 's' => $sub, 'u' => route($route).($hash ? '#'.$hash : ''), 'x' => false, 'a' => $aliases[$id] ?? '']);
         }
-        $items->push(['k' => 'Page', 't' => 'Action calendar', 's' => 'This week\'s runbook, boost log and Sunday review', 'u' => route('calendar'), 'x' => false, 'a' => 'q4 week runbook boost calendar']);
-        $items->push(['k' => 'Page', 't' => 'Help', 's' => 'Field guide: setup, shortcuts and playbooks', 'u' => route('help'), 'x' => false, 'a' => 'guide how to faq field guide']);
-        if ($user->can('view-activity')) {
-            $items->push(['k' => 'Page', 't' => 'Activity report', 's' => 'Admin', 'u' => route('activity.index'), 'x' => false]);
+        // Tool categories, e.g. Affiliate: open the Tools tab at that section.
+        foreach (Launchpad::categories() as $id => $name) {
+            $items->push(['k' => 'Category', 'key' => 'category:'.$id, 't' => $name, 's' => 'Tool category', 'u' => route('dashboard', ['cat' => Launchpad::categorySlug($name)]).'#tools', 'x' => false, 'a' => 'tools category']);
         }
         if ($user->can('admin')) {
-            $items->push(['k' => 'Page', 't' => 'People', 's' => 'Admin', 'u' => route('people.index'), 'x' => false]);
             foreach (\App\Models\User::where('is_active', true)->orderBy('name')->get() as $p) {
                 $items->push(['k' => 'Page', 't' => $p->name, 's' => 'Staff page · routines and tasks', 'u' => route('people.show', $p), 'x' => false, 'a' => 'staff person people '.strtolower($p->email)]);
             }
             $items->push(['k' => 'Action', 't' => 'Add an account', 's' => 'Brand + platform', 'u' => route('accounts.create'), 'x' => false]);
-            $items->push(['k' => 'Page', 't' => 'Access review', 's' => 'Admin · quarterly check of every login and owner', 'u' => route('access.review'), 'x' => false]);
             $waiting = \App\Models\AccessRequest::open()->count();
             if ($waiting) {
                 $items->push(['k' => 'Action', 't' => $waiting.' access '.\Illuminate\Support\Str::plural('request', $waiting), 's' => 'Waiting for an admin', 'u' => $home.'#access', 'x' => false]);
