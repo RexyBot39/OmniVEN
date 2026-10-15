@@ -29,6 +29,7 @@
             <span>Jump to…</span><kbd class="kbd-mac">⌘K</kbd><kbd class="kbd-pc">Ctrl K</kbd>
         </button>
         <nav class="who">
+            <a href="{{ route('calendar') }}" class="btn ghost">Calendar</a>
             @can('view-activity')
                 <a href="{{ route('activity.index') }}" class="btn ghost">Activity</a>
             @endcan

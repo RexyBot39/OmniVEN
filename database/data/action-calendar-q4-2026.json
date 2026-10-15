@@ -1,0 +1,472 @@
+{
+ "WEEKS": [
+  {
+   "id": "2026-09-14",
+   "n": 1,
+   "range": "Sep 14 – 20"
+  },
+  {
+   "id": "2026-09-21",
+   "n": 2,
+   "range": "Sep 21 – 27"
+  },
+  {
+   "id": "2026-09-28",
+   "n": 3,
+   "range": "Sep 28 – Oct 4"
+  },
+  {
+   "id": "2026-10-05",
+   "n": 4,
+   "range": "Oct 5 – 11"
+  },
+  {
+   "id": "2026-10-12",
+   "n": 5,
+   "range": "Oct 12 – 18"
+  },
+  {
+   "id": "2026-10-19",
+   "n": 6,
+   "range": "Oct 19 – 25"
+  },
+  {
+   "id": "2026-10-26",
+   "n": 7,
+   "range": "Oct 26 – Nov 1"
+  },
+  {
+   "id": "2026-11-02",
+   "n": 8,
+   "range": "Nov 2 – 8"
+  },
+  {
+   "id": "2026-11-09",
+   "n": 9,
+   "range": "Nov 9 – 15"
+  },
+  {
+   "id": "2026-11-16",
+   "n": 10,
+   "range": "Nov 16 – 22"
+  },
+  {
+   "id": "2026-11-23",
+   "n": 11,
+   "range": "Nov 23 – 29"
+  },
+  {
+   "id": "2026-11-30",
+   "n": 12,
+   "range": "Nov 30 – Dec 6"
+  },
+  {
+   "id": "2026-12-07",
+   "n": 13,
+   "range": "Dec 7 – 13"
+  },
+  {
+   "id": "2026-12-14",
+   "n": 14,
+   "range": "Dec 14 – 20"
+  },
+  {
+   "id": "2026-12-21",
+   "n": 15,
+   "range": "Dec 21 – 27"
+  },
+  {
+   "id": "2026-12-28",
+   "n": 16,
+   "range": "Dec 28 – Jan 3"
+  }
+ ],
+ "PHASE": {
+  "1": {
+   "l": "Phase 0 · Connect and configure",
+   "p": "No automations, no boosts, no scheduled volume. Post two or three pieces manually per account so the handles have a pulse before anything is automated."
+  },
+  "2": {
+   "l": "Phase 1 · First organic week",
+   "p": "Full runbook, organic only. Start the boost log at zero spend so the habit exists before the money does."
+  },
+  "3": {
+   "l": "Phase 2 · Conditional boosts on",
+   "p": "Two weeks of posts means you can finally compute a median. The 36-hour rule starts this week."
+  },
+  "4": {
+   "l": "Phase 3 · First funnels live",
+   "p": "Switch on GUIDE and SUPPORT, Instagram only, tested from a second account. Move the first tranche of freed budget into Ads Manager."
+  },
+  "5": {
+   "l": "Phase 4 · Remaining funnels",
+   "p": "If week 4's automation logs are clean, add BREAKDOWN, PD and RETURNS, plus the Ocusafe and Neurolux keywords."
+  },
+  "8": {
+   "l": "Phase 5 · First ROAS read",
+   "p": "Compare blended ROAS and cost per purchase against the pre-restart 30 days, and decide whether the $400 / $700 split holds. Don't judge it earlier than this."
+  }
+ },
+ "SEASON": {
+  "1": "FSA season starts now. Plant the first mention; don't push it yet.",
+  "2": "Fall frame refresh. Nothing seasonal to force this week.",
+  "3": "October is Eye Injury Prevention Month and Home Eye Safety Month — Ocusafe's biggest month of the year, on BOTH tracks. Build the assets this week, not next.",
+  "4": "Eye Injury Prevention Month. Two different posts: compliance for the safety manager on LinkedIn, and 'protect your own eyes, nobody's doing it for you' for the tradesperson on Instagram.",
+  "5": "Home Eye Safety Month — the DIY and workshop angle. The rare week where 39DG and Ocusafe content overlaps.",
+  "6": "Halloween decorative contact lenses. The FDA warns against unprescribed cosmetic lenses — the highest-authority thing a doctor-owned brand can publish, and it points at Online Contacts.",
+  "7": "Halloween week, plus the first real FSA reminder.",
+  "8": "November is Diabetic Eye Disease Awareness Month. Doctor Answers territory all month.",
+  "9": "Diabetic eye disease continues. FSA reminder two.",
+  "10": "Pre-Black Friday. The offer gets decided, the creative built and the queue loaded THIS week — not next.",
+  "11": "Thanksgiving Nov 26, Black Friday Nov 27. Peak week. If the queue wasn't loaded last week, this week is already lost.",
+  "12": "Cyber Monday Nov 30. Gift guide. FSA urgency starts ramping.",
+  "13": "FSA push in earnest, on 39DG AND Ocusafe — prescription safety eyewear is HSA/FSA eligible and almost nobody knows it. Publish your order-by dates so the deadline is concrete.",
+  "14": "Last order dates for holiday delivery. FSA urgency at peak.",
+  "15": "FSA final call — most plans expire Dec 31. Light posting, evergreen queue, inbox still staffed.",
+  "16": "FSA expires Dec 31 for most plans. Then pivot to new year, new prescription."
+ },
+ "BASE": [
+  {
+   "id": "mon-feedly",
+   "d": "Mon",
+   "b": "all",
+   "t": "Feedly triage — read the priority items, pick three anchors (one per brand) and load them into the Blotato Sources library",
+   "kw": "",
+   "o": "Social",
+   "dw": "Three article sources sitting in the Sources library"
+  },
+  {
+   "id": "mon-fotw",
+   "d": "Mon",
+   "b": "dg",
+   "t": "#FrameOfTheWeek — IG + FB story, TikTok, IG feed post. The story asks a question.",
+   "kw": "GUIDE",
+   "o": "Social",
+   "dw": "Stories live, old ones cleared out of the Weekly Frames highlight, feed post in its slot"
+  },
+  {
+   "id": "tue-nx",
+   "d": "Tue",
+   "b": "nx",
+   "t": "Neurolux — mechanism or day-in-the-life. IG carousel + TikTok reel.",
+   "kw": "FL41",
+   "o": "marc",
+   "dw": "Marc has signed off the caption BEFORE it schedules"
+  },
+  {
+   "id": "tue-os",
+   "d": "Tue",
+   "b": "os",
+   "t": "Ocusafe B2B — regulatory or compliance post from the safety board, alternating with program proof. LinkedIn + FB.",
+   "kw": "SPECSHEET / PROGRAM",
+   "o": "Social",
+   "dw": "Posted, no hashtags on LinkedIn, spec claims checked"
+  },
+  {
+   "id": "wed-blog",
+   "d": "Wed",
+   "b": "dg",
+   "t": "Blog publish → 8-slide carousel + FB long post + story to highlight",
+   "kw": "BREAKDOWN",
+   "o": "Social",
+   "dw": "Blog live, carousel scheduled, story added to the Weekly Frames highlight"
+  },
+  {
+   "id": "wed-boost",
+   "d": "Wed",
+   "b": "dg",
+   "t": "Boost decision on Monday's post — apply the 36-hour rule",
+   "kw": "",
+   "o": "Social",
+   "dw": "Boosted or explicitly skipped, and logged below either way"
+  },
+  {
+   "id": "wed-frames",
+   "d": "Wed",
+   "b": "all",
+   "t": "Ops — make new frames live",
+   "kw": "",
+   "o": "Ops",
+   "dw": "Batch live on site with images"
+  },
+  {
+   "id": "thu-doc",
+   "d": "Thu",
+   "b": "dg",
+   "t": "Doctor Answers — 20–30s reel, one real customer question, hook in the first two seconds. IG + TikTok + YouTube Short.",
+   "kw": "PD",
+   "o": "marc",
+   "dw": "One question answered, three placements scheduled"
+  },
+  {
+   "id": "thu-os",
+   "d": "Thu",
+   "b": "os",
+   "t": "Ocusafe DTC — fog, the employer-catalog gap, or a job-specific fit guide. IG + FB + TikTok.",
+   "kw": "FOG / Z87",
+   "o": "Social",
+   "dw": "On the consumer surfaces only — no program or centralized-billing language in the caption"
+  },
+  {
+   "id": "fri-style",
+   "d": "Fri",
+   "b": "dg",
+   "t": "Frame styling post, and schedule Saturday's evergreen from Sources",
+   "kw": "GUIDE",
+   "o": "Social",
+   "dw": "Both scheduled"
+  },
+  {
+   "id": "fri-pins",
+   "d": "Fri",
+   "b": "dg",
+   "t": "Build 7–10 Pinterest pins from REAL photography — frames and customer photos, vertical 2:3, intent-phrased titles. Schedule to drip 1–2/day next week.",
+   "kw": "GUIDE",
+   "o": "Social",
+   "dw": "Scheduled as a drip not a batch, no generated imagery, every pin linked to the page it's about"
+  },
+  {
+   "id": "fri-boost",
+   "d": "Fri",
+   "b": "dg",
+   "t": "Boost decision on Wednesday's post",
+   "kw": "",
+   "o": "Social",
+   "dw": "Logged below"
+  },
+  {
+   "id": "fri-upload",
+   "d": "Fri",
+   "b": "all",
+   "t": "Ops — frame upload batch",
+   "kw": "",
+   "o": "Ops",
+   "dw": "Named batch live"
+  },
+  {
+   "id": "sat-ever",
+   "d": "Sat",
+   "b": "dg",
+   "t": "Confirm the scheduled evergreen post actually went out",
+   "kw": "RETURNS",
+   "o": "Social",
+   "dw": "Seen live on the feed"
+  },
+  {
+   "id": "sun-review",
+   "d": "Sun",
+   "b": "all",
+   "t": "The 30-minute review — top posts per platform, LinkedIn pulled natively, Pinterest outbound clicks, active-contact burn, boost log, next week's queue",
+   "kw": "",
+   "o": "marc",
+   "dw": "Queue full for the coming week and one written decision in the notes below"
+  }
+ ],
+ "EXTRA": {
+  "1": [
+   {
+    "id": "w1-connect",
+    "d": "Setup",
+    "b": "all",
+    "t": "Connect every handle to Blotato and name each one by brand at connection time",
+    "kw": "",
+    "o": "Social",
+    "dw": "All handles connected, named, nothing ambiguous in the picker"
+   },
+   {
+    "id": "w1-kits",
+    "d": "Setup",
+    "b": "all",
+    "t": "Build three Brand Kits with real audience descriptions. Star 39DollarGlasses as primary.",
+    "kw": "",
+    "o": "Social",
+    "dw": "Three kits saved; a draft from each sounds like a different company"
+   },
+   {
+    "id": "w1-slots",
+    "d": "Setup",
+    "b": "all",
+    "t": "Create the recurring weekly slots per account",
+    "kw": "",
+    "o": "Social",
+    "dw": "Slots live, workspace timezone set to Eastern first"
+   },
+   {
+    "id": "w1-feedly",
+    "d": "Setup",
+    "b": "all",
+    "t": "Build the five Feedly boards — migraine research, workplace safety, vision health, eyewear trends, competitor watch",
+    "kw": "",
+    "o": "Social",
+    "dw": "Five boards, each with real feeds in it"
+   },
+   {
+    "id": "w1-manual",
+    "d": "Setup",
+    "b": "all",
+    "t": "Post two or three pieces manually per account — warm-up before anything is automated",
+    "kw": "",
+    "o": "Social",
+    "dw": "Posted by hand; no scheduling, no boosts"
+   },
+   {
+    "id": "w1-neuro",
+    "d": "Setup",
+    "b": "nx",
+    "t": "Write the Neurolux permitted-claims language into its Brand Kit as a hard constraint",
+    "kw": "",
+    "o": "marc",
+    "dw": "The exact allowed phrasing is in the kit, in Marc's words"
+   },
+   {
+    "id": "w1-pinname",
+    "d": "Setup",
+    "b": "dg",
+    "t": "Pinterest — rename \"Holiday Gift Guide | 2019\" to \"Eyewear Gift Guide\" and start refilling it. Gift search climbs from now to December; a dead year in the title can't participate.",
+    "kw": "",
+    "o": "Social",
+    "dw": "Renamed, and at least 10 current frames pinned to it"
+   },
+   {
+    "id": "w1-pinarch",
+    "d": "Setup",
+    "b": "dg",
+    "t": "Pinterest — archive the four off-topic boards: DIY/Halloween, Motivation/Quotes, Cool Shots/Scenic, Digital Art (203 pins telling Pinterest you're a lifestyle account)",
+    "kw": "",
+    "o": "Social",
+    "dw": "All four archived or secret, not deleted"
+   },
+   {
+    "id": "w1-pinclaim",
+    "d": "Setup",
+    "b": "dg",
+    "t": "Pinterest — claim the 39dollarglasses.com domain and get the verified badge",
+    "kw": "",
+    "o": "marc",
+    "dw": "Domain claimed; Pinterest Analytics now showing impressions and outbound clicks"
+   }
+  ],
+  "2": [
+   {
+    "id": "w2-pinrename",
+    "d": "Setup",
+    "b": "dg",
+    "t": "Pinterest — rename every surviving board to an intent phrase. Drop the pipes and the brand prefix; write each description as a sentence someone would say.",
+    "kw": "",
+    "o": "Social",
+    "dw": "No board title contains a pipe character or the domain name"
+   },
+   {
+    "id": "w2-pineyecare",
+    "d": "Setup",
+    "b": "dg",
+    "t": "Pinterest — revive the 111-pin Eye Care board as \"Eye Care Tips from an Optometrist\". An aged board beats a new one.",
+    "kw": "",
+    "o": "Social",
+    "dw": "Renamed and 10+ fresh pins added"
+   }
+  ],
+  "3": [
+   {
+    "id": "w3-rule",
+    "d": "Setup",
+    "b": "all",
+    "t": "Turn on the conditional boost rule and start the decision log",
+    "kw": "",
+    "o": "Social",
+    "dw": "First median computed from the last 8 posts; rule written where the team can see it"
+   },
+   {
+    "id": "w3-pinfeed",
+    "d": "Setup",
+    "b": "dg",
+    "t": "Pinterest — build and submit the product catalog feed. CSV/TSV/XML at a public HTTPS URL, 11 required fields (id, title, description, link, image_link, price, availability, condition, brand, google_product_category, product_type). THE highest-leverage action in the plan.",
+    "kw": "",
+    "o": "marc",
+    "dw": "Feed accepted and Product Pins appearing with live price and stock"
+   },
+   {
+    "id": "w3-pinfog",
+    "d": "Setup",
+    "b": "dg",
+    "t": "Pinterest — rebuild \"UltimateView™ Anti-Fog\" (5 pins in 6 years) as \"Anti-Fog Glasses & Lens Coatings\". Real search volume, serves 39DG and Ocusafe, nobody has claimed it.",
+    "kw": "FOG",
+    "o": "Social",
+    "dw": "Renamed and 15+ pins, half of them linked to product pages"
+   }
+  ],
+  "4": [
+   {
+    "id": "w4-funnels",
+    "d": "Setup",
+    "b": "dg",
+    "t": "Create the GUIDE and SUPPORT DM automations — Instagram only. Test each from a second account.",
+    "kw": "",
+    "o": "Social",
+    "dw": "Both fire correctly end to end, keyword and all"
+   },
+   {
+    "id": "w4-budget",
+    "d": "Setup",
+    "b": "all",
+    "t": "Move the first tranche of freed boost budget into the existing Ads Manager campaigns",
+    "kw": "",
+    "o": "marc",
+    "dw": "Campaign budgets updated; the amount moved is written down"
+   }
+  ],
+  "5": [
+   {
+    "id": "w5-funnels",
+    "d": "Setup",
+    "b": "all",
+    "t": "Add BREAKDOWN, PD and RETURNS, plus Ocusafe's SPECSHEET, PROGRAM, FOG and Z87, plus FL41 — only if week 4's logs are clean",
+    "kw": "",
+    "o": "Social",
+    "dw": "Live and tested, each with a keyword that can't misfire"
+   },
+   {
+    "id": "w5-ocutest",
+    "d": "Setup",
+    "b": "os",
+    "t": "Run one standalone FOG post on Ocusafe Instagram and watch the comments — the cheapest test of whether the DTC audience is reachable",
+    "kw": "FOG",
+    "o": "Social",
+    "dw": "Posted, and the comment volume written into the Sunday notes"
+   }
+  ],
+  "8": [
+   {
+    "id": "w8-roas",
+    "d": "Review",
+    "b": "all",
+    "t": "ROAS read — blended ROAS and cost per purchase against the pre-restart 30 days",
+    "kw": "",
+    "o": "marc",
+    "dw": "A written decision on whether the $400 / $700 split holds"
+   }
+  ],
+  "10": [
+   {
+    "id": "w10-bf",
+    "d": "Setup",
+    "b": "dg",
+    "t": "Black Friday prep — decide the offer, build the creative, load the entire peak-week queue",
+    "kw": "",
+    "o": "marc",
+    "dw": "Next week needs no production work at all"
+   }
+  ],
+  "13": [
+   {
+    "id": "w13-fsa",
+    "d": "Setup",
+    "b": "all",
+    "t": "Publish the FSA order-by dates so the deadline is concrete rather than vague",
+    "kw": "",
+    "o": "Social",
+    "dw": "Dates live on site and in the first comment of the FSA posts"
+   }
+  ]
+ }
+}

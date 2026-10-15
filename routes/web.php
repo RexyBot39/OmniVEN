@@ -87,6 +87,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/access-requests', [AccessRequestController::class, 'store'])->middleware('throttle:10,1')->name('access-requests.store');
     Route::delete('/access-requests/{accessRequest}', [AccessRequestController::class, 'destroy'])->name('access-requests.destroy');
 
+    // Weekly action calendar: shared checkmarks, boost log and Sunday review note.
+    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'show'])->name('calendar');
+    Route::get('/calendar/export/boosts.csv', [\App\Http\Controllers\CalendarController::class, 'exportBoosts'])->name('calendar.export.boosts');
+    Route::get('/calendar/export/tasks.csv', [\App\Http\Controllers\CalendarController::class, 'exportTasks'])->name('calendar.export.tasks');
+    Route::get('/calendar/{week}', [\App\Http\Controllers\CalendarController::class, 'show'])->name('calendar.week');
+    Route::post('/calendar/{week}/items/{item}/toggle', [\App\Http\Controllers\CalendarController::class, 'toggle'])->name('calendar.toggle');
+    Route::post('/calendar/{week}/boosts', [\App\Http\Controllers\CalendarController::class, 'storeBoost'])->name('calendar.boosts.store');
+    Route::delete('/calendar/boosts/{boost}', [\App\Http\Controllers\CalendarController::class, 'destroyBoost'])->name('calendar.boosts.destroy');
+    Route::put('/calendar/{week}/notes', [\App\Http\Controllers\CalendarController::class, 'notes'])->name('calendar.notes');
+
     // My launchpad: personal stars and recently opened items.
     Route::post('/launchpad/favorite', [\App\Http\Controllers\LaunchpadController::class, 'favorite'])->middleware('throttle:60,1')->name('launchpad.favorite');
     Route::post('/launchpad/open', [\App\Http\Controllers\LaunchpadController::class, 'open'])->middleware('throttle:120,1')->name('launchpad.open');

@@ -26,6 +26,7 @@ class LauncherController extends Controller
         foreach ($pages as [$name, $tab]) {
             $items->push(['k' => 'Page', 't' => $name, 's' => 'OmniVEN tab', 'u' => $home.'#'.$tab, 'x' => false]);
         }
+        $items->push(['k' => 'Page', 't' => 'Action calendar', 's' => 'This week\'s runbook, boost log and Sunday review', 'u' => route('calendar'), 'x' => false, 'a' => 'q4 week runbook boost calendar']);
         if ($user->can('view-activity')) {
             $items->push(['k' => 'Page', 't' => 'Activity report', 's' => 'Admin', 'u' => route('activity.index'), 'x' => false]);
         }
