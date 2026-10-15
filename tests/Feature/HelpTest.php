@@ -62,6 +62,21 @@ class HelpTest extends TestCase
         $this->assertTrue($items->contains(fn ($i) => ($i['t'] ?? null) === 'Help' && ($i['u'] ?? null) === route('help')));
     }
 
+    public function test_it_covers_the_newer_features(): void
+    {
+        $member = User::factory()->create(['is_active' => true, 'hotlist_popup_on' => today()]);
+
+        $this->actingAs($member)->get('/help')->assertOk()
+            ->assertSee('Hand off work with a task')
+            ->assertSee('+ New task')
+            ->assertSee('Unstick')
+            ->assertSee('Weekly affiliate check')
+            ->assertSee('CJ (Commission Junction)')
+            ->assertSee('#bi-cj', false)
+            ->assertSee('#bi-awin', false)
+            ->assertSee('Klaviyo dashboard');
+    }
+
     public function test_brand_spelling_in_the_guide(): void
     {
         $admin = User::factory()->admin()->create(['is_active' => true, 'hotlist_popup_on' => today()]);
