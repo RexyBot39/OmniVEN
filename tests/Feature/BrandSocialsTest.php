@@ -18,7 +18,7 @@ class BrandSocialsTest extends TestCase
     {
         $this->seed(OmniVenSeeder::class);
 
-        $this->assertSame(10, Account::count());
+        $this->assertSame(11, Account::count());
         $ocusafe = Brand::where('slug', 'ocusafe')->first();
         $ig = Account::where(['brand_id' => $ocusafe->id, 'platform' => 'instagram'])->firstOrFail();
         $this->assertSame(['@ocusafeglasses', 'https://www.instagram.com/ocusafeglasses'], [$ig->handle, $ig->url]);
@@ -28,8 +28,18 @@ class BrandSocialsTest extends TestCase
         $this->assertEqualsCanonicalizing(['facebook', 'x', 'instagram'], $sleep->accounts()->pluck('platform')->all());
         $this->assertCount(3, $sleep->socials);
 
-        // Brands with no footer profiles get none.
-        $this->assertSame(0, Brand::where('slug', 'trailview')->first()->accounts()->count());
+        // Brands with no profiles of their own get none.
+        $this->assertSame(0, Brand::where('slug', 'lumeo')->first()->accounts()->count());
+
+        $trail = Brand::where('slug', 'trailview')->first();
+        $this->assertSame('https://trailview.co', $trail->site);
+        $this->assertSame(['instagram'], $trail->accounts()->pluck('platform')->all());
+        $this->assertSame('https://www.instagram.com/trailview.co/', $trail->accounts()->first()->url);
+
+        $lumeo = Brand::where('slug', 'lumeo')->first();
+        $this->assertSame('https://www.39dollarglasses.com', $lumeo->site);
+        $this->assertStringContainsString('39DollarGlasses', $lumeo->notes);
+        $this->assertSame('https://www.39dollarglasses.com/help/re-lens/your-old-frame', Brand::where('slug', 'lensreplacement')->value('site'));
 
         $user = User::factory()->create(['is_active' => true]);
         $this->actingAs($user)->get('/brands/39dg')->assertOk()->assertSee('@39dollarglasses')->assertSee('39dollarglassesVideo');
@@ -43,9 +53,14 @@ class BrandSocialsTest extends TestCase
         $fb->update(['handle' => 'Edited by admin', 'login' => 'social@39dollarglasses.com']);
         $brand->update(['socials' => [['label' => 'Custom', 'url' => 'https://example.com/custom']]]);
 
-        (new BrandSocialsSeeder)->run();
+        $lumeo = Brand::where('slug', 'lumeo')->first();
+        $lumeo->update(['site' => 'https://lumeo.example.com', 'notes' => 'Admin note']);
 
-        $this->assertSame(10, Account::count());
+        (new BrandSocialsSeeder)->run();
+        (new \Database\Seeders\BrandDetailsSeeder)->run();
+
+        $this->assertSame(11, Account::count());
+        $this->assertSame(['https://lumeo.example.com', 'Admin note'], [$lumeo->fresh()->site, $lumeo->fresh()->notes]);
         $this->assertSame('Edited by admin', $fb->fresh()->handle);
         $this->assertSame('Custom', $brand->fresh()->socials[0]['label']);
     }
