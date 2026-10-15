@@ -18,7 +18,7 @@ class BrandSocialsTest extends TestCase
     {
         $this->seed(OmniVenSeeder::class);
 
-        $this->assertSame(11, Account::whereNotIn('platform', ['linkedin', 'shopper_approved'])->count());
+        $this->assertSame(11, Account::whereNotIn('platform', ['linkedin', 'shopper_approved', 'klaviyo'])->count());
         $ocusafe = Brand::where('slug', 'ocusafe')->first();
         $ig = Account::where(['brand_id' => $ocusafe->id, 'platform' => 'instagram'])->firstOrFail();
         $this->assertSame(['@ocusafeglasses', 'https://www.instagram.com/ocusafeglasses'], [$ig->handle, $ig->url]);
@@ -59,7 +59,7 @@ class BrandSocialsTest extends TestCase
         (new BrandSocialsSeeder)->run();
         (new \Database\Seeders\BrandDetailsSeeder)->run();
 
-        $this->assertSame(11, Account::whereNotIn('platform', ['linkedin', 'shopper_approved'])->count());
+        $this->assertSame(11, Account::whereNotIn('platform', ['linkedin', 'shopper_approved', 'klaviyo'])->count());
         $this->assertSame(['https://lumeo.example.com', 'Admin note'], [$lumeo->fresh()->site, $lumeo->fresh()->notes]);
         $this->assertSame('Edited by admin', $fb->fresh()->handle);
         $this->assertSame('Custom', $brand->fresh()->socials[0]['label']);
