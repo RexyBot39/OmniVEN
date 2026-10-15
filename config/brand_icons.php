@@ -27,4 +27,6 @@ return [
     'linkedin' => ['label' => 'LinkedIn', 'hex' => '#0A66C2'],
     'microsoft' => ['label' => 'Microsoft', 'hex' => '#FFFFFF', 'multicolor' => true],
     'klaviyo' => ['label' => 'Klaviyo', 'hex' => '#232426'],
+    // Stand-in rosette until the official Shopper Approved logo is supplied.
+    'shopperapproved' => ['label' => 'Shopper Approved', 'hex' => '#1F7A4D'],
 ];

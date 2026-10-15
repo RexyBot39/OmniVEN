@@ -15,7 +15,7 @@ class BrandIcon
         'meta_ads' => 'meta', 'meta_commerce' => 'meta', 'tiktok_ads' => 'tiktok', 'google_ads' => 'googleads',
         'microsoft_ads' => 'microsoft', 'merchant_center' => 'google', 'shopify' => 'shopify', 'ga4' => 'googleanalytics',
         'search_console' => 'googlesearchconsole', 'gtm' => 'googletagmanager', 'bing_webmaster' => 'microsoft',
-        'clarity' => 'microsoft', 'klaviyo' => 'klaviyo', 'google_business' => 'google', 'trustpilot' => 'trustpilot',
+        'clarity' => 'microsoft', 'klaviyo' => 'klaviyo', 'google_business' => 'google', 'trustpilot' => 'trustpilot', 'shopper_approved' => 'shopperapproved',
     ];
 
     /** Host (or host suffix) => icon slug, most specific first. */
@@ -26,7 +26,7 @@ class BrandIcon
         'instagram.com' => 'instagram', 'facebook.com' => 'facebook', 'tiktok.com' => 'tiktok', 'youtube.com' => 'youtube',
         'youtu.be' => 'youtube', 'pinterest.com' => 'pinterest', 'x.com' => 'x', 'twitter.com' => 'x', 'linkedin.com' => 'linkedin',
         'reddit.com' => 'reddit', 'klaviyo.com' => 'klaviyo', 'shopify.com' => 'shopify', 'slack.com' => 'slack',
-        'trustpilot.com' => 'trustpilot', 'figma.com' => 'figma', 'claude.ai' => 'claude', 'feedly.com' => 'feedly',
+        'trustpilot.com' => 'trustpilot', 'shopperapproved.com' => 'shopperapproved', 'figma.com' => 'figma', 'claude.ai' => 'claude', 'feedly.com' => 'feedly',
         'bing.com' => 'microsoft', 'microsoft.com' => 'microsoft', 'google.com' => 'google',
     ];
 
@@ -36,7 +36,7 @@ class BrandIcon
         'tag manager' => 'googletagmanager', 'google drive' => 'googledrive', 'gmail' => 'gmail', 'meta' => 'meta',
         'instagram' => 'instagram', 'facebook' => 'facebook', 'tiktok' => 'tiktok', 'youtube' => 'youtube',
         'pinterest' => 'pinterest', 'linkedin' => 'linkedin', 'reddit' => 'reddit', 'klaviyo' => 'klaviyo',
-        'shopify' => 'shopify', 'slack' => 'slack', 'trustpilot' => 'trustpilot', 'figma' => 'figma', 'claude' => 'claude',
+        'shopify' => 'shopify', 'slack' => 'slack', 'trustpilot' => 'trustpilot', 'shopper approved' => 'shopperapproved', 'figma' => 'figma', 'claude' => 'claude',
         'feedly' => 'feedly', 'microsoft' => 'microsoft', 'bing' => 'microsoft', 'clarity' => 'microsoft', 'google' => 'google',
     ];
 

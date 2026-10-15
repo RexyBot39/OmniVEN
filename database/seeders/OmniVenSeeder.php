@@ -63,7 +63,7 @@ class OmniVenSeeder extends Seeder
             ['Reddit', 'https://www.reddit.com', 'Social & Community', 'Community replies in r/glasses, r/frugal, r/optometry and others. Blotato does not post to Reddit.', ['39dg'], 'active', ['sort' => 5]],
 
             ['Trustpilot Business', 'https://business.trustpilot.com', 'Reviews & Reputation', 'Reply to and flag Trustpilot reviews.', ['39dg'], 'active', ['sort' => 1, 'access_note' => 'Public page: trustpilot.com/review/www.39dollarglasses.com']],
-            ['Shopper Approved', 'https://www.shopperapproved.com', 'Reviews & Reputation', 'Post-purchase site and product reviews; seller ratings feed.', ['39dg'], 'active', ['sort' => 2]],
+            ['Shopper Approved', 'https://www.shopperapproved.com/account/dashboard', 'Reviews & Reputation', 'Our main third-party review platform: post-purchase site and product reviews, and the seller ratings feed for Google.', ['39dg'], 'active', ['sort' => 0, 'featured' => true]],
             ['ConsumerAffairs', 'https://www.consumeraffairs.com/eyeglasses/39dollarglasses.html', 'Reviews & Reputation', 'Brand review page. Watch for restocking-fee and defect disputes.', ['39dg'], 'active', ['sort' => 3]],
             ['Better Business Bureau', 'https://www.bbb.org', 'Reviews & Reputation', 'BBB complaints and business profile. Any BBB mention is an escalation.', ['39dg'], 'verify', ['sort' => 4]],
             ['Google Business Profile', 'https://business.google.com', 'Reviews & Reputation', 'Google Maps listing, Google reviews and Q&A.', ['39dg'], 'verify', ['sort' => 5]],
@@ -95,7 +95,7 @@ class OmniVenSeeder extends Seeder
 
         $routines = [
             ['Work the Reddit report', 'daily', 'Read the top-scored threads in #reddit-monitor and post helpful, non-salesy replies to the best 1–2.', 'https://app.slack.com', ['39dg']],
-            ['Check new reviews and escalate', 'daily', 'Trustpilot, ConsumerAffairs, Shopper Approved. Escalate any chargeback, BBB, legal or prescription-error mention the same day.', 'https://business.trustpilot.com', ['39dg']],
+            ['Check new reviews and escalate', 'daily', 'Shopper Approved first (our main review platform), then Trustpilot and ConsumerAffairs. Escalate any chargeback, BBB, legal or prescription-error mention the same day.', 'https://www.shopperapproved.com/account/dashboard', ['39dg']],
             ['Answer comments and DMs', 'daily', 'Instagram, Facebook and TikTok inboxes for every brand.', 'https://business.facebook.com', $social],
             ['Fix Merchant Center disapprovals', 'weekly', 'Review product diagnostics and resolve disapproved or limited items.', 'https://merchants.google.com', ['all']],
             ['Search Console check', 'weekly', 'Indexing errors, top query movement and new pages to request indexing.', 'https://search.google.com/search-console', ['all']],
@@ -125,6 +125,6 @@ class OmniVenSeeder extends Seeder
             'body' => "Tools marked 'Verify access' were added as likely accounts. Open each one, confirm we have it and who owns it, and send the details to an admin so the card can be set to Active with its login account and owner.",
         ]);
 
-        $this->call([BrandDetailsSeeder::class, BrandSocialsSeeder::class, BrandLinkedInSeeder::class]);
+        $this->call([BrandDetailsSeeder::class, BrandSocialsSeeder::class, BrandLinkedInSeeder::class, ShopperApprovedSeeder::class]);
     }
 }
