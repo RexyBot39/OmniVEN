@@ -12,6 +12,14 @@
         <div class="fld"><label for="site">Website</label><input id="site" name="site" type="url" placeholder="https://" maxlength="1024" value="{{ old('site', $brand->site) }}"></div>
         <div class="fld"><label for="focus">Focus</label><textarea id="focus" name="focus" maxlength="1000">{{ old('focus', $brand->focus) }}</textarea></div>
         <div class="fld"><label for="channels">Main channels</label><input id="channels" name="channels" type="text" maxlength="1000" value="{{ old('channels', $brand->channels) }}"></div>
+        @php($sources = \App\Models\Brand::whereNull('accounts_from_id')->when($brand->exists, fn ($q) => $q->where('id', '!=', $brand->id))->orderBy('sort')->orderBy('name')->get())
+        <div class="fld"><label for="accounts_from_id">Brand accounts</label>
+            <select id="accounts_from_id" name="accounts_from_id">
+                <option value="">Its own accounts</option>
+                @foreach($sources as $s)<option value="{{ $s->id }}" @selected((string) old('accounts_from_id', $brand->accounts_from_id) === (string) $s->id)>Same as {{ $s->name }}</option>@endforeach
+            </select>
+            <span class="hint">For a brand sold on another brand's site that shares its social, ad and analytics accounts. Its hub and grid row then show that brand's accounts.</span>
+        </div>
         <div class="fld"><label for="socials_text">Social accounts</label>
             <textarea id="socials_text" name="socials_text" placeholder="Instagram | https://instagram.com/yourbrand">{{ old('socials_text', collect($brand->socials ?? [])->map(fn ($s) => trim(($s['label'] ?? '').' | '.($s['url'] ?? ''), ' |'))->implode("\n")) }}</textarea>
             <span class="hint">One per line: Label | https://link</span>

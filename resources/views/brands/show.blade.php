@@ -20,15 +20,19 @@
         @if($isAdmin)
             <div class="hub-actions">
                 <a class="btn" href="{{ route('brands.edit', $brand) }}">Edit brand</a>
-                <a class="btn primary" href="{{ route('accounts.create', ['brand' => $brand->slug, 'return' => 'hub']) }}">+ Add account</a>
+                @if($source->is($brand))<a class="btn primary" href="{{ route('accounts.create', ['brand' => $brand->slug, 'return' => 'hub']) }}">+ Add account</a>@endif
             </div>
         @endif
     </header>
 
     <section>
-        <div class="h2row"><h2>Accounts</h2><span class="sub">Every {{ $brand->name }} account, one click each</span></div>
+        @if($source->is($brand))
+            <div class="h2row"><h2>Accounts</h2><span class="sub">Every {{ $brand->name }} account, one click each</span></div>
+        @else
+            <div class="h2row"><h2>Accounts</h2><span class="sub">{{ $brand->name }} uses the <a href="{{ route('brands.show', $source) }}">{{ $source->name }}</a> accounts</span></div>
+        @endif
         @if($groups->isEmpty())
-            <div class="empty">No accounts added for {{ $brand->name }} yet.{{ $isAdmin ? ' Use + Add account, or the gaps below.' : ' Ask an admin to add them.' }}</div>
+            <div class="empty">No accounts added for {{ $source->name }} yet.{{ $isAdmin ? ' Use + Add account, or the gaps below.' : ' Ask an admin to add them.' }}</div>
         @else
             <div class="acct-groups">
                 @foreach($groups as $g)
