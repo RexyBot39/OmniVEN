@@ -19,18 +19,23 @@ class BrandController extends Controller
         Launchpad::recordOpen($request->user(), $brand);
         $favKeys = Launchpad::favoriteKeys($request->user());
         $myRequests = \App\Models\AccessRequest::latestFor($request->user());
-        $brand->load(['accounts' => fn ($q) => $q->orderBy('platform')]);
+        $brokenLinks = $request->user()->can('admin') ? \App\Models\LinkCheck::brokenKeys() : collect();
+        $source = $brand->accountSource();
+        $source->load(['accounts' => fn ($q) => $q->orderBy('platform')]);
         $tools = \App\Models\Tool::with('brands')->orderBy('sort')->orderBy('name')->get()
             ->filter(fn ($t) => $t->all_brands || $t->brands->contains('id', $brand->id))->values();
         $routines = \App\Models\Routine::with(['brands', 'latestCompletion.user'])->orderBy('sort')->get()
             ->filter(fn ($r) => $r->all_brands || $r->brands->contains('id', $brand->id))->values();
         $platforms = config('omniven.platforms');
         $groups = collect(config('omniven.platform_groups'))
-            ->map(fn ($label, $key) => ['label' => $label, 'accounts' => $brand->accounts->filter(fn ($a) => $a->group() === $key)->values()])
+            ->map(fn ($label, $key) => ['label' => $label, 'accounts' => $source->accounts->filter(fn ($a) => $a->group() === $key)->values()])
             ->filter(fn ($g) => $g['accounts']->isNotEmpty());
-        $missing = collect($platforms)->filter(fn ($p, $k) => $p['grid'] && ! $brand->accounts->contains('platform', $k));
+        // A brand that uses another's accounts doesn't nag for its own; gaps show on that brand's hub.
+        $missing = $source->is($brand)
+            ? collect($platforms)->filter(fn ($p, $k) => $p['grid'] && ! $source->accounts->contains('platform', $k))
+            : collect();
 
-        return view('brands.show', compact('brand', 'tools', 'routines', 'groups', 'missing', 'favKeys', 'myRequests'));
+        return view('brands.show', compact('brand', 'source', 'tools', 'routines', 'groups', 'missing', 'favKeys', 'myRequests', 'brokenLinks'));
     }
 
     public function create(): View
@@ -83,7 +88,22 @@ class BrandController extends Controller
             'socials_text' => ['nullable', 'string', 'max:4000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'sort' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'accounts_from_id' => ['nullable', 'integer', 'exists:brands,id'],
         ]);
+
+        // One level only: the chosen brand must use its own accounts, and can't be this brand.
+        if (filled($data['accounts_from_id'] ?? null)) {
+            $from = Brand::find($data['accounts_from_id']);
+            $self = $request->route('brand');
+            if (($self instanceof Brand && $from->is($self)) || $from->accounts_from_id) {
+                throw ValidationException::withMessages(['accounts_from_id' => 'Pick a brand that has its own accounts.']);
+            }
+            if ($self instanceof Brand && Brand::where('accounts_from_id', $self->id)->exists()) {
+                throw ValidationException::withMessages(['accounts_from_id' => "Other brands use {$self->name}'s accounts, so it needs to keep its own."]);
+            }
+        } else {
+            $data['accounts_from_id'] = null;
+        }
 
         $socials = [];
         foreach (preg_split('/\R/', (string) ($data['socials_text'] ?? '')) as $line) {

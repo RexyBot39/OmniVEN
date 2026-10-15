@@ -7,6 +7,7 @@
             <strong>{{ $t->name }}</strong>
         @endif
         <span class="pill {{ $t->status }}">{{ $t->statusLabel() }}</span>
+        @if(isset($brokenLinks) && $brokenLinks->has('tool:'.$t->id))<span class="pill link-broken" title="This link failed the last two nightly checks">Link broken</span>@endif
     </div>
     <div class="d">{{ $t->description }}</div>
     @if($t->login || $t->owner || $t->access_note)

@@ -10,7 +10,7 @@ class Brand extends Model
 {
     use OnLaunchpad;
 
-    protected $fillable = ['slug', 'name', 'site', 'focus', 'channels', 'socials', 'notes', 'sort'];
+    protected $fillable = ['slug', 'name', 'site', 'focus', 'channels', 'socials', 'notes', 'sort', 'accounts_from_id'];
 
     protected function casts(): array
     {
@@ -25,6 +25,18 @@ class Brand extends Model
     public function accounts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Account::class);
+    }
+
+    /** The brand whose accounts this one uses, e.g. Lumeo → 39DollarGlasses. */
+    public function accountsFrom(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'accounts_from_id');
+    }
+
+    /** The brand whose accounts to show for this one: itself, or the brand it shares with. */
+    public function accountSource(): Brand
+    {
+        return $this->accountsFrom ?? $this;
     }
 
     public function routines(): BelongsToMany

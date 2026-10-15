@@ -9,17 +9,20 @@
         </thead>
         <tbody>
             @foreach($brands as $b)
-                <tr data-brand-row="{{ $b->slug }}">
-                    <th scope="row"><a href="{{ route('brands.show', $b) }}"><span class="dot" style="background:var(--c{{ $b->colorSlot() }})"></span>{{ $b->name }}</a></th>
+                @php($srcId = $b->accounts_from_id ?: $b->id)
+                @php($srcName = $b->accounts_from_id ? $brands->firstWhere('id', $b->accounts_from_id)?->name : null)
+                <tr data-brand-row="{{ $b->slug }}" @class(['shared-row' => $srcName])>
+                    <th scope="row"><a href="{{ route('brands.show', $b) }}"><span class="dot" style="background:var(--c{{ $b->colorSlot() }})"></span>{{ $b->name }}</a>@if($srcName)<small class="shared-note">uses {{ $srcName }}</small>@endif</th>
                     @foreach($gridPlatforms as $key => $p)
-                        @php($a = $accountGrid[$b->id][$key] ?? null)
+                        @php($a = $accountGrid[$srcId][$key] ?? null)
                         <td>
                             @if($a)
-                                <a class="cell-link {{ $a->hasDirectLink() ? '' : 'weak' }} {{ $a->needsVerify() ? 'stale' : '' }}" href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer"
-                                   title="{{ $a->title() }}{{ $a->hasDirectLink() ? '' : ' (no direct link yet)' }}{{ $a->needsVerify() ? ' · access not verified recently' : '' }}">
+                                @php($aBroken = isset($brokenLinks) && $brokenLinks->has('account:'.$a->id))
+                                <a class="cell-link {{ $a->hasDirectLink() ? '' : 'weak' }} {{ $a->needsVerify() ? 'stale' : '' }} {{ $aBroken ? 'broken' : '' }}" href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer"
+                                   title="{{ $a->title() }}{{ $a->hasDirectLink() ? '' : ' (no direct link yet)' }}{{ $a->needsVerify() ? ' · access not verified recently' : '' }}{{ $aBroken ? ' · link broken' : '' }}">
                                     <span class="plat" data-p="{{ $key }}">{{ $p['short'] }}</span>
                                 </a>
-                            @elseif($isAdmin)
+                            @elseif($isAdmin && ! $srcName)
                                 <a class="cell-add" href="{{ route('accounts.create', ['brand' => $b->slug, 'platform' => $key, 'return' => 'brands']) }}" title="Add {{ $b->name }} {{ $p['label'] }}" aria-label="Add {{ $b->name }} {{ $p['label'] }}">+</a>
                             @else
                                 <span class="cell-none" aria-label="Not set up">·</span>
@@ -31,4 +34,4 @@
         </tbody>
     </table>
 </div>
-<p class="legend sub">Click a square to open that account. Faded squares have no direct link yet; a dot in the corner means access hasn't been verified in 90 days.{{ $isAdmin ? ' + adds a missing account.' : '' }}</p>
+<p class="legend sub">Click a square to open that account. Faded squares have no direct link yet; a dot in the corner means access hasn't been verified in 90 days.{{ $isAdmin ? ' + adds a missing account.' : '' }} Brands marked “uses …” share that brand's accounts.</p>

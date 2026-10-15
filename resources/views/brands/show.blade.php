@@ -20,15 +20,19 @@
         @if($isAdmin)
             <div class="hub-actions">
                 <a class="btn" href="{{ route('brands.edit', $brand) }}">Edit brand</a>
-                <a class="btn primary" href="{{ route('accounts.create', ['brand' => $brand->slug, 'return' => 'hub']) }}">+ Add account</a>
+                @if($source->is($brand))<a class="btn primary" href="{{ route('accounts.create', ['brand' => $brand->slug, 'return' => 'hub']) }}">+ Add account</a>@endif
             </div>
         @endif
     </header>
 
     <section>
-        <div class="h2row"><h2>Accounts</h2><span class="sub">Every {{ $brand->name }} account, one click each</span></div>
+        @if($source->is($brand))
+            <div class="h2row"><h2>Accounts</h2><span class="sub">Every {{ $brand->name }} account, one click each</span></div>
+        @else
+            <div class="h2row"><h2>Accounts</h2><span class="sub">{{ $brand->name }} uses the <a href="{{ route('brands.show', $source) }}">{{ $source->name }}</a> accounts</span></div>
+        @endif
         @if($groups->isEmpty())
-            <div class="empty">No accounts added for {{ $brand->name }} yet.{{ $isAdmin ? ' Use + Add account, or the gaps below.' : ' Ask an admin to add them.' }}</div>
+            <div class="empty">No accounts added for {{ $source->name }} yet.{{ $isAdmin ? ' Use + Add account, or the gaps below.' : ' Ask an admin to add them.' }}</div>
         @else
             <div class="acct-groups">
                 @foreach($groups as $g)
@@ -39,7 +43,7 @@
                                 <article class="acct-card">
                                     <span class="plat" data-p="{{ $a->platform }}">{{ $a->platformInfo()['short'] }}</span>
                                     <div class="acct-main">
-                                        <div class="acct-t"><b>{{ $a->platformLabel() }}</b>@if($a->handle)<span class="acct-handle">{{ $a->handle }}</span>@endif</div>
+                                        <div class="acct-t"><b>{{ $a->platformLabel() }}</b>@if($a->handle)<span class="acct-handle">{{ $a->handle }}</span>@endif @if($brokenLinks->has('account:'.$a->id))<span class="pill link-broken" title="This link failed the last two nightly checks">Link broken</span>@endif</div>
                                         <div class="acct-meta">
                                             @if($a->account_ref)<span>ID {{ $a->account_ref }}</span>@endif
                                             @if($a->login)<span>Login {{ $a->login }}</span>@endif

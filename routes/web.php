@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/accounts/{account}/verify', [AccountController::class, 'verify'])->name('accounts.verify');
         Route::post('/tools/{tool}/verify', [ToolController::class, 'verify'])->name('tools.verify');
         Route::get('/access/review', [AccessRequestController::class, 'review'])->name('access.review');
+        Route::post('/links/check', [\App\Http\Controllers\LinkCheckController::class, 'run'])->middleware('throttle:3,10')->name('links.check');
         Route::post('/access-requests/{accessRequest}/grant', [AccessRequestController::class, 'grant'])->name('access-requests.grant');
         Route::post('/access-requests/{accessRequest}/decline', [AccessRequestController::class, 'decline'])->name('access-requests.decline');
         Route::post('/slack/channels', [SlackController::class, 'store'])->name('slack.channels.store');

@@ -223,7 +223,7 @@
 
 {{-- ================= ACCESS ================= --}}
 <section data-view="access" hidden>
-    @if($isAdmin)@include('partials.access-requests')@endif
+    @if($isAdmin)@include('partials.access-requests')@include('partials.broken-links')@endif
     <div class="h2row"><h2>Access &amp; owners</h2><span class="sub">Which account each tool lives under and how to get in. Need a login? Use Request access.</span>@if($isAdmin)<a class="btn" href="{{ route('access.review') }}">Access review</a><a class="btn primary" href="{{ route('tools.create', ['return' => 'access']) }}">+ Add item</a>@endif</div>
     <div class="callout">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>

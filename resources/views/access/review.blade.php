@@ -18,6 +18,8 @@
         <div>Anyone who has left? Turn off their OmniVEN access on <a href="{{ route('people.index') }}">People</a> and remove them in each tool. Never put passwords or 2FA codes here. When you're done, tick “Quarterly access review” on <a href="{{ route('dashboard') }}#routines">Routines</a>.</div>
     </div>
 
+    @include('partials.broken-links', ['return' => 'review'])
+
     @foreach([['Tools', $tools, 'tool'], ['Brand accounts', $accounts, 'account']] as [$heading, $items, $type])
         <div class="h2row" style="margin-top:24px"><h2>{{ $heading }}</h2><span class="sub">{{ $items->count() }}</span></div>
         @if($items->isEmpty())
