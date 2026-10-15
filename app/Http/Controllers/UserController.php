@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Support\Activity;
+use App\Models\Routine;
+use App\Models\RoutineCompletion;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +16,39 @@ class UserController extends Controller
     public function index(): View
     {
         return view('people.index', ['users' => User::orderByDesc('is_admin')->orderBy('name')->get()]);
+    }
+
+    /** Admins: one person's routines and tasks. Their PostIT notes stay private and are never shown. */
+    public function show(User $user): View
+    {
+        $routines = Routine::with(['brands', 'latestCompletion.user'])->where('assignee_id', $user->id)
+            ->orderBy('sort')->orderBy('title')->get();
+        $byCadence = collect(config('omniven.cadences'))
+            ->map(fn ($label, $key) => ['label' => $label, 'routines' => $routines->where('cadence', $key)->values()])
+            ->filter(fn ($c) => $c['routines']->isNotEmpty());
+
+        $openTasks = Task::with('creator')->open()->where('assignee_id', $user->id)
+            ->orderByDesc('hot')->orderByRaw('due_on is null')->orderBy('due_on')->latest()->get();
+        $doneTasks = Task::with('assignee')->whereNotNull('completed_at')->where('completed_at', '>=', now()->subDays(30))
+            ->where(fn ($q) => $q->where('assignee_id', $user->id)->orWhere('completed_by', $user->id))
+            ->latest('completed_at')->limit(50)->get();
+        $ticks = RoutineCompletion::with('routine')->where('user_id', $user->id)
+            ->where('completed_at', '>=', now()->subDays(30))->latest('completed_at')->limit(50)->get();
+
+        $weekAgo = now()->subDays(7);
+        $stats = [
+            'routines_due' => $routines->reject->isDone()->count(),
+            'routines_total' => $routines->count(),
+            'tasks_open' => $openTasks->count(),
+            'tasks_overdue' => $openTasks->filter->isOverdue()->count(),
+            'done_week' => $ticks->where('completed_at', '>=', $weekAgo)->count() + $doneTasks->where('completed_at', '>=', $weekAgo)->count(),
+        ];
+
+        return view('people.show', [
+            'person' => $user, 'byCadence' => $byCadence, 'openTasks' => $openTasks, 'doneTasks' => $doneTasks,
+            'ticks' => $ticks, 'stats' => $stats,
+            'people' => User::where('is_active', true)->orWhere('id', $user->id)->orderBy('name')->get(),
+        ]);
     }
 
     /** Add someone before their first sign-in, so tasks can be assigned to them. */

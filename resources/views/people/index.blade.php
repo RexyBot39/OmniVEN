@@ -4,7 +4,7 @@
 <main class="wrap formpage wide">
     <a href="{{ route('dashboard') }}" class="back">← Back to OmniVEN</a>
     <h1 class="form-h">People</h1>
-    <p class="sub">Anyone with an {{ '@'.config('omniven.allowed_domain') }} Google account can sign in and appears here after their first visit. Admins can edit tools, brands and routines; everyone can tick routines and post notes.</p>
+    <p class="sub">Anyone with an {{ '@'.config('omniven.allowed_domain') }} Google account can sign in and appears here after their first visit. Admins can edit tools, brands and routines; everyone can tick routines and post notes. Open a person to see their routines and tasks.</p>
     @include('partials.form-errors')
     <form method="POST" action="{{ route('people.store') }}" class="card add-person">
         @csrf
@@ -19,7 +19,7 @@
             <tbody>
             @foreach($users as $u)
                 <tr>
-                    <td><strong>{{ $u->name }}</strong><div class="sub">{{ $u->email }}</div></td>
+                    <td><a class="person-link" href="{{ route('people.show', $u) }}"><strong>{{ $u->name }}</strong></a><div class="sub">{{ $u->email }} · <a href="{{ route('people.show', $u) }}">Routines &amp; tasks</a></div></td>
                     <td>{{ $u->last_login_at?->format('M j, Y g:ia') ?? 'Not yet signed in' }}</td>
                     <td>
                         @if($u->is(auth()->user()) || $u->isConfiguredAdmin())

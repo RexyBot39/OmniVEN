@@ -6,6 +6,7 @@ use App\Support\Activity;
 use App\Http\Controllers\Concerns\SyncsBrands;
 use App\Models\Brand;
 use App\Models\Routine;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -46,7 +47,7 @@ class RoutineController extends Controller
     {
         $routine = new Routine($this->validated($request));
         $this->applyBrands($routine, $request);
-        Activity::log('routine.created', "Added routine “{$routine->title}”", $routine);
+        Activity::log('routine.created', "Added routine “{$routine->title}”".$this->assignedText($routine), $routine);
 
         return redirect()->to(route('dashboard').'#routines')->with('status', 'Routine added.');
     }
@@ -59,8 +60,9 @@ class RoutineController extends Controller
     public function update(Request $request, Routine $routine): RedirectResponse
     {
         $routine->fill($this->validated($request));
+        $reassigned = $routine->isDirty('assignee_id');
         $this->applyBrands($routine, $request);
-        Activity::log('routine.updated', "Edited routine “{$routine->title}”", $routine);
+        Activity::log('routine.updated', "Edited routine “{$routine->title}”".($reassigned ? $this->assignedText($routine) : ''), $routine);
 
         return redirect()->to(route('dashboard').'#routines')->with('status', 'Routine saved.');
     }
@@ -75,7 +77,18 @@ class RoutineController extends Controller
 
     private function form(Routine $routine): View
     {
-        return view('routines.form', ['routine' => $routine, 'brands' => Brand::orderBy('sort')->get()]);
+        return view('routines.form', [
+            'routine' => $routine,
+            'brands' => Brand::orderBy('sort')->get(),
+            'people' => User::where('is_active', true)->orWhere('id', $routine->assignee_id)->orderBy('name')->get(),
+        ]);
+    }
+
+    private function assignedText(Routine $routine): string
+    {
+        $who = $routine->assignee_id ? User::find($routine->assignee_id) : null;
+
+        return $who ? " · assigned to {$who->name}" : ' · assigned to the whole team';
     }
 
     private function validated(Request $request): array
@@ -86,7 +99,15 @@ class RoutineController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
             'link' => ['nullable', 'url:http,https', 'max:1024'],
             'sort' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
         ] + $this->brandRules());
+        $data['assignee_id'] = $data['assignee_id'] ?? null;
+        // Only active people can be newly assigned; an existing assignment can stay as it is.
+        $current = $request->route('routine');
+        if ($data['assignee_id'] && ! User::whereKey($data['assignee_id'])->where('is_active', true)->exists()
+            && ! ($current instanceof Routine && (int) $current->assignee_id === (int) $data['assignee_id'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['assignee_id' => 'That person no longer has access to OmniVEN.']);
+        }
         unset($data['brands']);
         $data['sort'] ??= 100;
 

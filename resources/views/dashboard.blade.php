@@ -172,7 +172,7 @@
 <section data-view="routines">
     <div class="h2row">
         <h2>Routines</h2>
-        <span class="sub">Ticks reset each day, week, month or quarter (Eastern time).</span>
+        <span class="sub">Ticks reset each day, week, month or quarter (Eastern time).@php($myRoutines = $routines->where('assignee_id', $me->id))@if($myRoutines->isNotEmpty()) <b class="mine-n">{{ $myRoutines->reject->isDone()->count() }} of {{ $myRoutines->count() }} assigned to you still due.</b>@endif</span>
         @if($isAdmin)<a class="btn primary" href="{{ route('routines.create') }}">+ Add routine</a>@endif
     </div>
     <div class="routines">
@@ -182,7 +182,7 @@
                 <h3>{{ $label }}<small>{{ $rs->filter->isDone()->count() }}/{{ $rs->count() }} done</small></h3>
                 @forelse($rs as $r)
                     @php($done = $r->isDone())
-                    <div class="r {{ $done ? 'done' : '' }}" data-brands="{{ $r->brandFilterAttr() }}" data-search="{{ strtolower($r->title.' '.$r->description) }}">
+                    <div class="r {{ $done ? 'done' : '' }} {{ $r->assignee_id === $me->id ? 'mine' : '' }}" data-brands="{{ $r->brandFilterAttr() }}" data-search="{{ strtolower($r->title.' '.$r->description) }}">
                         <form method="POST" action="{{ route('routines.toggle', $r) }}">
                             @csrf
                             <button class="tick" type="submit" aria-pressed="{{ $done ? 'true' : 'false' }}" aria-label="{{ $done ? 'Mark not done' : 'Mark done' }}: {{ $r->title }}">
@@ -190,7 +190,7 @@
                             </button>
                         </form>
                         <div class="rbody">
-                            <div class="rt">{{ $r->title }}</div>
+                            <div class="rt">{{ $r->title }}@if($r->assignee)<span class="assignee {{ $r->assignee_id === $me->id ? 'you' : '' }}" title="Assigned to {{ $r->assignee->name }}">@if($isAdmin && $r->assignee_id !== $me->id)<a href="{{ route('people.show', $r->assignee) }}">→ {{ $r->assignee->firstName() }}</a>@else→ {{ $r->assignee_id === $me->id ? 'You' : $r->assignee->firstName() }}@endif</span>@endif</div>
                             @if($r->description)<div class="rd">{{ $r->description }}</div>@endif
                             <div class="rm">
                                 @if($r->link)<a href="{{ $r->link }}" target="_blank" rel="noopener noreferrer">Open {{ preg_replace('/^www\./', '', parse_url($r->link, PHP_URL_HOST)) }} ↗</a>@endif
