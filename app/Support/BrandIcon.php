@@ -15,7 +15,7 @@ class BrandIcon
         'meta_ads' => 'meta', 'meta_commerce' => 'meta', 'tiktok_ads' => 'tiktok', 'google_ads' => 'googleads',
         'microsoft_ads' => 'microsoft', 'merchant_center' => 'google', 'shopify' => 'shopify', 'ga4' => 'googleanalytics',
         'search_console' => 'googlesearchconsole', 'gtm' => 'googletagmanager', 'bing_webmaster' => 'microsoft',
-        'clarity' => 'microsoft', 'klaviyo' => 'klaviyo', 'google_business' => 'google', 'trustpilot' => 'trustpilot', 'shopper_approved' => 'shopperapproved',
+        'clarity' => 'microsoft', 'klaviyo' => 'klaviyo', 'google_business' => 'google', 'trustpilot' => 'trustpilot', 'shopper_approved' => 'shopperapproved', 'contentful' => 'contentful',
     ];
 
     /** Host (or host suffix) => icon slug, most specific first. */
@@ -25,7 +25,7 @@ class BrandIcon
         'business.facebook.com' => 'meta', 'adsmanager.facebook.com' => 'meta',
         'instagram.com' => 'instagram', 'facebook.com' => 'facebook', 'tiktok.com' => 'tiktok', 'youtube.com' => 'youtube',
         'youtu.be' => 'youtube', 'pinterest.com' => 'pinterest', 'x.com' => 'x', 'twitter.com' => 'x', 'linkedin.com' => 'linkedin',
-        'reddit.com' => 'reddit', 'klaviyo.com' => 'klaviyo', 'cj.com' => 'cj', 'awin.com' => 'awin', 'shopify.com' => 'shopify', 'slack.com' => 'slack',
+        'reddit.com' => 'reddit', 'klaviyo.com' => 'klaviyo', 'cj.com' => 'cj', 'awin.com' => 'awin', 'contentful.com' => 'contentful', 'shopify.com' => 'shopify', 'slack.com' => 'slack',
         'trustpilot.com' => 'trustpilot', 'shopperapproved.com' => 'shopperapproved', 'figma.com' => 'figma', 'claude.ai' => 'claude', 'feedly.com' => 'feedly',
         'bing.com' => 'microsoft', 'microsoft.com' => 'microsoft', 'google.com' => 'google',
     ];
@@ -35,7 +35,7 @@ class BrandIcon
         'google ads' => 'googleads', 'google analytics' => 'googleanalytics', 'search console' => 'googlesearchconsole',
         'tag manager' => 'googletagmanager', 'google drive' => 'googledrive', 'gmail' => 'gmail', 'meta' => 'meta',
         'instagram' => 'instagram', 'facebook' => 'facebook', 'tiktok' => 'tiktok', 'youtube' => 'youtube',
-        'pinterest' => 'pinterest', 'linkedin' => 'linkedin', 'reddit' => 'reddit', 'klaviyo' => 'klaviyo', 'commission junction' => 'cj', 'cj affiliate' => 'cj', 'awin' => 'awin',
+        'pinterest' => 'pinterest', 'linkedin' => 'linkedin', 'reddit' => 'reddit', 'klaviyo' => 'klaviyo', 'commission junction' => 'cj', 'cj affiliate' => 'cj', 'awin' => 'awin', 'contentful' => 'contentful',
         'shopify' => 'shopify', 'slack' => 'slack', 'trustpilot' => 'trustpilot', 'shopper approved' => 'shopperapproved', 'figma' => 'figma', 'claude' => 'claude',
         'feedly' => 'feedly', 'microsoft' => 'microsoft', 'bing' => 'microsoft', 'clarity' => 'microsoft', 'google' => 'google',
     ];
@@ -80,7 +80,7 @@ class BrandIcon
             'instagram' => '/\b(instagram|ig)\b/i', 'facebook' => '/\b(facebook|fb)\b/i', 'tiktok' => '/\btiktok\b/i',
             'linkedin' => '/\blinkedin\b/i', 'youtube' => '/\byoutube\b/i', 'pinterest' => '/\bpinterest\b/i',
             'meta' => '/\bads manager\b/i', 'feedly' => '/\bfeedly\b/i', 'klaviyo' => '/\bklaviyo\b/i', 'reddit' => '/\breddit\b/i',
-            'cj' => '/\b(commission junction|cj affiliate)\b/i', 'awin' => '/\bawin\b/i',
+            'cj' => '/\b(commission junction|cj affiliate)\b/i', 'awin' => '/\bawin\b/i', 'contentful' => '/\bcontentful\b/i',
         ];
         $found = [];
         foreach ($patterns as $slug => $re) {

@@ -32,4 +32,6 @@ return [
     // Traced from the logos Marc supplied: CJ's white mark on its green circle; Awin's flame on a white tile.
     'cj' => ['label' => 'CJ Affiliate', 'hex' => '#064A46'],
     'awin' => ['label' => 'Awin', 'hex' => '#FF5B00', 'multicolor' => true],
+    // Traced from the logo Marc supplied: yellow, blue and red "C" on a white tile.
+    'contentful' => ['label' => 'Contentful', 'hex' => '#1768E8', 'multicolor' => true],
 ];
