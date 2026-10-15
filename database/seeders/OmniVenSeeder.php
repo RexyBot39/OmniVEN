@@ -124,5 +124,7 @@ class OmniVenSeeder extends Seeder
         Note::firstOrCreate(['title' => 'First week: confirm logins'], [
             'body' => "Tools marked 'Verify access' were added as likely accounts. Open each one, confirm we have it and who owns it, and send the details to an admin so the card can be set to Active with its login account and owner.",
         ]);
+
+        $this->call(BrandSocialsSeeder::class);
     }
 }
