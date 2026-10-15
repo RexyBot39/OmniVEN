@@ -41,6 +41,7 @@ class Routine extends Model
         $at = ($at ?? now())->copy()->setTimezone(config('app.timezone'));
 
         return match ($cadence) {
+            'quarterly' => $at->year.'-Q'.$at->quarter,
             'monthly' => $at->format('Y-m'),
             'weekly' => $at->format('o-\WW'),
             default => $at->format('Y-m-d'),

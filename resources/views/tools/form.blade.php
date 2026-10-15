@@ -1,8 +1,9 @@
 @extends('layouts.app', ['title' => $tool->exists ? 'Edit '.$tool->name : ($return === 'access' ? 'Add access item' : 'Add tool')])
 
+@php($backUrl = $return === 'review' ? route('access.review') : route('dashboard').'#'.$return)
 @section('content')
 <main class="wrap formpage">
-    <a href="{{ route('dashboard') }}#{{ $return }}" class="back">← Back to {{ $return === 'access' ? 'Access' : 'Tools' }}</a>
+    <a href="{{ $backUrl }}" class="back">← Back to {{ ['access' => 'Access', 'review' => 'Access review'][$return] ?? 'Tools' }}</a>
     <h1 class="form-h">{{ $tool->exists ? 'Edit '.$tool->name : ($return === 'access' ? 'Add an access item' : 'Add a tool') }}</h1>
     @include('partials.form-errors')
     <form method="POST" action="{{ $tool->exists ? route('tools.update', $tool) : route('tools.store') }}" class="card form">
@@ -32,7 +33,7 @@
         <div class="fld narrow"><label for="sort">Sort order</label><input id="sort" name="sort" type="number" min="0" max="9999" value="{{ old('sort', $tool->sort) }}"><span class="hint">Lower numbers show first in their category.</span></div>
         <div class="form-actions">
             <span class="spacer"></span>
-            <a class="btn" href="{{ route('dashboard') }}#{{ $return }}">Cancel</a>
+            <a class="btn" href="{{ $backUrl }}">Cancel</a>
             <button class="btn primary" type="submit">Save tool</button>
         </div>
     </form>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAccessRequests;
 use App\Models\Concerns\OnLaunchpad;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /** A brand's account on one platform, e.g. Ocusafe · Instagram · @ocusafe. */
 class Account extends Model
 {
-    use OnLaunchpad;
+    use HasAccessRequests, OnLaunchpad;
 
     protected $fillable = ['brand_id', 'platform', 'handle', 'url', 'account_ref', 'login', 'owner', 'notes', 'verified_on'];
 
@@ -53,11 +54,5 @@ class Account extends Model
     public function title(): string
     {
         return collect([$this->brand?->name ?? 'All brands', $this->platformLabel(), $this->handle])->filter()->implode(' · ');
-    }
-
-    /** Older than 90 days, or never checked. */
-    public function needsVerify(): bool
-    {
-        return ! $this->verified_on || $this->verified_on->lt(today()->subDays(90));
     }
 }

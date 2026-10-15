@@ -87,5 +87,12 @@ return [
         'daily' => 'Daily',
         'weekly' => 'Weekly',
         'monthly' => 'Monthly',
+        'quarterly' => 'Quarterly',
     ],
+
+    // Slack channel (name or id) that gets a short "X requested access to Y" note. Empty = no Slack post.
+    'access_slack_channel' => env('OMNIVEN_ACCESS_SLACK_CHANNEL', ''),
+
+    // Brand accounts and tools not verified for this many days are flagged on the Access review.
+    'verify_days' => 90,
 ];

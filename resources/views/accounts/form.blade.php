@@ -2,7 +2,7 @@
 
 @section('content')
 <main class="wrap formpage">
-    @php($back = $return === 'hub' && $account->brand ? route('brands.show', $account->brand) : route('dashboard').'#'.($return === 'access' ? 'access' : 'brands'))
+    @php($back = $return === 'hub' && $account->brand ? route('brands.show', $account->brand) : ($return === 'review' ? route('access.review') : route('dashboard').'#'.($return === 'access' ? 'access' : 'brands')))
     <a href="{{ $back }}" class="back">← Back</a>
     <h1 class="form-h">{{ $account->exists ? 'Edit '.$account->title() : 'Add an account' }}</h1>
     <p class="sub">One brand on one platform, for example Ocusafe on Instagram. Never enter passwords here.</p>

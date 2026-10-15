@@ -31,6 +31,11 @@ class LauncherController extends Controller
         if ($user->can('admin')) {
             $items->push(['k' => 'Page', 't' => 'People', 's' => 'Admin', 'u' => route('people.index'), 'x' => false]);
             $items->push(['k' => 'Action', 't' => 'Add an account', 's' => 'Brand + platform', 'u' => route('accounts.create'), 'x' => false]);
+            $items->push(['k' => 'Page', 't' => 'Access review', 's' => 'Admin · quarterly check of every login and owner', 'u' => route('access.review'), 'x' => false]);
+            $waiting = \App\Models\AccessRequest::open()->count();
+            if ($waiting) {
+                $items->push(['k' => 'Action', 't' => $waiting.' access '.\Illuminate\Support\Str::plural('request', $waiting), 's' => 'Waiting for an admin', 'u' => $home.'#access', 'x' => false]);
+            }
         }
 
         foreach (Brand::orderBy('sort')->get() as $b) {

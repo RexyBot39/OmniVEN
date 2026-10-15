@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAccessRequests;
 use App\Models\Concerns\HasBrandScope;
 use App\Models\Concerns\OnLaunchpad;
 use Illuminate\Database\Eloquent\Model;
@@ -9,13 +10,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Tool extends Model
 {
-    use HasBrandScope, OnLaunchpad;
+    use HasAccessRequests, HasBrandScope, OnLaunchpad;
 
-    protected $fillable = ['name', 'url', 'category', 'description', 'status', 'featured', 'all_brands', 'login', 'owner', 'access_note', 'sort'];
+    protected $fillable = ['name', 'url', 'category', 'description', 'status', 'featured', 'all_brands', 'login', 'owner', 'access_note', 'sort', 'verified_on'];
 
     protected function casts(): array
     {
-        return ['featured' => 'boolean', 'all_brands' => 'boolean', 'sort' => 'integer'];
+        return ['featured' => 'boolean', 'all_brands' => 'boolean', 'sort' => 'integer', 'verified_on' => 'date'];
     }
 
     public function brands(): BelongsToMany

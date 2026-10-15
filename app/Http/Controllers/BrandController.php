@@ -18,6 +18,7 @@ class BrandController extends Controller
     {
         Launchpad::recordOpen($request->user(), $brand);
         $favKeys = Launchpad::favoriteKeys($request->user());
+        $myRequests = \App\Models\AccessRequest::latestFor($request->user());
         $brand->load(['accounts' => fn ($q) => $q->orderBy('platform')]);
         $tools = \App\Models\Tool::with('brands')->orderBy('sort')->orderBy('name')->get()
             ->filter(fn ($t) => $t->all_brands || $t->brands->contains('id', $brand->id))->values();
@@ -29,7 +30,7 @@ class BrandController extends Controller
             ->filter(fn ($g) => $g['accounts']->isNotEmpty());
         $missing = collect($platforms)->filter(fn ($p, $k) => $p['grid'] && ! $brand->accounts->contains('platform', $k));
 
-        return view('brands.show', compact('brand', 'tools', 'routines', 'groups', 'missing', 'favKeys'));
+        return view('brands.show', compact('brand', 'tools', 'routines', 'groups', 'missing', 'favKeys', 'myRequests'));
     }
 
     public function create(): View

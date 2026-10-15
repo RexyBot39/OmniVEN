@@ -51,20 +51,32 @@ class ToolController extends Controller
         return $this->back($request, "Removed {$tool->name}.");
     }
 
+    /** "I just checked this login and owner are still right." From the Access review. */
+    public function verify(Request $request, Tool $tool): RedirectResponse
+    {
+        $tool->update(['verified_on' => today()]);
+        Activity::log('tool.verified', "Verified access to “{$tool->name}”", $tool);
+
+        return $this->back($request, "Marked {$tool->name} as verified today.");
+    }
+
     private function form(Tool $tool, Request $request): View
     {
         return view('tools.form', ['tool' => $tool, 'brands' => Brand::orderBy('sort')->get(), 'return' => $this->returnTab($request)]);
     }
 
-    /** Which tab to go back to: the Access tab when editing from there, otherwise Tools. */
+    /** Where to go back to: the Access tab or Access review when editing from there, otherwise Tools. */
     private function returnTab(Request $request): string
     {
-        return $request->input('return') === 'access' ? 'access' : 'tools';
+        return in_array($request->input('return'), ['access', 'review'], true) ? $request->input('return') : 'tools';
     }
 
     private function back(Request $request, string $msg): RedirectResponse
     {
-        return redirect()->to(route('dashboard').'#'.$this->returnTab($request))->with('status', $msg);
+        $tab = $this->returnTab($request);
+        $url = $tab === 'review' ? route('access.review') : route('dashboard').'#'.$tab;
+
+        return redirect()->to($url)->with('status', $msg);
     }
 
     private function validated(Request $request): array
