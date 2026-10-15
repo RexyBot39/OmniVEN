@@ -76,6 +76,7 @@ return [
         'Listening & Research',
         'Creative & Content',
         'AI & Internal Tools',
+        'Affiliate',
     ],
 
     'statuses' => [
