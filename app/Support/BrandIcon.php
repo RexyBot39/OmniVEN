@@ -73,6 +73,25 @@ class BrandIcon
         return null;
     }
 
+    /** Platforms named in free text ("IG carousel + TikTok reel"), in order, for small logos beside it. */
+    public static function mentions(?string $text): array
+    {
+        $patterns = [
+            'instagram' => '/\b(instagram|ig)\b/i', 'facebook' => '/\b(facebook|fb)\b/i', 'tiktok' => '/\btiktok\b/i',
+            'linkedin' => '/\blinkedin\b/i', 'youtube' => '/\byoutube\b/i', 'pinterest' => '/\bpinterest\b/i',
+            'meta' => '/\bads manager\b/i', 'feedly' => '/\bfeedly\b/i', 'klaviyo' => '/\bklaviyo\b/i', 'reddit' => '/\breddit\b/i',
+        ];
+        $found = [];
+        foreach ($patterns as $slug => $re) {
+            if (preg_match($re, (string) $text, $m, PREG_OFFSET_CAPTURE)) {
+                $found[$slug] = $m[0][1];
+            }
+        }
+        asort($found);
+
+        return array_keys($found);
+    }
+
     public static function forTool(Tool $tool): ?string
     {
         return self::forUrl($tool->url) ?? self::forName($tool->name);

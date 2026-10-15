@@ -176,6 +176,14 @@
         <span class="sub">Ticks reset each day, week, month or quarter (Eastern time).@php($myRoutines = $routines->where('assignee_id', $me->id))@if($myRoutines->isNotEmpty()) <b class="mine-n">{{ $myRoutines->reject->isDone()->count() }} of {{ $myRoutines->count() }} assigned to you still due.</b>@endif</span>
         @if($isAdmin)<a class="btn primary" href="{{ route('routines.create') }}">+ Add routine</a>@endif
     </div>
+    @if($calWeek)
+        <a class="cal-strip" href="{{ route('calendar') }}">
+            <b>Action calendar · Week {{ $calWeek->number }}</b>
+            <span class="track"><i style="width:{{ $calProgress['total'] ? round($calProgress['done'] / $calProgress['total'] * 100) : 0 }}%"></i></span>
+            <span class="sub">{{ $calProgress['done'] }} of {{ $calProgress['total'] }} done · {{ $calWeek->range_label }}{{ $calWeek->season_text ? ' · '.\Illuminate\Support\Str::limit($calWeek->season_text, 70) : '' }}</span>
+            <span class="mini">Open →</span>
+        </a>
+    @endif
     <div class="routines">
         @foreach(config('omniven.cadences') as $key => $label)
             @php($rs = $routines->where('cadence', $key))
