@@ -18,7 +18,7 @@ class UserController extends Controller
         return view('people.index', ['users' => User::orderByDesc('is_admin')->orderBy('name')->get()]);
     }
 
-    /** Admins: one person's routines and tasks. Their PostIT notes stay private and are never shown. */
+    /** Admins: one person's routines and tasks. Their sticky notes stay private and are never shown. */
     public function show(User $user): View
     {
         $routines = Routine::with(['brands', 'latestCompletion.user', 'assigner'])->where('assignee_id', $user->id)

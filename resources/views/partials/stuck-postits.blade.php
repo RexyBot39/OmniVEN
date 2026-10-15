@@ -1,6 +1,6 @@
-{{-- Your stuck PostIT notes, floating in the top right of every page. Only you see them. --}}
+{{-- Your stuck sticky notes, floating in the top right of every page. Only you see them. --}}
 @if($stuckPostits->isNotEmpty())
-<aside class="stuck-postits" aria-label="Your stuck PostIT notes">
+<aside class="stuck-postits" aria-label="Your stuck sticky notes">
     @foreach($stuckPostits as $n)
         @php($open = $n->items->whereNull('done_at')->count())
         <details class="postit stuck pi-{{ $n->color }}" open data-stuck="{{ $n->id }}">

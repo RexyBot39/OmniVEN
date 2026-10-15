@@ -94,6 +94,6 @@
         @endif
     </section>
 
-    <p class="sub staff-private">{{ $person->firstName() }}'s PostIT notes are private and never shown here.</p>
+    <p class="sub staff-private">{{ $person->firstName() }}'s sticky notes are private and never shown here.</p>
 </main>
 @endsection

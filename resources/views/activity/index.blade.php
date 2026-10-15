@@ -59,7 +59,7 @@
                         <th class="n">Open / overdue</th>
                         <th class="n">Routines</th>
                         <th class="n">Content</th>
-                        <th class="n">PostIT</th>
+                        <th class="n">Sticky notes</th>
                         <th>Last active</th>
                     </tr>
                 </thead>
@@ -91,7 +91,7 @@
         </div>
         <p class="legend sub">
             Day squares: <span class="cell l0"></span> none <span class="cell l1"></span> 1–2 <span class="cell l2"></span> 3–9 <span class="cell l3"></span> 10+ actions.
-            Open / overdue shows tasks assigned to them right now. Content = tools, brands, routines and Bulletin notes added or edited. PostIT = to-dos checked off (note text stays private).
+            Open / overdue shows tasks assigned to them right now. Content = tools, brands, routines and Bulletin notes added or edited. Sticky notes = to-dos checked off (note text stays private).
         </p>
     </section>
 

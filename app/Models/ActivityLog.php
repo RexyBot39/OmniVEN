@@ -28,7 +28,7 @@ class ActivityLog extends Model
             'note.posted', 'note.updated', 'note.deleted',
             'account.created', 'account.updated', 'account.deleted', 'account.verified',
         ]],
-        'postit' => ['label' => 'PostIT Notes', 'actions' => ['postit.created', 'postit.deleted', 'postit.item_added', 'postit.item_done', 'postit.item_undone', 'postit.cleared']],
+        'postit' => ['label' => 'Sticky Notes', 'actions' => ['postit.created', 'postit.deleted', 'postit.item_added', 'postit.item_done', 'postit.item_undone', 'postit.cleared', 'postit.stuck', 'postit.unstuck']],
         'slack' => ['label' => 'Slack', 'actions' => ['slack.posted', 'slack.channel_added', 'slack.channel_removed']],
         'people' => ['label' => 'People', 'actions' => ['person.added', 'person.updated']],
     ];
