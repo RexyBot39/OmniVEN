@@ -21,15 +21,15 @@ class UserController extends Controller
     /** Admins: one person's routines and tasks. Their PostIT notes stay private and are never shown. */
     public function show(User $user): View
     {
-        $routines = Routine::with(['brands', 'latestCompletion.user'])->where('assignee_id', $user->id)
+        $routines = Routine::with(['brands', 'latestCompletion.user', 'assigner'])->where('assignee_id', $user->id)
             ->orderBy('sort')->orderBy('title')->get();
         $byCadence = collect(config('omniven.cadences'))
             ->map(fn ($label, $key) => ['label' => $label, 'routines' => $routines->where('cadence', $key)->values()])
             ->filter(fn ($c) => $c['routines']->isNotEmpty());
 
-        $openTasks = Task::with('creator')->open()->where('assignee_id', $user->id)
+        $openTasks = Task::with(['creator', 'assigner'])->open()->where('assignee_id', $user->id)
             ->orderByDesc('hot')->orderByRaw('due_on is null')->orderBy('due_on')->latest()->get();
-        $doneTasks = Task::with('assignee')->whereNotNull('completed_at')->where('completed_at', '>=', now()->subDays(30))
+        $doneTasks = Task::with(['assignee', 'assigner', 'completer'])->whereNotNull('completed_at')->where('completed_at', '>=', now()->subDays(30))
             ->where(fn ($q) => $q->where('assignee_id', $user->id)->orWhere('completed_by', $user->id))
             ->latest('completed_at')->limit(50)->get();
         $ticks = RoutineCompletion::with('routine')->where('user_id', $user->id)

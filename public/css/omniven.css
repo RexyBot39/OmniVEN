@@ -574,7 +574,7 @@ a.gap-chip:hover{border-color:var(--teal);color:var(--teal)}
 .staff-list .what b{font-weight:600;overflow-wrap:anywhere}
 .staff-list li.done .what b{color:var(--muted)}
 .staff-feed{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column}
-.staff-feed li{display:grid;grid-template-columns:56px 70px minmax(0,1fr);gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14.5px;align-items:baseline}
+.staff-feed li{display:grid;grid-template-columns:96px 70px minmax(0,1fr);gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14.5px;align-items:baseline}
 .staff-feed li:first-child{border-top:0}
 .staff-feed .when{color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px}
 .staff-feed .kind{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
@@ -583,3 +583,9 @@ a.gap-chip:hover{border-color:var(--teal);color:var(--teal)}
 .staff-private{margin:0}
 .person-link{color:inherit;text-decoration:none}
 .person-link:hover{text-decoration:underline}
+
+/* Admin-only assignment / completion timestamps */
+.stamps{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:5px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.stamp{display:inline-flex;gap:4px;align-items:baseline;background:var(--sunk);border-radius:6px;padding:1px 7px}
+.stamp b{font-weight:700;color:var(--ink);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}
+.stamp.done b{color:var(--good)}

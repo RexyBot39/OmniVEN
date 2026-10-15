@@ -17,12 +17,13 @@
         <div class="rm">
             <span class="who-chip {{ $mine ? 'me-chip' : '' }}">{{ $mine ? 'You' : $t->assignee?->name }}</span>
             @if($t->isDone())
-                <span class="ok">✓ {{ $t->completed_at->format('M j, g:ia') }}{{ $t->completer ? ' · '.$t->completer->firstName() : '' }}</span>
+                <span class="ok">✓ Done{{ $t->completer ? ' · '.$t->completer->firstName() : '' }}</span>
             @else
                 @if($t->dueLabel())<span class="{{ $t->isOverdue() ? 'late' : '' }}">{{ $t->dueLabel() }}</span>@endif
-                <span>from {{ $t->creator?->firstName() ?? '—' }} · {{ $t->created_at->format('M j') }}</span>
+                <span>from {{ ($t->assigner ?? $t->creator)?->firstName() ?? '—' }}</span>
             @endif
         </div>
+        @can('admin')@include('partials.stamps', ['assignedAt' => $t->assigned_at ?? $t->created_at, 'assignedBy' => $t->assigner ?? $t->creator, 'doneAt' => $t->completed_at, 'doneBy' => $t->completer])@endcan
     </div>
     @can('admin')<a class="mini" href="{{ route('tasks.edit', $t) }}">Edit</a>@endcan
 </div>

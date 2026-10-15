@@ -195,12 +195,11 @@
                             <div class="rm">
                                 @if($r->link)<a href="{{ $r->link }}" target="_blank" rel="noopener noreferrer">Open {{ preg_replace('/^www\./', '', parse_url($r->link, PHP_URL_HOST)) }} ↗</a>@endif
                                 @if($done)
-                                    <span class="ok">✓ {{ $r->latestCompletion->completed_at->format('M j, g:ia') }}{{ $r->latestCompletion->user ? ' · '.$r->latestCompletion->user->firstName() : '' }}</span>
-                                @elseif($r->latestCompletion)
-                                    <span>Last done {{ $r->latestCompletion->completed_at->format('M j') }}</span>
+                                    <span class="ok">✓ Done{{ $r->latestCompletion->user ? ' · '.$r->latestCompletion->user->firstName() : '' }}</span>
                                 @endif
                                 <span>{{ implode(', ', $r->brandLabels()) }}</span>
                             </div>
+                            @if($isAdmin)@include('partials.stamps', ['assignedAt' => $r->assignee_id ? $r->assigned_at : null, 'assignedBy' => $r->assigner, 'assignedTo' => $r->assignee, 'doneAt' => $r->latestCompletion?->completed_at, 'doneBy' => $r->latestCompletion?->user, 'doneLabel' => $done ? 'Done' : 'Last done'])@endif
                         </div>
                         @if($isAdmin)<a class="mini" href="{{ route('routines.edit', $r) }}">Edit</a>@endif
                     </div>

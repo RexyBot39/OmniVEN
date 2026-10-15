@@ -45,6 +45,7 @@
                                         @else Never done yet @endif
                                         · {{ implode(', ', $r->brandLabels()) }}
                                     </span>
+                                    @include('partials.stamps', ['assignedAt' => $r->assigned_at, 'assignedBy' => $r->assigner, 'doneAt' => $r->latestCompletion?->completed_at, 'doneBy' => $r->latestCompletion?->user, 'doneLabel' => $done ? 'Done' : 'Last done'])
                                 </div>
                                 <a class="mini" href="{{ route('routines.edit', $r) }}">Edit</a>
                             </li>
@@ -66,7 +67,8 @@
                         <li class="{{ $t->isOverdue() ? 'late' : 'due' }}">
                             <span class="st">{{ $t->hot ? 'Hot' : ($t->isOverdue() ? 'Late' : 'Open') }}</span>
                             <div class="what"><b>{{ $t->title }}</b>
-                                <span class="sub">{{ $t->dueLabel() ?? 'No due date' }}{{ $t->creator ? ' · from '.$t->creator->firstName() : '' }}</span>
+                                <span class="sub">{{ $t->dueLabel() ?? 'No due date' }}{{ ($t->assigner ?? $t->creator) ? ' · from '.($t->assigner ?? $t->creator)->firstName() : '' }}</span>
+                                @include('partials.stamps', ['assignedAt' => $t->assigned_at ?? $t->created_at, 'assignedBy' => $t->assigner ?? $t->creator])
                             </div>
                             <a class="mini" href="{{ route('tasks.edit', $t) }}">Edit</a>
                         </li>
@@ -86,7 +88,7 @@
         @else
             <ul class="staff-feed">
                 @foreach($recent as $e)
-                    <li><span class="when">{{ $e['at']->format('M j') }}</span><span class="kind k-{{ strtolower($e['kind']) }}">{{ $e['kind'] }}</span><span class="t">{{ $e['title'] }}@if($e['note']) <span class="sub">{{ $e['note'] }}</span>@endif</span></li>
+                    <li><span class="when" title="{{ $e['at']->timezone(config('app.timezone'))->format('M j, Y g:ia') }}">{{ $e['at']->timezone(config('app.timezone'))->format('M j g:ia') }}</span><span class="kind k-{{ strtolower($e['kind']) }}">{{ $e['kind'] }}</span><span class="t">{{ $e['title'] }}@if($e['note']) <span class="sub">{{ $e['note'] }}</span>@endif</span></li>
                 @endforeach
             </ul>
         @endif

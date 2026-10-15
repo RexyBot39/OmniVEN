@@ -13,11 +13,11 @@ class Routine extends Model
 {
     use HasBrandScope;
 
-    protected $fillable = ['title', 'cadence', 'description', 'link', 'all_brands', 'sort', 'assignee_id'];
+    protected $fillable = ['title', 'cadence', 'description', 'link', 'all_brands', 'sort', 'assignee_id', 'assigned_at', 'assigned_by'];
 
     protected function casts(): array
     {
-        return ['all_brands' => 'boolean', 'sort' => 'integer'];
+        return ['all_brands' => 'boolean', 'sort' => 'integer', 'assigned_at' => 'datetime'];
     }
 
     public function brands(): BelongsToMany
@@ -29,6 +29,12 @@ class Routine extends Model
     public function assignee(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'assignee_id');
+    }
+
+    /** The admin who assigned it to its current person. */
+    public function assigner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 
     public function completions(): HasMany
