@@ -24,7 +24,7 @@ class DashboardController extends Controller
 
         $brands = Brand::orderBy('sort')->orderBy('name')->get();
         $tools = Tool::with('brands')->orderBy('sort')->orderBy('name')->get();
-        $routines = Routine::with(['brands', 'latestCompletion.user', 'assignee'])->orderBy('sort')->orderBy('title')->get();
+        $routines = Routine::with(['brands', 'latestCompletion.user', 'assignee', 'assigner'])->orderBy('sort')->orderBy('title')->get();
         $notes = Note::with('user')->orderByDesc('pinned')->latest()->limit(12)->get();
 
         $categories = collect(config('omniven.categories'))
@@ -35,9 +35,9 @@ class DashboardController extends Controller
         $uncategorized = $tools->whereNull('category')->values();
 
         // Tasks: everything open, plus the last 14 days of finished work.
-        $openTasks = Task::with(['assignee', 'creator'])->open()
+        $openTasks = Task::with(['assignee', 'creator', 'assigner'])->open()
             ->orderByDesc('hot')->orderByRaw('due_on is null')->orderBy('due_on')->latest()->get();
-        $doneTasks = Task::with(['assignee', 'completer'])->whereNotNull('completed_at')
+        $doneTasks = Task::with(['assignee', 'completer', 'assigner'])->whereNotNull('completed_at')
             ->where('completed_at', '>=', now()->subDays(14))->latest('completed_at')->limit(50)->get();
         $hotlist = $openTasks->where('hot', true)->values();
 

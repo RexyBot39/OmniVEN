@@ -46,6 +46,7 @@ class RoutineController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $routine = new Routine($this->validated($request));
+        $this->stampAssignment($routine, $request);
         $this->applyBrands($routine, $request);
         Activity::log('routine.created', "Added routine “{$routine->title}”".$this->assignedText($routine), $routine);
 
@@ -61,6 +62,9 @@ class RoutineController extends Controller
     {
         $routine->fill($this->validated($request));
         $reassigned = $routine->isDirty('assignee_id');
+        if ($reassigned) {
+            $this->stampAssignment($routine, $request);
+        }
         $this->applyBrands($routine, $request);
         Activity::log('routine.updated', "Edited routine “{$routine->title}”".($reassigned ? $this->assignedText($routine) : ''), $routine);
 
@@ -82,6 +86,14 @@ class RoutineController extends Controller
             'brands' => Brand::orderBy('sort')->get(),
             'people' => User::where('is_active', true)->orWhere('id', $routine->assignee_id)->orderBy('name')->get(),
         ]);
+    }
+
+    /** Record when and by whom the routine got its current person (cleared for "whole team"). */
+    private function stampAssignment(Routine $routine, Request $request): void
+    {
+        $routine->fill($routine->assignee_id
+            ? ['assigned_at' => now(), 'assigned_by' => $request->user()->id]
+            : ['assigned_at' => null, 'assigned_by' => null]);
     }
 
     private function assignedText(Routine $routine): string

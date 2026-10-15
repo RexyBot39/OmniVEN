@@ -16,7 +16,9 @@ class TaskController extends Controller
     /** Admins assign tasks to anyone, including other admins. */
     public function store(Request $request): RedirectResponse
     {
-        $task = Task::create($this->validated($request) + ['created_by' => $request->user()->id]);
+        $task = Task::create($this->validated($request) + [
+            'created_by' => $request->user()->id, 'assigned_at' => now(), 'assigned_by' => $request->user()->id,
+        ]);
         Activity::log('task.assigned', "Assigned “{$task->title}” to {$task->assignee->name}".($task->hot ? ' (Hotlist)' : ''), $task);
 
         return $this->back("Assigned “{$task->title}” to {$task->assignee->firstName()}.");
@@ -29,8 +31,13 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task): RedirectResponse
     {
-        $task->update($this->validated($request));
-        Activity::log('task.updated', "Edited task “{$task->title}”", $task);
+        $task->fill($this->validated($request));
+        $reassigned = $task->isDirty('assignee_id');
+        if ($reassigned) {
+            $task->fill(['assigned_at' => now(), 'assigned_by' => $request->user()->id]);
+        }
+        $task->save();
+        Activity::log('task.updated', "Edited task “{$task->title}”".($reassigned ? " · reassigned to {$task->assignee->name}" : ''), $task);
 
         return $this->back('Task saved.');
     }

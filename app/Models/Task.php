@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
-    protected $fillable = ['title', 'details', 'assignee_id', 'created_by', 'hot', 'due_on', 'completed_at', 'completed_by'];
+    protected $fillable = ['title', 'details', 'assignee_id', 'created_by', 'hot', 'due_on', 'completed_at', 'completed_by', 'assigned_at', 'assigned_by'];
 
     protected function casts(): array
     {
-        return ['hot' => 'boolean', 'due_on' => 'date', 'completed_at' => 'datetime'];
+        return ['hot' => 'boolean', 'due_on' => 'date', 'completed_at' => 'datetime', 'assigned_at' => 'datetime'];
     }
 
     public function assignee(): BelongsTo
@@ -23,6 +23,12 @@ class Task extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /** The admin who assigned it (or last reassigned it). */
+    public function assigner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 
     public function completer(): BelongsTo
