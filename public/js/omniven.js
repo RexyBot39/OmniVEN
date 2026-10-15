@@ -386,6 +386,70 @@
   }
   const state = { tab: 'routines', brand: store.get('brand') || 'all', q: '' };
 
+  // ---- Omni search: the search box also looks across all of OmniVEN ----
+  const omni = document.getElementById('omni');
+  if (q && omni) {
+    let oTimer, oReq = 0, oLinks = [], oSel = -1;
+    const oEsc = (t) => { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; };
+    const oMark = (text, words) => {
+      let h = oEsc(text);
+      words.forEach((w) => { if (w.length > 1) h = h.replace(new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig'), '<mark>$1</mark>'); });
+      return h;
+    };
+    const oIcon = (ic) => (!ic || !/^[a-z0-9]+$/.test(ic.s) || !/^#[0-9A-Fa-f]{6}$/.test(ic.h)) ? ''
+      : '<span class="bi bi-sm ' + oEsc(ic.c) + '" style="--bi:' + ic.h + '" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="' + oEsc(omni.dataset.icons) + '#bi-' + ic.s + '"></use></svg></span>';
+    const oClose = () => { omni.hidden = true; q.setAttribute('aria-expanded', 'false'); oSel = -1; };
+    const oPick = (i) => {
+      oSel = i;
+      oLinks.forEach((a, j) => a.setAttribute('aria-selected', String(j === i)));
+      if (oLinks[i]) { oLinks[i].scrollIntoView({ block: 'nearest' }); q.setAttribute('aria-activedescendant', oLinks[i].id); }
+    };
+    function oRender(data) {
+      const words = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      const groups = data.groups || [];
+      let n = 0;
+      const real = groups.filter((g) => g.label !== 'Help');
+      omni.innerHTML = (real.length ? '' : '<div class="omni-empty">Nothing in OmniVEN matches “' + oEsc(q.value.trim()) + '”.</div>')
+        + groups.map((g) => '<div class="omni-g" role="group" aria-label="' + oEsc(g.label) + '"><div class="omni-h"><span>' + oEsc(g.label) + '</span>' + (g.total > g.items.length ? '<span>' + g.items.length + ' of ' + g.total + '</span>' : '') + '</div>'
+          + g.items.map((it) => '<a id="om-' + (n++) + '" role="option" aria-selected="false" href="' + oEsc(it.u) + '"' + (it.x ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + oIcon(it.ic)
+            + '<span class="ot"><b>' + oMark(it.t, words) + '</b>' + (it.s ? '<small>' + oMark(it.s, words) + '</small>' : '') + '</span>' + (it.x ? '<span class="ox" aria-hidden="true">↗</span>' : '') + '</a>').join('') + '</div>').join('')
+        + '<div class="omni-foot">↑ ↓ to move · Enter to open · Esc to close. This tab is filtered too.</div>';
+      oLinks = [...omni.querySelectorAll('a[role=option]')];
+      omni.hidden = false; q.setAttribute('aria-expanded', 'true');
+      oPick(oLinks.length ? 0 : -1);
+    }
+    async function oSearch() {
+      const term = q.value.trim();
+      if (term.length < 2) { oClose(); return; }
+      const mine = ++oReq;
+      try {
+        const res = await fetch(omni.dataset.src + '?q=' + encodeURIComponent(term), { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+        if (!res.ok || mine !== oReq) return;
+        oRender(await res.json());
+      } catch {}
+    }
+    q.addEventListener('input', () => { clearTimeout(oTimer); oTimer = setTimeout(oSearch, 180); });
+    q.addEventListener('focus', () => { if (q.value.trim().length > 1 && omni.innerHTML) { omni.hidden = false; q.setAttribute('aria-expanded', 'true'); } });
+    q.addEventListener('keydown', (e) => {
+      if (omni.hidden) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); oPick(Math.min(oSel + 1, oLinks.length - 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); oPick(Math.max(oSel - 1, 0)); }
+      else if (e.key === 'Enter' && oLinks[oSel]) { e.preventDefault(); oLinks[oSel].click(); }
+      else if (e.key === 'Escape') { e.preventDefault(); oClose(); }
+    });
+    omni.addEventListener('click', (e) => {
+      const a = e.target.closest('a[role=option]');
+      if (!a) return;
+      oClose();
+      // Same-page tab links switch tabs instead of reloading.
+      const u = new URL(a.href);
+      if (!a.target && u.origin + u.pathname + u.search === location.origin + location.pathname + location.search && u.hash) {
+        e.preventDefault(); location.hash = u.hash; window.dispatchEvent(new HashChangeEvent('hashchange'));
+      }
+    });
+    document.addEventListener('click', (e) => { if (!e.target.closest('.omni-wrap')) oClose(); });
+  }
+
   // ---- Slack tab ----
   const slackBox = document.getElementById('slack-feed');
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content;

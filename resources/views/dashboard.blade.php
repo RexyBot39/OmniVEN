@@ -34,10 +34,13 @@
                 <button class="tab" role="tab" data-tab="tools" aria-selected="false">Tools<span class="n">{{ $tools->count() }}</span></button>
                 <button class="tab" role="tab" data-tab="access" aria-selected="false">Access @if($openRequests->isNotEmpty())<span class="n req-n">{{ $openRequests->count() }} {{ Str::plural('request', $openRequests->count()) }}</span>@endif</button>
             </div>
-            <label class="search">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                <input id="q" type="search" placeholder="Search tools, logins, routines…" autocomplete="off" aria-label="Search">
-            </label>
+            <div class="omni-wrap">
+                <label class="search">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    <input id="q" type="search" placeholder="Search everything: brands, tools, routines, tasks…" autocomplete="off" aria-label="Search everything in OmniVEN" role="combobox" aria-expanded="false" aria-controls="omni" aria-autocomplete="list">
+                </label>
+                <div class="omni" id="omni" role="listbox" aria-label="Search results" data-src="{{ route('search') }}" data-icons="{{ \App\Support\BrandIcon::spriteUrl() }}" hidden></div>
+            </div>
         </div>
         <div class="chips" aria-label="Filter by brand">
             <button class="chip" data-brand="all" aria-pressed="true">All brands</button>
