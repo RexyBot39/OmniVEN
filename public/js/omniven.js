@@ -117,6 +117,11 @@
       return sc - order[it.k] + (it.f !== undefined ? 15 : 0) + (it.r !== undefined ? 8 - Math.min(it.r, 7) : 0);
     }
     function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    // Brand mark (Instagram, Google Ads…) from the shared sprite, in its brand color.
+    function mark(ic) {
+      if (!ic || !/^[a-z0-9]+$/.test(ic.s) || !/^#[0-9A-Fa-f]{6}$/.test(ic.h)) return '';
+      return '<span class="bi bi-xs ' + esc(ic.c) + '" style="--bi:' + ic.h + '" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="' + esc(list.dataset.icons) + '#bi-' + ic.s + '"></use></svg></span>';
+    }
     function render() {
       const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
       shown = !words.length
@@ -128,7 +133,7 @@
         : items.map((it) => [score(it, words), it]).filter(([sc]) => sc >= 0).sort((a, b) => b[0] - a[0]).slice(0, 12).map(([, it]) => it);
       sel = 0;
       list.innerHTML = shown.length ? shown.map((it, i) =>
-        '<li role="option" id="ln-' + i + '" aria-selected="' + (i === sel) + '" data-i="' + i + '"><span class="ln-k ln-' + it.k.toLowerCase() + '">' + it.k + '</span><span class="ln-t"><b>' + (it.f !== undefined ? '<span class="ln-star" aria-label="starred">★</span> ' : '') + esc(it.t) + '</b>' + (it.s ? '<small>' + esc(it.s) + '</small>' : '') + '</span>' + (it.x ? '<span class="ln-ext" aria-hidden="true">↗</span>' : '') + '</li>'
+        '<li role="option" id="ln-' + i + '" aria-selected="' + (i === sel) + '" data-i="' + i + '"><span class="ln-k ln-' + it.k.toLowerCase() + '">' + it.k + '</span><span class="ln-t"><b>' + (it.f !== undefined ? '<span class="ln-star" aria-label="starred">★</span> ' : '') + mark(it.ic) + esc(it.t) + '</b>' + (it.s ? '<small>' + esc(it.s) + '</small>' : '') + '</span>' + (it.x ? '<span class="ln-ext" aria-hidden="true">↗</span>' : '') + '</li>'
       ).join('') : '<li class="ln-empty">Nothing matches. Try a brand name or a platform like “instagram”.</li>';
       input.setAttribute('aria-activedescendant', shown.length ? 'ln-0' : '');
     }

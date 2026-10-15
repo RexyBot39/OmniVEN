@@ -1,5 +1,6 @@
 <article class="tool" data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->description.' '.$t->category.' '.$t->login.' '.$t->owner.' '.$t->access_note) }}">
-    <span class="mono" style="--c:var(--c{{ $t->categorySlot() }})">{{ $t->initials() }}</span>
+    @php($ic = \App\Support\BrandIcon::forTool($t))
+    @if($ic){{ \App\Support\BrandIcon::html($ic, 'lg', $t->name) }}@else<span class="mono" style="--c:var(--c{{ $t->categorySlot() }})">{{ $t->initials() }}</span>@endif
     <div class="t">
         @if($t->url)
             <a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $t->launchKey() }}">{{ $t->name }} ↗</a>
