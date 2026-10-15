@@ -70,6 +70,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/accounts/{account}/verify', [AccountController::class, 'verify'])->name('accounts.verify');
         Route::post('/tools/{tool}/verify', [ToolController::class, 'verify'])->name('tools.verify');
         Route::get('/access/review', [AccessRequestController::class, 'review'])->name('access.review');
+        Route::get('/calendar/{week}/items/create', [\App\Http\Controllers\CalendarItemController::class, 'create'])->name('calendar.items.create');
+        Route::post('/calendar/{week}/items', [\App\Http\Controllers\CalendarItemController::class, 'store'])->name('calendar.items.store');
+        Route::get('/calendar/{week}/items/{item}/edit', [\App\Http\Controllers\CalendarItemController::class, 'edit'])->name('calendar.items.edit');
+        Route::put('/calendar/{week}/items/{item}', [\App\Http\Controllers\CalendarItemController::class, 'update'])->name('calendar.items.update');
+        Route::delete('/calendar/{week}/items/{item}', [\App\Http\Controllers\CalendarItemController::class, 'destroy'])->name('calendar.items.destroy');
         Route::post('/links/check', [\App\Http\Controllers\LinkCheckController::class, 'run'])->middleware('throttle:3,10')->name('links.check');
         Route::post('/access-requests/{accessRequest}/grant', [AccessRequestController::class, 'grant'])->name('access-requests.grant');
         Route::post('/access-requests/{accessRequest}/decline', [AccessRequestController::class, 'decline'])->name('access-requests.decline');

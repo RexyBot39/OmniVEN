@@ -42,7 +42,7 @@
 <main class="wrap cal-main">
     <div class="cal-col">
         <section class="panel" id="week">
-            <h2>Week {{ $week->number }}{{ $week->is($current) ? ' — this week' : '' }}<span class="c">{{ $week->range_label }}</span></h2>
+            <h2>Week {{ $week->number }}{{ $week->is($current) ? ' — this week' : '' }}<span class="c">{{ $week->range_label }}</span>@if($isAdmin)<a class="btn add-item" href="{{ route('calendar.items.create', $week) }}">+ Add item</a>@endif</h2>
             @if($week->phase_label)
                 <div class="banner phase"><div class="bl">{{ $week->phase_label }}</div><p>{{ $week->phase_text }}</p></div>
             @else
@@ -68,11 +68,13 @@
                                 @if($brand)<span class="cpill brand" style="--c:var(--c{{ $brand->colorSlot() }})">{{ $brand->name }}</span>@else<span class="cpill all">All brands</span>@endif
                                 @if($it->keyword)<span class="cpill kw">{{ $it->keyword }}</span>@endif
                                 @if($it->owner === 'Marc')<span class="cpill marc">Marc signs off</span>@else<span class="cpill own">{{ $it->owner }}</span>@endif
+                                @if($isAdmin && ! $it->calendar_week_id && $it->day !== 'Setup')<span class="cpill own" title="Repeats every week">↻ Every week</span>@endif
                                 @if($c)<span class="ok-t">✓ {{ $c->user?->firstName() ?? 'Done' }}</span>@endif
                             </div>
                             @if($it->done_when)<div class="dw"><b>Done when</b>{{ $it->done_when }}</div>@endif
                             @if($isAdmin && $c)@include('partials.stamps', ['doneAt' => $c->checked_at, 'doneBy' => $c->user])@endif
                         </div>
+                        @if($isAdmin)<a class="mini item-edit" href="{{ route('calendar.items.edit', [$week, $it]) }}" title="{{ $it->calendar_week_id ? 'Only this week' : 'Repeats every week' }}">Edit</a>@endif
                     </div>
                 @endforeach
             @endforeach
