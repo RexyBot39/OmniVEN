@@ -136,7 +136,7 @@
     syncKind();
   }
 
-  // Stuck PostIT notes: click the title to fold one away. Remembered per note; folded by default on phones.
+  // Stuck sticky notes: click the title to fold one away. Remembered per note; folded by default on phones.
   document.querySelectorAll('details[data-stuck]').forEach((d) => {
     const key = 'stuck-open:' + d.dataset.stuck;
     const saved = store.get(key);

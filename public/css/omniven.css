@@ -265,7 +265,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--teal)}
 .fld.grow{flex:1 1 220px}
 .fld input[type=date],.fld input[type=email]{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;width:100%}
 
-/* PostIT notes */
+/* Sticky notes */
 .new-postit{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
 .new-postit input[type=text]{flex:1 1 240px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 11px}
 .swatches{display:flex;gap:6px}
@@ -805,7 +805,7 @@ a.gap-chip:hover{border-color:var(--teal);color:var(--teal)}
 .fld .kind-opt:has(input:checked){border-color:var(--teal);background:var(--accent-soft)}
 .work-form .two{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 
-/* Stuck PostIT notes: float top right on every page */
+/* Stuck sticky notes: float top right on every page */
 .stuck-postits{position:fixed;top:calc(72px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:40;width:250px;max-height:calc(100vh - 92px);overflow:auto;display:flex;flex-direction:column;gap:12px;padding:4px 4px 12px;pointer-events:none}
 .stuck-postits .postit{pointer-events:auto;transform:rotate(.8deg);padding:12px 14px 10px;gap:6px;box-shadow:0 1px 1px rgb(0 0 0 / .1),0 14px 24px -12px rgb(0 0 0 / .55)}
 .stuck-postits .postit:nth-child(even){transform:rotate(-.6deg)}

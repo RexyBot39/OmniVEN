@@ -101,7 +101,7 @@ class RoutineAssignmentTest extends TestCase
             ->assertSee('Fix the Ocusafe feed')->assertDontSee('Pat task')
             ->assertSee('Old finished task')
             ->assertSee('✓ Done')
-            ->assertSee('PostIT notes are private')
+            ->assertSee('sticky notes are private')
             ->assertDontSee('Secret list');
 
         $this->actingAs($this->admin)->get('/people')->assertSee(route('people.show', $this->leona), false);

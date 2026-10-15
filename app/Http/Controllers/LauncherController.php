@@ -20,11 +20,13 @@ class LauncherController extends Controller
         $items = collect();
 
         $pages = [
-            ['Routines', 'routines'], ['Tasks', 'tasks'], ['PostIT Notes', 'postit'], ['Slack', 'slack'],
+            ['Routines', 'routines'], ['Tasks', 'tasks'], ['Sticky Notes', 'postit'], ['Slack', 'slack'],
             ['Brands', 'brands'], ['Tools', 'tools'], ['Access', 'access'],
         ];
+        // Old names people may still type.
+        $aliases = ['postit' => 'postit post-it postits notes'];
         foreach ($pages as [$name, $tab]) {
-            $items->push(['k' => 'Page', 't' => $name, 's' => 'OmniVEN tab', 'u' => $home.'#'.$tab, 'x' => false]);
+            $items->push(['k' => 'Page', 't' => $name, 's' => 'OmniVEN tab', 'u' => $home.'#'.$tab, 'x' => false, 'a' => $aliases[$tab] ?? '']);
         }
         $items->push(['k' => 'Page', 't' => 'Action calendar', 's' => 'This week\'s runbook, boost log and Sunday review', 'u' => route('calendar'), 'x' => false, 'a' => 'q4 week runbook boost calendar']);
         $items->push(['k' => 'Page', 't' => 'Help', 's' => 'Field guide: setup, shortcuts and playbooks', 'u' => route('help'), 'x' => false, 'a' => 'guide how to faq field guide']);

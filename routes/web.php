@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::post('/tasks/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
 
-    // PostIT notes: personal to-do lists.
+    // Sticky notes: personal to-do lists.
     Route::post('/postits', [PostItController::class, 'store'])->name('postits.store');
     Route::put('/postits/{postit}', [PostItController::class, 'update'])->name('postits.update');
     Route::delete('/postits/{postit}', [PostItController::class, 'destroy'])->name('postits.destroy');

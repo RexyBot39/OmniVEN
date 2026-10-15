@@ -70,7 +70,7 @@ class StuckPostItTest extends TestCase
             ->assertSee('Brief the Ocusleep designer')
             ->assertSee('Stick to screen');
 
-        // Stick it again from the PostIT tab.
+        // Stick it again from the Sticky Notes tab.
         $this->actingAs($this->pat)->post("/postits/{$note->id}/stick")->assertRedirect(route('dashboard').'#postit');
         $this->assertTrue($note->fresh()->stuck);
     }
@@ -93,7 +93,7 @@ class StuckPostItTest extends TestCase
         $this->actingAs($this->pat)->post("/postits/{$note->id}/stick", ['from_sticky' => '1']);
 
         $logged = ActivityLog::pluck('description')->implode(' ');
-        $this->assertStringContainsString('Unstuck a PostIT note', $logged);
+        $this->assertStringContainsString('Unstuck a sticky note', $logged);
         $this->assertStringNotContainsString('Launch week', $logged);
         $this->assertStringNotContainsString('Ocusleep designer', $logged);
     }

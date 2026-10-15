@@ -64,7 +64,7 @@ class ActivityController extends Controller
                         }
                     });
             } else {
-                fputcsv($out, ['Week of', 'Person', 'Email', 'Role', 'Days active', 'Sign-ins', 'Tasks completed', 'Open tasks', 'Overdue tasks', 'Routines ticked', 'Content added/edited', 'PostIT check-offs', 'Total actions', 'Last active (ET)']);
+                fputcsv($out, ['Week of', 'Person', 'Email', 'Role', 'Days active', 'Sign-ins', 'Tasks completed', 'Open tasks', 'Overdue tasks', 'Routines ticked', 'Content added/edited', 'Sticky note check-offs', 'Total actions', 'Last active (ET)']);
                 foreach ($this->summary($start, $end) as $r) {
                     fputcsv($out, [$start->format('Y-m-d'), $r['user']->name, $r['user']->email, $r['user']->is_admin ? 'Admin' : 'Staff',
                         $r['days_active'], $r['sign_ins'], $r['tasks_done'], $r['open'], $r['overdue'], $r['routines'], $r['content'],
