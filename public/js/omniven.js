@@ -21,6 +21,99 @@
   // Selects that jump to a page (e.g. the person switcher on a staff page).
   document.querySelectorAll('select[data-nav]').forEach((s) => s.addEventListener('change', () => { if (s.value) location.href = s.value; }));
 
+  // ---- Help page: search, contents highlight, admin checklist ----
+  const helpMain = document.querySelector('.help-main');
+  if (helpMain) {
+    const hq = document.getElementById('help-q');
+    const sections = [...helpMain.querySelectorAll('section[id]')];
+    const railLinks = [...document.querySelectorAll('.help-rail nav a')];
+    const ITEMS = '.steps > li, .tab-card, .key, .lede, .how > article, .setup > article, tbody tr, .play, .rule, .check li';
+    // Keep step numbers fixed while some steps are filtered out.
+    helpMain.querySelectorAll('.steps').forEach((ol) => [...ol.children].forEach((li, i) => { li.dataset.n = i + 1; }));
+
+    const unmark = () => helpMain.querySelectorAll('mark').forEach((m) => {
+      const p = m.parentNode; p.replaceChild(document.createTextNode(m.textContent), m); p.normalize();
+    });
+    const markIn = (el, terms) => {
+      const re = new RegExp('(' + terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walk.nextNode()) if (walk.currentNode.nodeValue.trim()) nodes.push(walk.currentNode);
+      nodes.forEach((n) => {
+        if (!re.test(n.nodeValue)) return;
+        re.lastIndex = 0;
+        const frag = document.createDocumentFragment();
+        n.nodeValue.split(re).forEach((part, i) => {
+          if (!part) return;
+          if (i % 2) { const m = document.createElement('mark'); m.textContent = part; frag.appendChild(m); } else frag.appendChild(document.createTextNode(part));
+        });
+        n.parentNode.replaceChild(frag, n);
+      });
+    };
+
+    function search() {
+      unmark();
+      const terms = hq.value.toLowerCase().split(/\s+/).filter(Boolean);
+      let hits = 0, secs = 0;
+      sections.forEach((sec) => {
+        const items = [...sec.querySelectorAll(ITEMS)];
+        const title = (sec.querySelector('h2')?.textContent || '').toLowerCase();
+        // A search that names the section (e.g. "shortcuts") shows all of it.
+        const whole = terms.length && terms.every((t) => title.includes(t));
+        let n = 0;
+        items.forEach((it) => {
+          const text = (it.textContent + ' ' + title).toLowerCase();
+          const ok = !terms.length || whole || terms.every((t) => text.includes(t));
+          it.hidden = !ok;
+          if (ok && terms.length) { if (!it.classList.contains('lede')) n++; markIn(it, terms); }
+        });
+        sec.querySelectorAll('.tablewrap').forEach((w) => { w.hidden = !!terms.length && !w.querySelector('tbody tr:not([hidden])'); });
+        const show = !terms.length || whole || n > 0;
+        sec.hidden = !show;
+        hits += n; if (show && terms.length) secs++;
+        railLinks.forEach((a) => { if (a.getAttribute('href') === '#' + sec.id) a.hidden = !show; });
+      });
+      document.getElementById('help-none').hidden = !terms.length || secs > 0;
+      document.getElementById('help-count').textContent = terms.length
+        ? (secs ? hits + ' ' + (hits === 1 ? 'match' : 'matches') + ' in ' + secs + ' ' + (secs === 1 ? 'section' : 'sections') : 'No matches')
+        : '';
+    }
+    let ht;
+    hq.addEventListener('input', () => { clearTimeout(ht); ht = setTimeout(search, 120); });
+    hq.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && hq.value) { e.preventDefault(); hq.value = ''; search(); }
+      if (e.key === 'Enter') { e.preventDefault(); helpMain.querySelector('section:not([hidden])')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+    // /help?q=boost opens with a search already run.
+    const preset = new URLSearchParams(location.search).get('q');
+    if (preset) { hq.value = preset; search(); }
+
+    // Highlight the section in view in the contents rail.
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+        if (en.isIntersecting) railLinks.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + en.target.id));
+      }), { rootMargin: '-30% 0px -60% 0px' });
+      sections.forEach((s) => io.observe(s));
+    }
+
+    // Admin checklist: ticks are kept in this browser only.
+    const boxes = [...document.querySelectorAll('#help-checks input')];
+    if (boxes.length) {
+      let saved = {};
+      try { saved = JSON.parse(store.get('help-checks') || '{}') || {}; } catch { saved = {}; }
+      boxes.forEach((b) => { b.checked = !!saved[b.id]; });
+      const update = () => {
+        const n = boxes.filter((b) => b.checked).length;
+        document.getElementById('help-checked').textContent = n + ' of ' + boxes.length + ' done';
+        document.getElementById('help-meter').style.width = (n / boxes.length * 100) + '%';
+      };
+      const save = () => { const s = {}; boxes.forEach((b) => { if (b.checked) s[b.id] = 1; }); store.set('help-checks', JSON.stringify(s)); };
+      boxes.forEach((b) => b.addEventListener('change', () => { save(); update(); }));
+      document.getElementById('help-reset').addEventListener('click', () => { boxes.forEach((b) => { b.checked = false; }); save(); update(); });
+      update();
+    }
+  }
+
   // Show/hide toggles (e.g. the note form).
   document.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('click', () => {
     const el = document.getElementById(b.dataset.toggle);
