@@ -1,7 +1,7 @@
 <?php
 
 // Brand marks shown next to social and tool links: slug => label and brand color.
-// Shapes live in public/images/brand-icons.svg (Simple Icons, CC0; Microsoft and Klaviyo drawn).
+// Shapes live in public/images/brand-icons.svg (Simple Icons, CC0; Microsoft and Klaviyo drawn; Shopper Approved traced from its logo).
 return [
     'reddit' => ['label' => 'Reddit', 'hex' => '#FF4500'],
     'instagram' => ['label' => 'Instagram', 'hex' => '#FF0069'],
@@ -27,6 +27,6 @@ return [
     'linkedin' => ['label' => 'LinkedIn', 'hex' => '#0A66C2'],
     'microsoft' => ['label' => 'Microsoft', 'hex' => '#FFFFFF', 'multicolor' => true],
     'klaviyo' => ['label' => 'Klaviyo', 'hex' => '#232426'],
-    // Stand-in rosette until the official Shopper Approved logo is supplied.
-    'shopperapproved' => ['label' => 'Shopper Approved', 'hex' => '#1F7A4D'],
+    // Traced from the logo Marc supplied (navy star, orange check), shown on a white tile.
+    'shopperapproved' => ['label' => 'Shopper Approved', 'hex' => '#E86600', 'multicolor' => true],
 ];
