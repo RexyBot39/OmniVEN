@@ -685,3 +685,8 @@ a.gap-chip:hover{border-color:var(--teal);color:var(--teal)}
 .cal-strip .track{flex:1 1 160px;max-width:260px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
 .cal-strip .track i{display:block;height:100%;background:var(--teal)}
 .cal-strip .sub{flex:1 1 200px}
+.cal-task{grid-template-columns:28px minmax(0,1fr) auto}
+.cal-task .item-edit{align-self:start}
+.cal-main .panel>h2 .add-item{font-family:var(--f-body);font-size:13px;padding:4px 12px;margin-left:8px}
+.form .scope{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.form .scope legend{font-weight:600;margin-bottom:4px;padding:0}
