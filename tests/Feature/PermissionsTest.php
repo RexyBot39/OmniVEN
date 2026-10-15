@@ -53,7 +53,7 @@ class PermissionsTest extends TestCase
         $this->actingAs($admin)->post('/tools', [
             'name' => 'Pinterest Business', 'url' => 'https://business.pinterest.com', 'category' => 'Social & Community',
             'status' => 'verify', 'brands' => ['ocusafe', 'neurolux'], 'featured' => '1',
-        ])->assertRedirect('/');
+        ])->assertRedirect(route('dashboard').'#tools');
         $tool = Tool::where('name', 'Pinterest Business')->first();
         $this->assertTrue($tool->featured);
         $this->assertEqualsCanonicalizing(['ocusafe', 'neurolux'], $tool->brands->pluck('slug')->all());
@@ -118,5 +118,32 @@ class PermissionsTest extends TestCase
         $count = Tool::count();
         $this->seed(OmniVenSeeder::class);
         $this->assertSame($count, Tool::count());
+    }
+
+    public function test_admin_manages_access_items_from_the_access_tab(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->actingAs($admin)->get('/')->assertSee('+ Add item')->assertSee('return=access', false);
+        $this->actingAs($admin)->get('/tools/create?return=access')->assertOk()->assertSee('Add an access item')->assertSee('name="return" value="access"', false);
+
+        $this->actingAs($admin)->post('/tools', [
+            'name' => 'Pinterest Business', 'url' => 'https://business.pinterest.com', 'status' => 'verify',
+            'login' => 'marketing@39dollarglasses.com', 'owner' => 'Leona', 'access_note' => 'Ask Leona', 'brands' => ['all'], 'return' => 'access',
+        ])->assertRedirect(route('dashboard').'#access');
+
+        $tool = Tool::where('name', 'Pinterest Business')->first();
+        $this->actingAs($admin)->put("/tools/{$tool->id}", ['name' => 'Pinterest Business', 'status' => 'active', 'owner' => 'Marc', 'return' => 'access'])
+            ->assertRedirect(route('dashboard').'#access');
+        $this->assertSame('Marc', $tool->fresh()->owner);
+
+        $this->actingAs($admin)->delete("/tools/{$tool->id}?return=access")->assertRedirect(route('dashboard').'#access');
+        $this->assertNull(Tool::find($tool->id));
+    }
+
+    public function test_staff_see_no_access_edit_controls(): void
+    {
+        $html = $this->actingAs(User::factory()->create())->get('/')->getContent();
+        $this->assertStringNotContainsString('+ Add item', $html);
+        $this->assertStringNotContainsString('row-actions', $html);
     }
 }

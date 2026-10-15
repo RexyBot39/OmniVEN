@@ -219,14 +219,14 @@
 
 {{-- ================= ACCESS ================= --}}
 <section data-view="access" hidden>
-    <div class="h2row"><h2>Access &amp; owners</h2><span class="sub">Which account each tool lives under and how to get in</span></div>
+    <div class="h2row"><h2>Access &amp; owners</h2><span class="sub">Which account each tool lives under and how to get in</span>@if($isAdmin)<a class="btn primary" href="{{ route('tools.create', ['return' => 'access']) }}">+ Add item</a>@endif</div>
     <div class="callout">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         <div>Never put passwords or 2FA codes in OmniVEN. List the login account and who grants access; credentials stay in the password manager.</div>
     </div>
     <div class="tablewrap">
         <table>
-            <thead><tr><th>Tool</th><th>Status</th><th>Login account</th><th>Owner</th><th>How to get access</th><th>Brands</th></tr></thead>
+            <thead><tr><th>Tool</th><th>Status</th><th>Login account</th><th>Owner</th><th>How to get access</th><th>Brands</th>@if($isAdmin)<th class="actions-h"><span class="sr">Actions</span></th>@endif</tr></thead>
             <tbody>
                 @foreach($tools->sortBy(fn ($t) => [array_search($t->category, config('omniven.categories')) ?: 99, $t->name]) as $t)
                     <tr data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->login.' '.$t->owner.' '.$t->access_note.' '.$t->category) }}">
@@ -236,6 +236,14 @@
                         <td>{!! $t->owner ? e($t->owner) : '<span class="missing">Add</span>' !!}</td>
                         <td>{!! $t->access_note ? e($t->access_note) : '<span class="missing">—</span>' !!}</td>
                         <td>{{ implode(', ', $t->brandLabels()) }}</td>
+                        @if($isAdmin)
+                            <td class="row-actions">
+                                <a class="mini" href="{{ route('tools.edit', [$t, 'return' => 'access']) }}">Edit</a>
+                                <form method="POST" action="{{ route('tools.destroy', [$t, 'return' => 'access']) }}" data-confirm>@csrf @method('DELETE')
+                                    <button class="mini danger-link" type="submit" data-label="Delete">Delete</button>
+                                </form>
+                            </td>
+                        @endif
                     </tr>
                 @endforeach
             </tbody>

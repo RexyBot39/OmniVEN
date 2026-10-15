@@ -374,3 +374,9 @@ table.feed{min-width:720px}
 /* Unread Slack marker */
 .unread-star{color:var(--bad);font-weight:800;font-size:1.25em;line-height:0;margin-left:3px;position:relative;top:.2em}
 .chip[aria-pressed="true"] .unread-star{color:#ff8a80}
+
+/* Access table row actions */
+td.row-actions{white-space:nowrap;text-align:right}
+td.row-actions form{display:inline;margin:0}
+.danger-link{border:0;background:none;cursor:pointer;font:inherit;font-size:12.5px;color:var(--bad)}
+.danger-link:hover{background:color-mix(in srgb,var(--bad) 10%,transparent)}

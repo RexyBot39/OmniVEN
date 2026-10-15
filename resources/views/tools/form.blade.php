@@ -1,13 +1,15 @@
-@extends('layouts.app', ['title' => $tool->exists ? 'Edit '.$tool->name : 'Add tool'])
+@extends('layouts.app', ['title' => $tool->exists ? 'Edit '.$tool->name : ($return === 'access' ? 'Add access item' : 'Add tool')])
 
 @section('content')
 <main class="wrap formpage">
-    <a href="{{ route('dashboard') }}" class="back">← Back to OmniVEN</a>
-    <h1 class="form-h">{{ $tool->exists ? 'Edit '.$tool->name : 'Add a tool' }}</h1>
+    <a href="{{ route('dashboard') }}#{{ $return }}" class="back">← Back to {{ $return === 'access' ? 'Access' : 'Tools' }}</a>
+    <h1 class="form-h">{{ $tool->exists ? 'Edit '.$tool->name : ($return === 'access' ? 'Add an access item' : 'Add a tool') }}</h1>
     @include('partials.form-errors')
     <form method="POST" action="{{ $tool->exists ? route('tools.update', $tool) : route('tools.store') }}" class="card form">
         @csrf
         @if($tool->exists) @method('PUT') @endif
+        <input type="hidden" name="return" value="{{ $return }}">
+        @if($return === 'access')<p class="sub">Access items also appear in the Tools directory. Fill in the login account, owner and how to get access below.</p>@endif
         <div class="fld"><label for="name">Name</label><input id="name" name="name" type="text" required maxlength="120" value="{{ old('name', $tool->name) }}"></div>
         <div class="fld"><label for="url">Link</label><input id="url" name="url" type="url" placeholder="https://" maxlength="1024" value="{{ old('url', $tool->url) }}"></div>
         <div class="two">
@@ -30,12 +32,12 @@
         <div class="fld narrow"><label for="sort">Sort order</label><input id="sort" name="sort" type="number" min="0" max="9999" value="{{ old('sort', $tool->sort) }}"><span class="hint">Lower numbers show first in their category.</span></div>
         <div class="form-actions">
             <span class="spacer"></span>
-            <a class="btn" href="{{ route('dashboard') }}">Cancel</a>
+            <a class="btn" href="{{ route('dashboard') }}#{{ $return }}">Cancel</a>
             <button class="btn primary" type="submit">Save tool</button>
         </div>
     </form>
     @if($tool->exists)
-        @include('partials.delete', ['action' => route('tools.destroy', $tool), 'label' => 'Delete this tool'])
+        @include('partials.delete', ['action' => route('tools.destroy', [$tool, 'return' => $return]), 'label' => 'Delete this tool'])
     @endif
 </main>
 @endsection

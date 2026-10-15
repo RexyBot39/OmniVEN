@@ -15,9 +15,9 @@ class ToolController extends Controller
 {
     use SyncsBrands;
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return $this->form(new Tool(['status' => 'active', 'all_brands' => true, 'sort' => 100]));
+        return $this->form(new Tool(['status' => 'active', 'all_brands' => true, 'sort' => 100]), $request);
     }
 
     public function store(Request $request): RedirectResponse
@@ -26,12 +26,12 @@ class ToolController extends Controller
         $this->applyBrands($tool, $request);
         Activity::log('tool.created', "Added tool “{$tool->name}”", $tool);
 
-        return redirect()->route('dashboard')->with('status', "Added {$tool->name}.");
+        return $this->back($request, "Added {$tool->name}.");
     }
 
-    public function edit(Tool $tool): View
+    public function edit(Request $request, Tool $tool): View
     {
-        return $this->form($tool->load('brands'));
+        return $this->form($tool->load('brands'), $request);
     }
 
     public function update(Request $request, Tool $tool): RedirectResponse
@@ -40,20 +40,31 @@ class ToolController extends Controller
         $this->applyBrands($tool, $request);
         Activity::log('tool.updated', "Edited tool “{$tool->name}”", $tool);
 
-        return redirect()->route('dashboard')->with('status', "Saved {$tool->name}.");
+        return $this->back($request, "Saved {$tool->name}.");
     }
 
-    public function destroy(Tool $tool): RedirectResponse
+    public function destroy(Request $request, Tool $tool): RedirectResponse
     {
         Activity::log('tool.deleted', "Removed tool “{$tool->name}”", $tool);
         $tool->delete();
 
-        return redirect()->route('dashboard')->with('status', "Removed {$tool->name}.");
+        return $this->back($request, "Removed {$tool->name}.");
     }
 
-    private function form(Tool $tool): View
+    private function form(Tool $tool, Request $request): View
     {
-        return view('tools.form', ['tool' => $tool, 'brands' => Brand::orderBy('sort')->get()]);
+        return view('tools.form', ['tool' => $tool, 'brands' => Brand::orderBy('sort')->get(), 'return' => $this->returnTab($request)]);
+    }
+
+    /** Which tab to go back to: the Access tab when editing from there, otherwise Tools. */
+    private function returnTab(Request $request): string
+    {
+        return $request->input('return') === 'access' ? 'access' : 'tools';
+    }
+
+    private function back(Request $request, string $msg): RedirectResponse
+    {
+        return redirect()->to(route('dashboard').'#'.$this->returnTab($request))->with('status', $msg);
     }
 
     private function validated(Request $request): array
