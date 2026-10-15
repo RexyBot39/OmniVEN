@@ -37,7 +37,7 @@
   if (!tabs.length) return;
   const views = [...document.querySelectorAll('[data-view]')];
   const q = document.getElementById('q');
-  const state = { tab: 'tools', brand: store.get('brand') || 'all', q: '' };
+  const state = { tab: 'routines', brand: store.get('brand') || 'all', q: '' };
 
   // ---- Slack tab ----
   const slackBox = document.getElementById('slack-feed');
@@ -121,7 +121,7 @@
   });
 
   function setTab(t, push) {
-    if (!views.some((v) => v.dataset.view === t)) t = 'tools';
+    if (!views.some((v) => v.dataset.view === t)) t = 'routines';
     if (t === 'slack') loadSlack();
     state.tab = t;
     tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
@@ -130,7 +130,7 @@
     const chips = document.querySelector('.chips');
     if (chips) chips.hidden = t === 'tasks' || t === 'postit' || t === 'slack';
     store.set('tab', t);
-    if (push) history.replaceState(null, '', t === 'tools' ? location.pathname : '#' + t);
+    if (push) history.replaceState(null, '', t === 'routines' ? location.pathname : '#' + t);
   }
 
   function apply() {
@@ -191,7 +191,7 @@
   document.querySelectorAll('[data-taskfilter]').forEach((b) => b.addEventListener('click', () => filterTasks(b.dataset.taskfilter)));
   q.addEventListener('input', () => setTimeout(() => filterTasks(store.get('taskfilter') || 'all'), 150));
 
-  setTab(location.hash.slice(1) || store.get('tab') || 'tools', false);
+  setTab(location.hash.slice(1) || store.get('tab') || 'routines', false);
   apply();
   checkUnread();
   filterTasks(store.get('taskfilter') || 'all');

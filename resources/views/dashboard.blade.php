@@ -25,12 +25,12 @@
     <div class="wrap bar-in">
         <div class="row1">
             <div class="tabs" role="tablist">
-                <button class="tab" role="tab" data-tab="tools" aria-selected="true">Tools<span class="n">{{ $tools->count() }}</span></button>
-                <button class="tab" role="tab" data-tab="brands" aria-selected="false">Brands<span class="n">{{ $brands->count() }}</span></button>
-                <button class="tab" role="tab" data-tab="routines" aria-selected="false">Routines<span class="n">{{ $due }} due</span></button>
+                <button class="tab" role="tab" data-tab="routines" aria-selected="true">Routines<span class="n">{{ $due }} due</span></button>
                 <button class="tab" role="tab" data-tab="tasks" aria-selected="false">Tasks<span class="n">{{ $myOpen ? $myOpen.' yours' : $openTasks->count() }}</span></button>
                 <button class="tab" role="tab" data-tab="postit" aria-selected="false">PostIT Notes</button>
                 <button class="tab" role="tab" data-tab="slack" aria-selected="false">Slack<span class="unread-star" id="slack-star" hidden aria-label="new Slack messages">*</span></button>
+                <button class="tab" role="tab" data-tab="brands" aria-selected="false">Brands<span class="n">{{ $brands->count() }}</span></button>
+                <button class="tab" role="tab" data-tab="tools" aria-selected="false">Tools<span class="n">{{ $tools->count() }}</span></button>
                 <button class="tab" role="tab" data-tab="access" aria-selected="false">Access</button>
             </div>
             <label class="search">
@@ -50,7 +50,7 @@
 <main class="wrap main">
 
 {{-- ================= TOOLS ================= --}}
-<div data-view="tools">
+<div data-view="tools" hidden>
     <section>
         <div class="h2row">
             <h2>Bulletin</h2>
@@ -165,7 +165,7 @@
 </section>
 
 {{-- ================= ROUTINES ================= --}}
-<section data-view="routines" hidden>
+<section data-view="routines">
     <div class="h2row">
         <h2>Routines</h2>
         <span class="sub">Ticks reset each day, week or month (Eastern time).</span>
