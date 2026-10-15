@@ -13,7 +13,7 @@ use Illuminate\View\View;
 
 class TaskController extends Controller
 {
-    /** Admins assign tasks to anyone, including other admins. */
+    /** Anyone can give a task to anyone, themselves included. Editing and deleting stay with admins. */
     public function store(Request $request): RedirectResponse
     {
         $task = Task::create($this->validated($request) + [

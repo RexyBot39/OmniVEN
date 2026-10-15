@@ -113,10 +113,39 @@ class NewWorkFormTest extends TestCase
         $this->actingAs($this->admin)->get('/routines/create')->assertRedirect(route('work.create', ['type' => 'routine']));
     }
 
-    public function test_staff_cannot_use_it(): void
+    public function test_staff_add_tasks_for_anyone_but_not_routines(): void
     {
-        $this->actingAs($this->leona)->get('/work/new')->assertForbidden();
-        $this->actingAs($this->leona)->post('/work', ['kind' => 'task', 'title' => 'x', 'assignee_id' => $this->leona->id])->assertForbidden();
-        $this->actingAs($this->leona)->get('/')->assertOk()->assertDontSee('/work/new', false);
+        $this->actingAs($this->leona)->get('/')->assertOk()
+            ->assertSee(route('work.create', ['type' => 'task']), false)
+            ->assertSee('+ New task')
+            ->assertDontSee('+ New task or routine')
+            ->assertDontSee(route('work.create', ['type' => 'routine']), false);
+
+        // The form is task-only: no type picker, no routine fields, no whole-team option.
+        $this->actingAs($this->leona)->get('/work/new?type=routine')->assertOk()
+            ->assertSee('<h1 class="form-h">New task</h1>', false)
+            ->assertSee('name="kind" value="task"', false)
+            ->assertDontSee('value="routine"', false)
+            ->assertDontSee('name="cadence"', false)
+            ->assertDontSee('name="brands[]"', false)
+            ->assertDontSee('Whole team')
+            ->assertSee('name="due_on"', false)
+            ->assertSee('Marc Weinstein');
+
+        $this->actingAs($this->leona)->post('/work', ['kind' => 'task', 'title' => 'Review the Neurolux landing page', 'assignee_id' => $this->admin->id, 'due_on' => '2026-10-22'])
+            ->assertRedirect(route('dashboard').'#tasks');
+        $task = Task::where('title', 'Review the Neurolux landing page')->firstOrFail();
+        $this->assertSame($this->admin->id, $task->assignee_id);
+        $this->assertSame($this->leona->id, $task->created_by);
+        $this->assertSame($this->leona->id, $task->assigned_by);
+        $this->assertFalse((bool) $task->hot);
+
+        $this->actingAs($this->leona)->post('/work', ['kind' => 'routine', 'title' => 'Sneaky routine', 'cadence' => 'daily', 'brands' => ['all']])->assertForbidden();
+        $this->actingAs($this->leona)->post('/routines', ['title' => 'Sneaky routine', 'cadence' => 'daily', 'brands' => ['all']])->assertForbidden();
+        $this->assertFalse(Routine::where('title', 'Sneaky routine')->exists());
+
+        // A staff page link can't send them back to an admin-only page.
+        $this->actingAs($this->leona)->post('/work', ['kind' => 'task', 'title' => 'Prep notes', 'assignee_id' => $this->leona->id, 'back_to_person' => '1'])
+            ->assertRedirect(route('dashboard').'#tasks');
     }
 }

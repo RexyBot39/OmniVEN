@@ -7,7 +7,7 @@
             <button type="button" class="seg-b" data-taskfilter="mine" aria-pressed="false">Mine</button>
             <button type="button" class="seg-b" data-taskfilter="all" aria-pressed="true">Everyone</button>
         </div>
-        @can('admin')<a class="btn primary" href="{{ route('work.create', ['type' => 'task']) }}">+ New task or routine</a>@endcan
+        <a class="btn primary" href="{{ route('work.create', ['type' => 'task']) }}">{{ auth()->user()->can('admin') ? '+ New task or routine' : '+ New task' }}</a>
     </div>
 
     <div class="task-cols">

@@ -7,10 +7,11 @@ use App\Models\Routine;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/** One "New routine or task" form for admins. Saving hands off to the routine or task controller. */
+/** One form for new work: anyone can add a task, only admins a routine. Saving hands off to the task or routine controller. */
 class WorkController extends Controller
 {
     public function create(Request $request): View
@@ -18,10 +19,10 @@ class WorkController extends Controller
         $assignee = User::where('is_active', true)->find($request->integer('assignee'));
 
         return view('work.create', [
-            'kind' => $request->query('type') === 'routine' ? 'routine' : 'task',
+            'kind' => $request->query('type') === 'routine' && $request->user()->can('admin') ? 'routine' : 'task',
             'routine' => new Routine(['cadence' => 'daily', 'all_brands' => true, 'sort' => 100]),
             'assignee' => $assignee,
-            'fromPerson' => $assignee && $request->query('from') === 'person',
+            'fromPerson' => $assignee && $request->query('from') === 'person' && $request->user()->can('admin'),
             'brands' => Brand::orderBy('sort')->get(),
             'people' => User::where('is_active', true)->orderBy('name')->get(),
         ]);
@@ -29,6 +30,9 @@ class WorkController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if ($request->input('kind') === 'routine') {
+            Gate::authorize('admin');
+        }
         $request->validate([
             'kind' => ['required', Rule::in(['routine', 'task'])],
             // A task always belongs to one person; a routine can be left to the whole team.
@@ -36,7 +40,7 @@ class WorkController extends Controller
             'title' => $request->input('kind') === 'routine' ? ['max:160'] : [],
             'details' => $request->input('kind') === 'routine' ? ['nullable', 'max:1000'] : [],
         ], [
-            'assignee_id.required' => 'Choose who the task is for. Only routines can go to the whole team.',
+            'assignee_id.required' => 'Choose who the task is for.',
             'title.max' => 'Keep a routine\'s title under 160 characters.',
             'details.max' => 'Keep a routine\'s details under 1,000 characters.',
         ]);
@@ -49,7 +53,7 @@ class WorkController extends Controller
             $response = app(TaskController::class)->store($request);
         }
 
-        $person = $request->boolean('back_to_person') ? User::find($request->integer('assignee_id')) : null;
+        $person = $request->boolean('back_to_person') && $request->user()->can('admin') ? User::find($request->integer('assignee_id')) : null;
 
         return $person
             ? redirect()->route('people.show', $person)->with('status', session('status'))

@@ -45,10 +45,15 @@ class TasksAndNotesTest extends TestCase
         $this->actingAs(User::factory()->create())->get('/')->assertSee('Hotlist')->assertSee('Approve Q4 Ocusafe ad creative');
     }
 
-    public function test_staff_cannot_assign_tasks(): void
+    public function test_staff_can_add_tasks_but_not_edit_or_delete_them(): void
     {
         $staff = User::factory()->create();
-        $this->actingAs($staff)->post('/tasks', ['title' => 'x', 'assignee_id' => $staff->id])->assertForbidden();
+        $this->actingAs($staff)->post('/tasks', ['title' => 'Draft the Ocusleep FAQ', 'assignee_id' => $staff->id])->assertRedirect();
+        $task = Task::where('title', 'Draft the Ocusleep FAQ')->firstOrFail();
+        $this->assertSame($staff->id, $task->created_by);
+
+        $this->actingAs($staff)->get("/tasks/{$task->id}/edit")->assertForbidden();
+        $this->actingAs($staff)->delete("/tasks/{$task->id}")->assertForbidden();
     }
 
     public function test_only_assignee_or_admin_can_complete(): void
