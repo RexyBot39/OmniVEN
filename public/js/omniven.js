@@ -136,6 +136,14 @@
     syncKind();
   }
 
+  // Stuck PostIT notes: click the title to fold one away. Remembered per note; folded by default on phones.
+  document.querySelectorAll('details[data-stuck]').forEach((d) => {
+    const key = 'stuck-open:' + d.dataset.stuck;
+    const saved = store.get(key);
+    d.open = saved === null ? !window.matchMedia('(max-width: 640px)').matches : saved === '1';
+    d.addEventListener('toggle', () => store.set(key, d.open ? '1' : '0'));
+  });
+
   // Show/hide toggles (e.g. the note form).
   document.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('click', () => {
     const el = document.getElementById(b.dataset.toggle);

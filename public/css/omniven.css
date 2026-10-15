@@ -803,3 +803,17 @@ a.gap-chip:hover{border-color:var(--teal);color:var(--teal)}
 .kind-opt small{display:block;color:var(--muted);font-size:13.5px;line-height:1.4;margin-top:2px}
 .fld .kind-opt:has(input:checked){border-color:var(--teal);background:var(--accent-soft)}
 .work-form .two{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+
+/* Stuck PostIT notes: float top right on every page */
+.stuck-postits{position:fixed;top:calc(72px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:40;width:250px;max-height:calc(100vh - 92px);overflow:auto;display:flex;flex-direction:column;gap:12px;padding:4px 4px 12px;pointer-events:none}
+.stuck-postits .postit{pointer-events:auto;transform:rotate(.8deg);padding:12px 14px 10px;gap:6px;box-shadow:0 1px 1px rgb(0 0 0 / .1),0 14px 24px -12px rgb(0 0 0 / .55)}
+.stuck-postits .postit:nth-child(even){transform:rotate(-.6deg)}
+.stuck-postits summary{display:flex;align-items:baseline;justify-content:space-between;gap:8px;cursor:pointer;list-style:none}
+.stuck-postits summary::-webkit-details-marker{display:none}
+.stuck-postits summary h3{font-size:15px}
+.stuck-postits .postit:not([open]) .pi-count::after{content:" · show"}
+.stuck-postits li{grid-template-columns:22px 1fr}
+.stuck-postits .pi-text{font-size:13.5px}
+.stuck-postits footer{padding-top:2px}
+@media (max-width:640px){.stuck-postits{width:min(210px,calc(100vw - 32px));max-height:60vh}}
+@media print{.stuck-postits{display:none}}
