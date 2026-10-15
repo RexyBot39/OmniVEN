@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Montserrat:wght@700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap">
     <link rel="stylesheet" href="{{ asset('css/omniven.css') }}?v={{ filemtime(public_path('css/omniven.css')) }}">
     <script src="{{ asset('js/omniven.js') }}?v={{ filemtime(public_path('js/omniven.js')) }}" defer></script>
 </head>

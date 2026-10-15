@@ -1,28 +1,30 @@
-/* OmniVEN — palette from the logo: deep navy (#04264E) + teal (#019F97). */
+/* OmniVEN — "Clinic" theme: Sora headings, Source Sans 3 text; logo navy (#04264E) + teal (#019F97), coral for urgency. */
 :root{
-  --bg:#F2F5F8; --surface:#FFFFFF; --sunk:#E7EDF2; --ink:#0B1F3A; --navy:#04264E; --muted:#56667A; --line:#D5DEE6;
+  --bg:#F4F7F9; --surface:#FFFFFF; --sunk:#E8EEF2; --ink:#0E1E33; --navy:#04264E; --muted:#5C6B7D; --line:#DCE3EA;
   --teal:#019F97; --accent:#00776F; --accent-soft:#DCF1EF; --on-primary:#FFFFFF; --primary:#04264E;
   --good:#16805A; --warn:#A3660C; --build:#1E6F99; --bad:#B4322A;
   --c1:#04264E; --c2:#019F97; --c3:#A3660C; --c4:#B4322A; --c5:#6E4BB0; --c6:#1E6F99; --c7:#5F6B1E; --c8:#B23A7A;
-  --f-display:"Montserrat","Helvetica Neue",Arial,sans-serif;
-  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
-  --hot:#C2410C; --hot-soft:#FDEBDD;
+  --f-display:"Sora","Avenir Next","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Source Sans 3","Source Sans Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Source Sans 3","Source Sans Pro",system-ui,sans-serif;
+  --hot:#C9472F; --hot-soft:#FCE8E3; --coral:#E2614A;
   --pi-yellow:#FFF3B0; --pi-pink:#FFD6E0; --pi-blue:#D4E9FF; --pi-green:#D6F5DD; --pi-orange:#FFE0C2; --pi-ink:#2A2414;
   --r:10px;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root{
-  --bg:#07111E; --surface:#0E1B2C; --sunk:#14243A; --ink:#E5ECF4; --navy:#E5ECF4; --muted:#93A3B7; --line:#21344C;
+  --bg:#08121F; --surface:#0F1C2D; --sunk:#15253A; --ink:#E6EDF5; --navy:#E6EDF5; --muted:#97A6B8; --line:#22354D;
   --teal:#1DB5AA; --accent:#3CCABE; --accent-soft:#0D3135; --on-primary:#04201F; --primary:#2CC0B4;
   --good:#4CC28E; --warn:#E3A64A; --build:#5DB3DE; --bad:#F07A70;
   --c1:#8FB4EA; --c2:#3CCABE; --c3:#E3A64A; --c4:#F07A70; --c5:#B794F0; --c6:#5DB3DE; --c7:#B9C55A; --c8:#EE85BD;
-  --hot:#FB923C; --hot-soft:#3A2416;
+  --hot:#F2846D; --hot-soft:#3B211C; --coral:#F2846D;
   --pi-yellow:#E8D97A; --pi-pink:#E8AFC0; --pi-blue:#A9CBEF; --pi-green:#A9DDB6; --pi-orange:#EDBB8C; --pi-ink:#1E1A0E;
   color-scheme:dark}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.5}
+h1,h2,h3{letter-spacing:-.01em}
+.ts,.tab .n,.m-num{font-variant-numeric:tabular-nums}
 img{max-width:100%}
 [hidden]{display:none!important}
 a{color:inherit}
@@ -218,17 +220,17 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--teal)}
 .hotlist{padding-block:0 18px}
 .hot-head{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-bottom:10px}
 .hot-title{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:800;font-size:16px;color:var(--hot);text-transform:uppercase;letter-spacing:.04em}
-.flame{width:10px;height:10px;border-radius:50%;background:var(--hot);box-shadow:0 0 0 4px var(--hot-soft)}
+.flame{width:10px;height:10px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 4px var(--hot-soft)}
 .hot-head .mini{margin-left:auto;background:none;border:0;cursor:pointer;font:inherit;font-size:13px;color:var(--accent)}
 .hot-items{list-style:none;margin:0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
-.hot-item{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--hot);border-radius:9px;padding:9px 12px;min-width:0}
+.hot-item{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--coral);border-radius:9px;padding:9px 12px;min-width:0}
 .hot-item.mine{background:linear-gradient(var(--hot-soft),var(--hot-soft)) left/6px 100% no-repeat,var(--surface)}
 .hot-item form{margin:0}
 .hot-body{display:flex;flex-direction:column;min-width:0}
 .hot-t{font-weight:600;font-size:14px;overflow-wrap:anywhere}
 .hot-meta{font-size:12.5px;color:var(--muted)}
 .late{color:var(--bad);font-weight:600}
-.dot-hot{width:8px;height:8px;border-radius:50%;background:var(--hot);margin:7px 7px 0}
+.dot-hot{width:8px;height:8px;border-radius:50%;background:var(--coral);margin:7px 7px 0}
 .hotlist .more{margin:8px 0 0}
 
 /* Daily popup */
@@ -238,7 +240,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--teal)}
 .popup h2{font-family:var(--f-display);font-weight:800;font-size:21px;margin:0;color:var(--navy)}
 .popup > .sub{margin:6px 0 14px;display:block}
 .popup-list{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto}
-.popup-list li{border:1px solid var(--line);border-left:3px solid var(--hot);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.popup-list li{border:1px solid var(--line);border-left:3px solid var(--coral);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
 .popup-list li p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
 .popup-actions{display:flex;justify-content:flex-end;gap:8px;margin:0}
 
