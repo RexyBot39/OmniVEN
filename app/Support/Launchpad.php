@@ -112,16 +112,17 @@ class Launchpad
         return $base + match ($type) {
             'tool' => [
                 't' => $m->name, 's' => $m->category ?? 'Tool', 'u' => $m->url ?: route('dashboard').'#tools',
-                'x' => (bool) $m->url, 'ini' => $m->initials(), 'c' => $m->categorySlot(),
+                'x' => (bool) $m->url, 'ini' => $m->initials(), 'c' => $m->categorySlot(), 'ic' => BrandIcon::forTool($m),
             ],
             'account' => [
                 't' => $m->title(), 's' => $m->platformLabel(),
                 'u' => $m->openUrl() ?: ($m->brand ? route('brands.show', $m->brand) : route('dashboard').'#access'),
                 'x' => (bool) $m->openUrl(), 'ini' => $m->platformInfo()['short'] ?? '·', 'c' => $m->brand?->colorSlot() ?? 1,
+                'ic' => BrandIcon::forPlatform($m->platform),
             ],
             'brand' => [
                 't' => $m->name, 's' => 'Brand hub', 'u' => route('brands.show', $m), 'x' => false,
-                'ini' => strtoupper(mb_substr($m->name, 0, 2)), 'c' => $m->colorSlot(),
+                'ini' => strtoupper(mb_substr($m->name, 0, 2)), 'c' => $m->colorSlot(), 'ic' => null,
             ],
         };
     }

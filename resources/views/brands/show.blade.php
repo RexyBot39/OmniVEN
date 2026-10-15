@@ -41,7 +41,7 @@
                         <div class="acct-list">
                             @foreach($g['accounts'] as $a)
                                 <article class="acct-card">
-                                    <span class="plat" data-p="{{ $a->platform }}">{{ $a->platformInfo()['short'] }}</span>
+                                    @php($ic = \App\Support\BrandIcon::forPlatform($a->platform))@if($ic){{ \App\Support\BrandIcon::html($ic, 'lg', $a->platformLabel()) }}@else<span class="plat" data-p="{{ $a->platform }}">{{ $a->platformInfo()['short'] }}</span>@endif
                                     <div class="acct-main">
                                         <div class="acct-t"><b>{{ $a->platformLabel() }}</b>@if($a->handle)<span class="acct-handle">{{ $a->handle }}</span>@endif @if($brokenLinks->has('account:'.$a->id))<span class="pill link-broken" title="This link failed the last two nightly checks">Link broken</span>@endif</div>
                                         <div class="acct-meta">
@@ -82,9 +82,9 @@
                 <span class="sub">Not set up yet:</span>
                 @foreach($missing as $key => $p)
                     @if($isAdmin)
-                        <a class="gap-chip" href="{{ route('accounts.create', ['brand' => $brand->slug, 'platform' => $key, 'return' => 'hub']) }}">+ {{ $p['label'] }}</a>
+                        <a class="gap-chip" href="{{ route('accounts.create', ['brand' => $brand->slug, 'platform' => $key, 'return' => 'hub']) }}">{{ \App\Support\BrandIcon::html(\App\Support\BrandIcon::forPlatform($key), 'xs') }}+ {{ $p['label'] }}</a>
                     @else
-                        <span class="gap-chip off">{{ $p['label'] }}</span>
+                        <span class="gap-chip off">{{ \App\Support\BrandIcon::html(\App\Support\BrandIcon::forPlatform($key), 'xs') }}{{ $p['label'] }}</span>
                     @endif
                 @endforeach
             </div>
@@ -97,7 +97,7 @@
             <ul class="hub-tools">
                 @foreach($tools as $t)
                     <li>
-                        @if($t->url)<a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $t->launchKey() }}">{{ $t->name }} ↗</a>@else<span>{{ $t->name }}</span>@endif
+                        @if($t->url)<a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $t->launchKey() }}">{{ \App\Support\BrandIcon::html(\App\Support\BrandIcon::forTool($t), 'xs') }}{{ $t->name }} ↗</a>@else<span>{{ \App\Support\BrandIcon::html(\App\Support\BrandIcon::forTool($t), 'xs') }}{{ $t->name }}</span>@endif
                         <span class="sub">{{ $t->category }}{{ $t->all_brands ? '' : ' · just this brand' }}</span>
                     </li>
                 @endforeach

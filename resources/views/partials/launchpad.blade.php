@@ -4,7 +4,7 @@
         <span class="lp-h">My launchpad</span>
         @forelse($launchpad['favorites'] as $i)
             <a class="lp-chip" href="{{ $i['u'] }}" data-lp="{{ $i['key'] }}" @if($i['x']) target="_blank" rel="noopener noreferrer" @endif title="{{ $i['s'] }}">
-                <span class="lp-ini" style="--c:var(--c{{ $i['c'] }})">{{ $i['ini'] }}</span>
+                @if($i['ic']){{ \App\Support\BrandIcon::html($i['ic'], 'sm', $i['t']) }}@else<span class="lp-ini" style="--c:var(--c{{ $i['c'] }})">{{ $i['ini'] }}</span>@endif
                 <span class="lp-t">{{ $i['t'] }}</span>@if($i['x'])<span class="lp-ext" aria-hidden="true">↗</span>@endif
             </a>
         @empty
@@ -15,7 +15,7 @@
         <div class="lp-row lp-recent">
             <span class="lp-h">Recent</span>
             @foreach($launchpad['recent'] as $i)
-                <a href="{{ $i['u'] }}" data-lp="{{ $i['key'] }}" @if($i['x']) target="_blank" rel="noopener noreferrer" @endif title="{{ $i['s'] }}">{{ $i['t'] }}</a>
+                <a href="{{ $i['u'] }}" data-lp="{{ $i['key'] }}" @if($i['x']) target="_blank" rel="noopener noreferrer" @endif title="{{ $i['s'] }}">{{ \App\Support\BrandIcon::html($i['ic'], 'xs') }}{{ $i['t'] }}</a>
             @endforeach
         </div>
     @endif

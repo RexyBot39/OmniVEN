@@ -15,7 +15,7 @@
             @foreach($lr['broken'] as ['row' => $r, 'item' => $item])
                 <li>
                     <div class="links-what">
-                        <b>{{ \App\Models\LinkCheck::itemName($item) }}</b>
+                        <b>{{ \App\Support\BrandIcon::html(\App\Support\BrandIcon::forUrl($r->url), 'xs') }}{{ \App\Models\LinkCheck::itemName($item) }}</b>
                         <a class="links-url" href="{{ $r->url }}" target="_blank" rel="noopener noreferrer">{{ \Illuminate\Support\Str::limit(preg_replace('#^https?://(www\.)?#', '', $r->url), 70) }} ↗</a>
                     </div>
                     <span class="links-err">{{ $r->shortError() }} · since {{ $r->first_failed_at?->timezone(config('app.timezone'))->format('M j') }}</span>

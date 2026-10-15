@@ -91,7 +91,8 @@
         <div class="consoles">
             @forelse($tools->where('featured', true) as $t)
                 <a class="console" href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $t->launchKey() }}" data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->description.' '.$t->category) }}">
-                    <span class="mono" style="--c:var(--c{{ $t->categorySlot() }})">{{ $t->initials() }}</span>
+                    @php($ic = \App\Support\BrandIcon::forTool($t))
+                    @if($ic){{ \App\Support\BrandIcon::html($ic, 'lg', $t->name) }}@else<span class="mono" style="--c:var(--c{{ $t->categorySlot() }})">{{ $t->initials() }}</span>@endif
                     <span class="name">{{ $t->name }}</span>
                     <span class="d">{{ $t->description }}</span>
                     <span class="go">{{ $t->host() }} ↗</span>
@@ -149,7 +150,7 @@
                         <dt>Social</dt>
                         <dd>
                             @forelse($b->socials ?? [] as $s)
-                                @if(!empty($s['url']))<a href="{{ $s['url'] }}" target="_blank" rel="noopener noreferrer">{{ $s['label'] ?: parse_url($s['url'], PHP_URL_HOST) }}</a>@else{{ $s['label'] }}@endif{{ !$loop->last ? ' · ' : '' }}
+                                @php($ic = \App\Support\BrandIcon::forLink($s['label'] ?? null, $s['url'] ?? null))@if(!empty($s['url']))<a href="{{ $s['url'] }}" target="_blank" rel="noopener noreferrer">{{ \App\Support\BrandIcon::html($ic, 'xs') }}{{ $s['label'] ?: parse_url($s['url'], PHP_URL_HOST) }}</a>@else{{ \App\Support\BrandIcon::html($ic, 'xs') }}{{ $s['label'] }}@endif{{ !$loop->last ? ' · ' : '' }}
                             @empty
                                 <span class="missing">No handles added</span>
                             @endforelse
@@ -193,7 +194,7 @@
                             <div class="rt">{{ $r->title }}@if($r->assignee)<span class="assignee {{ $r->assignee_id === $me->id ? 'you' : '' }}" title="Assigned to {{ $r->assignee->name }}">@if($isAdmin && $r->assignee_id !== $me->id)<a href="{{ route('people.show', $r->assignee) }}">→ {{ $r->assignee->firstName() }}</a>@else→ {{ $r->assignee_id === $me->id ? 'You' : $r->assignee->firstName() }}@endif</span>@endif</div>
                             @if($r->description)<div class="rd">{{ $r->description }}</div>@endif
                             <div class="rm">
-                                @if($r->link)<a href="{{ $r->link }}" target="_blank" rel="noopener noreferrer">Open {{ preg_replace('/^www\./', '', parse_url($r->link, PHP_URL_HOST)) }} ↗</a>@endif
+                                @if($r->link)<a href="{{ $r->link }}" target="_blank" rel="noopener noreferrer">{{ \App\Support\BrandIcon::html(\App\Support\BrandIcon::forUrl($r->link), 'xs') }}Open {{ preg_replace('/^www\./', '', parse_url($r->link, PHP_URL_HOST)) }} ↗</a>@endif
                                 @if($done)
                                     <span class="ok">✓ Done{{ $r->latestCompletion->user ? ' · '.$r->latestCompletion->user->firstName() : '' }}</span>
                                 @endif
@@ -216,7 +217,7 @@
 
 {{-- ================= SLACK ================= --}}
 <section data-view="slack" hidden>
-    <div class="h2row"><h2>Slack</h2><span class="sub">Recent messages from our channels. Updates every minute while this tab is open.</span></div>
+    <div class="h2row"><h2>{{ \App\Support\BrandIcon::html('slack', 'md') }} Slack</h2><span class="sub">Recent messages from our channels. Updates every minute while this tab is open.</span></div>
     <div id="slack-feed" data-url="{{ route('slack.feed') }}" data-unread-url="{{ route('slack.unread') }}"><div class="empty">Loading Slack…</div></div>
 </section>
 
@@ -234,7 +235,7 @@
             <tbody>
                 @foreach($tools->sortBy(fn ($t) => [array_search($t->category, config('omniven.categories')) ?: 99, $t->name]) as $t)
                     <tr data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->login.' '.$t->owner.' '.$t->access_note.' '.$t->category) }}">
-                        <td>@if($t->url)<a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer">{{ $t->name }}</a>@else{{ $t->name }}@endif<div class="sub">{{ $t->category }}</div></td>
+                        <td>@php($ic = \App\Support\BrandIcon::forTool($t))@if($t->url)<a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer">{{ \App\Support\BrandIcon::html($ic, 'xs') }}{{ $t->name }}</a>@else{{ \App\Support\BrandIcon::html($ic, 'xs') }}{{ $t->name }}@endif<div class="sub">{{ $t->category }}</div></td>
                         <td><span class="pill {{ $t->status }}">{{ $t->statusLabel() }}</span></td>
                         <td>{!! $t->login ? e($t->login) : '<span class="missing">Add</span>' !!}</td>
                         <td>{!! $t->owner ? e($t->owner) : '<span class="missing">Add</span>' !!}</td>
@@ -266,7 +267,7 @@
                 <tbody>
                     @foreach($allAccounts as $a)
                         <tr data-brands="{{ $a->brand?->slug ?? 'all' }}" data-search="{{ strtolower($a->title().' '.$a->login.' '.$a->owner.' '.$a->account_ref) }}">
-                            <td class="with-star">@include('partials.star', ['item' => $a])@if($a->openUrl())<a href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $a->launchKey() }}">{{ $a->title() }}</a>@else{{ $a->title() }}@endif</td>
+                            <td class="with-star">@include('partials.star', ['item' => $a])@php($ic = \App\Support\BrandIcon::forPlatform($a->platform))@if($a->openUrl())<a href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $a->launchKey() }}">{{ \App\Support\BrandIcon::html($ic, 'xs') }}{{ $a->title() }}</a>@else{{ \App\Support\BrandIcon::html($ic, 'xs') }}{{ $a->title() }}@endif</td>
                             <td class="ts">{{ $a->account_ref ?: '—' }}</td>
                             <td>{!! $a->login ? e($a->login) : '<span class="missing">Add</span>' !!}</td>
                             <td>{!! $a->owner ? e($a->owner) : '<span class="missing">Add</span>' !!}</td>

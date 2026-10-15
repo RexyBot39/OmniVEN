@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Brand;
 use App\Models\Tool;
+use App\Support\BrandIcon;
 use App\Support\Launchpad;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -49,14 +50,14 @@ class LauncherController extends Controller
             $items->push([
                 'k' => 'Account', 'key' => $a->launchKey(), 't' => $a->title(),
                 's' => collect([$a->account_ref ? 'ID '.$a->account_ref : null, $a->login ? 'Login '.$a->login : null, $a->hasDirectLink() ? null : 'No direct link yet'])->filter()->implode(' · '),
-                'u' => $a->openUrl(), 'x' => true,
+                'u' => $a->openUrl(), 'x' => true, 'ic' => BrandIcon::meta(BrandIcon::forPlatform($a->platform)),
                 // Extra words people type: platform short code and group, e.g. "ig", "social".
                 'a' => strtolower(($a->platformInfo()['short'] ?? '').' '.$a->group().' '.$a->platform),
             ]);
         }
 
         foreach (Tool::orderBy('name')->get() as $t) {
-            $items->push(['k' => 'Tool', 'key' => $t->launchKey(), 't' => $t->name, 's' => $t->category ?? '', 'u' => $t->url ?: $home.'#tools', 'x' => (bool) $t->url, 'a' => strtolower((string) $t->description)]);
+            $items->push(['k' => 'Tool', 'key' => $t->launchKey(), 't' => $t->name, 's' => $t->category ?? '', 'u' => $t->url ?: $home.'#tools', 'x' => (bool) $t->url, 'a' => strtolower((string) $t->description), 'ic' => BrandIcon::meta(BrandIcon::forTool($t))]);
         }
 
         // Your launchpad: f = position among your stars, r = how recently you opened it (0 = latest).
