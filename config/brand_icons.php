@@ -29,7 +29,7 @@ return [
     'klaviyo' => ['label' => 'Klaviyo', 'hex' => '#232426'],
     // Traced from the logo Marc supplied (navy star, orange check), shown on a white tile.
     'shopperapproved' => ['label' => 'Shopper Approved', 'hex' => '#E86600', 'multicolor' => true],
-    // Drawn stand-ins in each brand's color until we have the real marks.
-    'cj' => ['label' => 'CJ Affiliate', 'hex' => '#00AF66'],
-    'awin' => ['label' => 'Awin', 'hex' => '#FF6600'],
+    // Traced from the logos Marc supplied: CJ's white mark on its green circle; Awin's flame on a white tile.
+    'cj' => ['label' => 'CJ Affiliate', 'hex' => '#064A46'],
+    'awin' => ['label' => 'Awin', 'hex' => '#FF5B00', 'multicolor' => true],
 ];
