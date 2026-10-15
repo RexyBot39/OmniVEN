@@ -34,6 +34,57 @@
   }
 
 
+  // ---- My launchpad: stars and recently opened (every page) ----
+  const lpList = document.getElementById('ln-list');
+  const lpCsrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const lp = {
+    onChange: null, // the launcher hooks in here to refresh its marks
+    async toggle(key) {
+      const [type, id] = key.split(':');
+      const res = await fetch(lpList.dataset.fav, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': lpCsrf() },
+        body: JSON.stringify({ type, id: Number(id) }),
+      });
+      if (!res.ok) throw new Error('star failed');
+      const data = await res.json();
+      document.querySelectorAll('form[data-star="' + key + '"] .star').forEach((b) => {
+        b.setAttribute('aria-pressed', String(data.starred));
+        b.textContent = data.starred ? '★' : '☆';
+        b.title = (data.starred ? 'Remove from' : 'Add to') + ' My launchpad';
+      });
+      const strip = document.getElementById('launchpad');
+      if (strip && data.html) strip.outerHTML = data.html;
+      lp.onChange?.(key, data.starred);
+      return data.starred;
+    },
+    // Brand hubs record themselves on the server, so only tools and accounts are sent.
+    opened(key) {
+      if (!key || !lpList || key.startsWith('brand:')) return;
+      const [type, id] = key.split(':');
+      fetch(lpList.dataset.open, {
+        method: 'POST', credentials: 'same-origin', keepalive: true,
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': lpCsrf() },
+        body: JSON.stringify({ type, id: Number(id) }),
+      }).catch(() => {});
+    },
+  };
+  document.addEventListener('submit', (e) => {
+    const f = e.target.closest('form[data-star]');
+    if (!f || !lpList) return;
+    e.preventDefault();
+    lp.toggle(f.dataset.star).catch(() => f.submit());
+  });
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-lp]');
+    if (a) lp.opened(a.dataset.lp);
+  });
+  // Middle-click opens in a new tab without a click event.
+  document.addEventListener('auxclick', (e) => {
+    const a = e.target.closest('a[data-lp]');
+    if (a && e.button === 1) lp.opened(a.dataset.lp);
+  });
+
   // ---- ⌘K quick launcher (every page) ----
   (function launcher() {
     const dlg = document.getElementById('launcher');
@@ -59,17 +110,22 @@
         if (i < 0) return -1;
         sc += it.tl.startsWith(w) ? 30 : (it.tl.includes(' ' + w) ? 20 : (it.tl.includes(w) ? 12 : 4));
       }
-      return sc - order[it.k];
+      // Your stars and recent opens rank higher.
+      return sc - order[it.k] + (it.f !== undefined ? 15 : 0) + (it.r !== undefined ? 8 - Math.min(it.r, 7) : 0);
     }
     function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
     function render() {
       const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
       shown = !words.length
-        ? items.filter((it) => it.k === 'Brand' || it.k === 'Page').slice(0, 15)
+        ? [
+            ...items.filter((it) => it.f !== undefined).sort((a, b) => a.f - b.f),
+            ...items.filter((it) => it.f === undefined && it.r !== undefined).sort((a, b) => a.r - b.r).slice(0, 6),
+            ...items.filter((it) => it.f === undefined && it.r === undefined && (it.k === 'Brand' || it.k === 'Page')),
+          ].slice(0, 15)
         : items.map((it) => [score(it, words), it]).filter(([sc]) => sc >= 0).sort((a, b) => b[0] - a[0]).slice(0, 12).map(([, it]) => it);
       sel = 0;
       list.innerHTML = shown.length ? shown.map((it, i) =>
-        '<li role="option" id="ln-' + i + '" aria-selected="' + (i === sel) + '" data-i="' + i + '"><span class="ln-k ln-' + it.k.toLowerCase() + '">' + it.k + '</span><span class="ln-t"><b>' + esc(it.t) + '</b>' + (it.s ? '<small>' + esc(it.s) + '</small>' : '') + '</span>' + (it.x ? '<span class="ln-ext" aria-hidden="true">↗</span>' : '') + '</li>'
+        '<li role="option" id="ln-' + i + '" aria-selected="' + (i === sel) + '" data-i="' + i + '"><span class="ln-k ln-' + it.k.toLowerCase() + '">' + it.k + '</span><span class="ln-t"><b>' + (it.f !== undefined ? '<span class="ln-star" aria-label="starred">★</span> ' : '') + esc(it.t) + '</b>' + (it.s ? '<small>' + esc(it.s) + '</small>' : '') + '</span>' + (it.x ? '<span class="ln-ext" aria-hidden="true">↗</span>' : '') + '</li>'
       ).join('') : '<li class="ln-empty">Nothing matches. Try a brand name or a platform like “instagram”.</li>';
       input.setAttribute('aria-activedescendant', shown.length ? 'ln-0' : '');
     }
@@ -84,11 +140,27 @@
       const it = shown[i];
       if (!it) return;
       dlg.close();
+      lp.opened(it.key);
       if (it.x) { window.open(it.u, '_blank', 'noopener'); return; }
       const here = location.origin + location.pathname;
       if (it.u.split('#')[0] === here && it.u.includes('#')) { location.hash = it.u.split('#')[1]; window.dispatchEvent(new HashChangeEvent('hashchange')); }
       else location.href = it.u;
     }
+    // ⇧Enter stars or un-stars the highlighted brand, account or tool.
+    async function star(i) {
+      const it = shown[i];
+      if (!it?.key) return;
+      const keep = sel;
+      try { await lp.toggle(it.key); } catch { return; }
+      render();
+      move(Math.min(keep, shown.length - 1) - sel);
+    }
+    lp.onChange = (key, on) => {
+      if (!items) return;
+      const it = items.find((x) => x.key === key);
+      if (!it) return;
+      if (on) it.f = Math.max(-1, ...items.map((x) => x.f ?? -1)) + 1; else delete it.f;
+    };
     async function open() {
       if (dlg.open) return;
       dlg.showModal(); input.value = '';
@@ -104,6 +176,7 @@
     input.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+      else if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); star(sel); }
       else if (e.key === 'Enter') { e.preventDefault(); go(sel); }
     });
     list.addEventListener('click', (e) => { const li = e.target.closest('li[data-i]'); if (li) go(Number(li.dataset.i)); });

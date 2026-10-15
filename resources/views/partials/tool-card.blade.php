@@ -2,7 +2,7 @@
     <span class="mono" style="--c:var(--c{{ $t->categorySlot() }})">{{ $t->initials() }}</span>
     <div class="t">
         @if($t->url)
-            <a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer">{{ $t->name }} ↗</a>
+            <a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $t->launchKey() }}">{{ $t->name }} ↗</a>
         @else
             <strong>{{ $t->name }}</strong>
         @endif
@@ -20,6 +20,7 @@
     <div class="foot">
         @foreach($t->brandLabels() as $label)<span class="tag">{{ $label }}</span>@endforeach
         <span class="spacer"></span>
+        @include('partials.star', ['item' => $t])
         @can('admin')<a class="mini" href="{{ route('tools.edit', $t) }}">Edit</a>@endcan
     </div>
 </article>

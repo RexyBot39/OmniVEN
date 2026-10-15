@@ -9,7 +9,7 @@
 
     <header class="hub-head">
         <div class="hub-id">
-            <h1 class="form-h">{{ $brand->name }}</h1>
+            <div class="hub-title"><h1 class="form-h">{{ $brand->name }}</h1>@include('partials.star', ['item' => $brand])</div>
             @if($brand->site)
                 <a class="hub-site" href="{{ $brand->site }}" target="_blank" rel="noopener noreferrer">{{ preg_replace('#^https?://(www\.)?#', '', rtrim($brand->site, '/')) }} ↗</a>
             @else
@@ -53,8 +53,9 @@
                                         @if($a->notes)<p class="acct-notes">{{ $a->notes }}</p>@endif
                                     </div>
                                     <div class="acct-actions">
+                                        @include('partials.star', ['item' => $a])
                                         @if($a->openUrl())
-                                            <a class="btn {{ $a->hasDirectLink() ? 'primary' : '' }}" href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer" title="{{ $a->hasDirectLink() ? 'Opens this account' : 'No direct link yet: opens the platform sign-in' }}">Open ↗</a>
+                                            <a class="btn {{ $a->hasDirectLink() ? 'primary' : '' }}" href="{{ $a->openUrl() }}" data-lp="{{ $a->launchKey() }}" target="_blank" rel="noopener noreferrer" title="{{ $a->hasDirectLink() ? 'Opens this account' : 'No direct link yet: opens the platform sign-in' }}">Open ↗</a>
                                         @endif
                                         @if($isAdmin)
                                             <span class="acct-admin">
@@ -91,7 +92,7 @@
             <ul class="hub-tools">
                 @foreach($tools as $t)
                     <li>
-                        @if($t->url)<a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer">{{ $t->name }} ↗</a>@else<span>{{ $t->name }}</span>@endif
+                        @if($t->url)<a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $t->launchKey() }}">{{ $t->name }} ↗</a>@else<span>{{ $t->name }}</span>@endif
                         <span class="sub">{{ $t->category }}{{ $t->all_brands ? '' : ' · just this brand' }}</span>
                     </li>
                 @endforeach

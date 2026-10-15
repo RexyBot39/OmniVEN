@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\Activity;
+use App\Support\Launchpad;
 use App\Models\Account;
 use App\Models\Brand;
 use App\Models\Note;
@@ -54,6 +55,8 @@ class DashboardController extends Controller
         $accountGrid = Account::all()->groupBy('brand_id')->map(fn ($as) => $as->groupBy('platform')->map->first());
         $gridPlatforms = collect(config('omniven.platforms'))->filter(fn ($p) => $p['grid']);
         $postits = $me->postits()->with('items')->get();
+        $launchpad = Launchpad::forUser($me);
+        $favKeys = Launchpad::favoriteKeys($me);
 
         // Fresh sign-in, or the logo link (/?home=1): reset to Routines, all brands.
         $goHome = $request->session()->get('omniven_home', false) || $request->boolean('home');
@@ -62,7 +65,7 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms'
+            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys'
         ));
     }
 }

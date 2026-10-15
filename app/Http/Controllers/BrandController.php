@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\Activity;
+use App\Support\Launchpad;
 use App\Models\Brand;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,8 +14,10 @@ use Illuminate\View\View;
 class BrandController extends Controller
 {
     /** Brand hub: everything for one brand on one page. Open to everyone signed in. */
-    public function show(Brand $brand): View
+    public function show(Request $request, Brand $brand): View
     {
+        Launchpad::recordOpen($request->user(), $brand);
+        $favKeys = Launchpad::favoriteKeys($request->user());
         $brand->load(['accounts' => fn ($q) => $q->orderBy('platform')]);
         $tools = \App\Models\Tool::with('brands')->orderBy('sort')->orderBy('name')->get()
             ->filter(fn ($t) => $t->all_brands || $t->brands->contains('id', $brand->id))->values();
@@ -26,7 +29,7 @@ class BrandController extends Controller
             ->filter(fn ($g) => $g['accounts']->isNotEmpty());
         $missing = collect($platforms)->filter(fn ($p, $k) => $p['grid'] && ! $brand->accounts->contains('platform', $k));
 
-        return view('brands.show', compact('brand', 'tools', 'routines', 'groups', 'missing'));
+        return view('brands.show', compact('brand', 'tools', 'routines', 'groups', 'missing', 'favKeys'));
     }
 
     public function create(): View

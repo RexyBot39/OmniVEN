@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\OnLaunchpad;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** A brand's account on one platform, e.g. Ocusafe · Instagram · @ocusafe. */
 class Account extends Model
 {
+    use OnLaunchpad;
+
     protected $fillable = ['brand_id', 'platform', 'handle', 'url', 'account_ref', 'login', 'owner', 'notes', 'verified_on'];
 
     protected function casts(): array

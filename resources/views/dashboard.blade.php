@@ -20,6 +20,7 @@
 </section>
 
 @include('partials.hotlist')
+@include('partials.launchpad')
 
 <div class="bar">
     <div class="wrap bar-in">
@@ -89,7 +90,7 @@
         <div class="h2row"><h2>Platform consoles</h2><span class="sub">The ad, shopping and search accounts we open most</span></div>
         <div class="consoles">
             @forelse($tools->where('featured', true) as $t)
-                <a class="console" href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->description.' '.$t->category) }}">
+                <a class="console" href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $t->launchKey() }}" data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->description.' '.$t->category) }}">
                     <span class="mono" style="--c:var(--c{{ $t->categorySlot() }})">{{ $t->initials() }}</span>
                     <span class="name">{{ $t->name }}</span>
                     <span class="d">{{ $t->description }}</span>
@@ -264,7 +265,7 @@
                 <tbody>
                     @foreach($allAccounts as $a)
                         <tr data-brands="{{ $a->brand?->slug ?? 'all' }}" data-search="{{ strtolower($a->title().' '.$a->login.' '.$a->owner.' '.$a->account_ref) }}">
-                            <td>@if($a->openUrl())<a href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer">{{ $a->title() }}</a>@else{{ $a->title() }}@endif</td>
+                            <td class="with-star">@include('partials.star', ['item' => $a])@if($a->openUrl())<a href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $a->launchKey() }}">{{ $a->title() }}</a>@else{{ $a->title() }}@endif</td>
                             <td class="ts">{{ $a->account_ref ?: '—' }}</td>
                             <td>{!! $a->login ? e($a->login) : '<span class="missing">Add</span>' !!}</td>
                             <td>{!! $a->owner ? e($a->owner) : '<span class="missing">Add</span>' !!}</td>

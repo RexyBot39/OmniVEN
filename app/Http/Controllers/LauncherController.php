@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Brand;
 use App\Models\Tool;
+use App\Support\Launchpad;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,12 +34,12 @@ class LauncherController extends Controller
         }
 
         foreach (Brand::orderBy('sort')->get() as $b) {
-            $items->push(['k' => 'Brand', 't' => $b->name, 's' => 'Brand hub · every account and tool', 'u' => route('brands.show', $b), 'x' => false]);
+            $items->push(['k' => 'Brand', 'key' => $b->launchKey(), 't' => $b->name, 's' => 'Brand hub · every account and tool', 'u' => route('brands.show', $b), 'x' => false]);
         }
 
         foreach (Account::with('brand')->get() as $a) {
             $items->push([
-                'k' => 'Account', 't' => $a->title(),
+                'k' => 'Account', 'key' => $a->launchKey(), 't' => $a->title(),
                 's' => collect([$a->account_ref ? 'ID '.$a->account_ref : null, $a->login ? 'Login '.$a->login : null, $a->hasDirectLink() ? null : 'No direct link yet'])->filter()->implode(' · '),
                 'u' => $a->openUrl(), 'x' => true,
                 // Extra words people type: platform short code and group, e.g. "ig", "social".
@@ -47,8 +48,25 @@ class LauncherController extends Controller
         }
 
         foreach (Tool::orderBy('name')->get() as $t) {
-            $items->push(['k' => 'Tool', 't' => $t->name, 's' => $t->category ?? '', 'u' => $t->url ?: $home.'#tools', 'x' => (bool) $t->url, 'a' => strtolower((string) $t->description)]);
+            $items->push(['k' => 'Tool', 'key' => $t->launchKey(), 't' => $t->name, 's' => $t->category ?? '', 'u' => $t->url ?: $home.'#tools', 'x' => (bool) $t->url, 'a' => strtolower((string) $t->description)]);
         }
+
+        // Your launchpad: f = position among your stars, r = how recently you opened it (0 = latest).
+        $mine = Launchpad::forUser($user, Launchpad::KEEP_RECENT);
+        $fav = $mine['favorites']->pluck('key')->flip();
+        $recent = $mine['recent']->pluck('key')->flip();
+        $items = $items->map(function ($it) use ($fav, $recent) {
+            if (isset($it['key'])) {
+                if ($fav->has($it['key'])) {
+                    $it['f'] = $fav[$it['key']];
+                }
+                if ($recent->has($it['key'])) {
+                    $it['r'] = $recent[$it['key']];
+                }
+            }
+
+            return $it;
+        });
 
         return response()->json($items->values());
     }
