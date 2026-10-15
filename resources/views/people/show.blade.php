@@ -29,7 +29,7 @@
 
     <div class="staff-cols">
         <section>
-            <div class="h2row"><h2>Assigned routines</h2><a class="mini" href="{{ route('routines.create') }}">+ Add routine</a></div>
+            <div class="h2row"><h2>Assigned routines</h2><a class="mini" href="{{ route('work.create', ['type' => 'routine', 'assignee' => $person->id, 'from' => 'person']) }}">+ Assign a routine</a></div>
             @forelse($byCadence as $c)
                 <div class="staff-cad">
                     <div class="cat-h">{{ $c['label'] }}</div>
@@ -58,7 +58,7 @@
         </section>
 
         <section>
-            <div class="h2row"><h2>Open tasks</h2><a class="mini" href="{{ route('dashboard') }}#tasks">+ New task</a></div>
+            <div class="h2row"><h2>Open tasks</h2><a class="mini" href="{{ route('work.create', ['type' => 'task', 'assignee' => $person->id, 'from' => 'person']) }}">+ Assign a task</a></div>
             @if($openTasks->isEmpty())
                 <div class="empty">No open tasks for {{ $person->firstName() }}.</div>
             @else

@@ -60,6 +60,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:admin')->group(function () {
         Route::resource('tools', ToolController::class)->except(['index', 'show']);
         Route::resource('brands', BrandController::class)->except(['index', 'show']);
+        Route::get('/work/new', [\App\Http\Controllers\WorkController::class, 'create'])->name('work.create');
+        Route::post('/work', [\App\Http\Controllers\WorkController::class, 'store'])->name('work.store');
         Route::resource('routines', RoutineController::class)->except(['index', 'show']);
         Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
         Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');

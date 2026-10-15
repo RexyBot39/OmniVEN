@@ -50,8 +50,6 @@ class DashboardController extends Controller
             }
         }
 
-        $people = User::where('is_active', true)->orderBy('name')->get();
-
         // Brand × platform grid: [brand_id][platform] => first account.
         $accountGrid = Account::all()->groupBy('brand_id')->map(fn ($as) => $as->groupBy('platform')->map->first());
         $gridPlatforms = collect(config('omniven.platforms'))->filter(fn ($p) => $p['grid']);
@@ -71,7 +69,7 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress'
+            'openTasks', 'doneTasks', 'hotlist', 'popup', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress'
         ));
     }
 }
