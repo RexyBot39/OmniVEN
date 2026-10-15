@@ -109,7 +109,7 @@
                 @forelse($routines as $r)
                     <li class="{{ $r->isDone() ? 'done' : '' }}">
                         <span class="cad">{{ config('omniven.cadences')[$r->cadence] ?? '' }}</span>
-                        <span class="rt">{{ $r->title }}</span>
+                        <span class="rt">{{ $r->title }}@if($r->assignee) <span class="assignee">→ {{ $r->assignee->firstName() }}</span>@endif</span>
                         @if($r->isDone())<span class="ok-t">✓ {{ $r->latestCompletion->user?->firstName() }}</span>@endif
                     </li>
                 @empty

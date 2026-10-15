@@ -24,7 +24,7 @@ class BrandController extends Controller
         $source->load(['accounts' => fn ($q) => $q->orderBy('platform')]);
         $tools = \App\Models\Tool::with('brands')->orderBy('sort')->orderBy('name')->get()
             ->filter(fn ($t) => $t->all_brands || $t->brands->contains('id', $brand->id))->values();
-        $routines = \App\Models\Routine::with(['brands', 'latestCompletion.user'])->orderBy('sort')->get()
+        $routines = \App\Models\Routine::with(['brands', 'latestCompletion.user', 'assignee'])->orderBy('sort')->get()
             ->filter(fn ($r) => $r->all_brands || $r->brands->contains('id', $brand->id))->values();
         $platforms = config('omniven.platforms');
         $groups = collect(config('omniven.platform_groups'))

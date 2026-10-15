@@ -15,6 +15,13 @@
             </div>
             <div class="fld"><label for="sort">Sort order</label><input id="sort" name="sort" type="number" min="0" max="9999" value="{{ old('sort', $routine->sort) }}"></div>
         </div>
+        <div class="fld"><label for="assignee_id">Assigned to</label>
+            <select id="assignee_id" name="assignee_id">
+                <option value="">Whole team (anyone can tick it)</option>
+                @foreach($people as $p)<option value="{{ $p->id }}" @selected((string) old('assignee_id', $routine->assignee_id) === (string) $p->id)>{{ $p->name }}</option>@endforeach
+            </select>
+            <span class="hint">The person shows on the routine and on their staff page. Anyone can still tick it if they cover for them.</span>
+        </div>
         <div class="fld"><label for="description">Details</label><textarea id="description" name="description" maxlength="1000">{{ old('description', $routine->description) }}</textarea></div>
         <div class="fld"><label for="link">Link to open</label><input id="link" name="link" type="url" placeholder="https://" maxlength="1024" value="{{ old('link', $routine->link) }}"></div>
         @include('partials.brand-checks', ['item' => $routine])

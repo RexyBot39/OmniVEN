@@ -13,7 +13,7 @@ class Routine extends Model
 {
     use HasBrandScope;
 
-    protected $fillable = ['title', 'cadence', 'description', 'link', 'all_brands', 'sort'];
+    protected $fillable = ['title', 'cadence', 'description', 'link', 'all_brands', 'sort', 'assignee_id'];
 
     protected function casts(): array
     {
@@ -23,6 +23,12 @@ class Routine extends Model
     public function brands(): BelongsToMany
     {
         return $this->belongsToMany(Brand::class);
+    }
+
+    /** The one person this routine is assigned to, or null for the whole team. */
+    public function assignee(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assignee_id');
     }
 
     public function completions(): HasMany

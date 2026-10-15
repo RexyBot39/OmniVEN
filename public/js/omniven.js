@@ -18,6 +18,9 @@
     }
   });
 
+  // Selects that jump to a page (e.g. the person switcher on a staff page).
+  document.querySelectorAll('select[data-nav]').forEach((s) => s.addEventListener('change', () => { if (s.value) location.href = s.value; }));
+
   // Show/hide toggles (e.g. the note form).
   document.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('click', () => {
     const el = document.getElementById(b.dataset.toggle);

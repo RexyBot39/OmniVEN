@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/slack/channels', [SlackController::class, 'store'])->name('slack.channels.store');
         Route::delete('/slack/channels/{channel}', [SlackController::class, 'destroy'])->name('slack.channels.destroy');
         Route::get('/people', [UserController::class, 'index'])->name('people.index');
+        Route::get('/people/{user}', [UserController::class, 'show'])->name('people.show');
         Route::patch('/people/{user}', [UserController::class, 'update'])->name('people.update');
     });
 
