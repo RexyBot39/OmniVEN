@@ -181,8 +181,8 @@ class AccessRequestsTest extends TestCase
 
         $admin = $this->admin();
         $tool = Tool::first();
-        $acct = Account::create(['brand_id' => Brand::first()->id, 'platform' => 'tiktok', 'handle' => '@lumeo']);
-        $total = Tool::count() + 1;
+        $acct = Account::create(['brand_id' => Brand::where('slug', 'lumeo')->value('id'), 'platform' => 'tiktok', 'handle' => '@lumeo']);
+        $total = Tool::count() + Account::count();
 
         $this->actingAs($admin)->get('/access/review')->assertOk()->assertSee("0 of {$total}")->assertSee('@lumeo');
         $this->actingAs($admin)->post("/tools/{$tool->id}/verify", ['return' => 'review'])->assertRedirect(route('access.review'));

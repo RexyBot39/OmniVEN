@@ -57,9 +57,10 @@ class AccountsTest extends TestCase
     public function test_account_validation_rejects_bad_platform_and_url(): void
     {
         $admin = User::factory()->admin()->create(['is_active' => true]);
+        $before = Account::count();
         $this->actingAs($admin)->post('/accounts', ['platform' => 'myspace', 'url' => 'javascript:alert(1)'])
             ->assertSessionHasErrors(['platform', 'url']);
-        $this->assertSame(0, Account::count());
+        $this->assertSame($before, Account::count());
     }
 
     public function test_staff_cannot_manage_accounts_but_can_view_hub(): void
