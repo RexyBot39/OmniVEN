@@ -33,7 +33,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update');
     Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
 
-    // Tasks: the assignee (or an admin) marks them done.
+    // Tasks: anyone can create one for anyone; the assignee (or an admin) marks it done.
+    // The same "New task" form also makes routines, for admins only.
+    Route::get('/work/new', [\App\Http\Controllers\WorkController::class, 'create'])->name('work.create');
+    Route::post('/work', [\App\Http\Controllers\WorkController::class, 'store'])->name('work.store');
+    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::post('/tasks/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
 
     // PostIT notes: personal to-do lists.
@@ -61,7 +65,6 @@ Route::middleware('auth')->group(function () {
         Route::resource('tools', ToolController::class)->except(['index', 'show']);
         Route::resource('brands', BrandController::class)->except(['index', 'show']);
         Route::resource('routines', RoutineController::class)->except(['index', 'show']);
-        Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
         Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
         Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');

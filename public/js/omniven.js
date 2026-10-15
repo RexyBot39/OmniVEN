@@ -114,6 +114,28 @@
     }
   }
 
+  // New routine or task: show the fields for the chosen type; hidden ones aren't sent.
+  const workForm = document.getElementById('work-form');
+  if (workForm) {
+    const who = workForm.querySelector('#assignee_id');
+    const team = who.querySelector('[data-team]');
+    const submit = workForm.querySelector('button[type=submit]');
+    const syncKind = () => {
+      const kind = workForm.querySelector('input[name=kind]:checked')?.value || 'task';
+      workForm.querySelectorAll('[data-kind]').forEach((el) => {
+        const on = el.dataset.kind === kind;
+        el.hidden = !on;
+        el.querySelectorAll('input,select,textarea').forEach((i) => { i.disabled = !on; });
+      });
+      team.textContent = kind === 'task' ? 'Choose a person' : 'Whole team (anyone can tick it)';
+      team.disabled = kind === 'task';
+      who.required = kind === 'task';
+      submit.textContent = submit.dataset['label' + kind[0].toUpperCase() + kind.slice(1)];
+    };
+    workForm.querySelectorAll('input[name=kind]').forEach((r) => r.addEventListener('change', syncKind));
+    syncKind();
+  }
+
   // Show/hide toggles (e.g. the note form).
   document.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('click', () => {
     const el = document.getElementById(b.dataset.toggle);

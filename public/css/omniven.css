@@ -793,3 +793,13 @@ a.gap-chip:hover{border-color:var(--teal);color:var(--teal)}
 .help .check label span{font-size:14px;color:var(--muted)}
 .help .check input:checked + div b{text-decoration:line-through;color:var(--muted)}
 .help .steps li[data-n]::before{content:attr(data-n)}
+
+/* New routine or task: one form, fields follow the chosen type */
+.kind-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.kind-opts{grid-template-columns:1fr}}
+.fld .kind-opt{font-size:14px;font-weight:400;color:var(--ink);display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;background:var(--bg)}
+.kind-opt input{margin:4px 0 0;accent-color:var(--teal)}
+.kind-opt b{display:block;font-family:var(--f-display);color:var(--navy);font-size:15.5px}
+.kind-opt small{display:block;color:var(--muted);font-size:13.5px;line-height:1.4;margin-top:2px}
+.fld .kind-opt:has(input:checked){border-color:var(--teal);background:var(--accent-soft)}
+.work-form .two{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}

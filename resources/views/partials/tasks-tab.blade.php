@@ -7,32 +7,8 @@
             <button type="button" class="seg-b" data-taskfilter="mine" aria-pressed="false">Mine</button>
             <button type="button" class="seg-b" data-taskfilter="all" aria-pressed="true">Everyone</button>
         </div>
+        <a class="btn primary" href="{{ route('work.create', ['type' => 'task']) }}">{{ auth()->user()->can('admin') ? '+ New task or routine' : '+ New task' }}</a>
     </div>
-
-    @can('admin')
-        <form method="POST" action="{{ route('tasks.store') }}" class="card task-form">
-            @csrf
-            <div class="task-form-row">
-                <div class="fld grow"><label for="t-title">Task</label><input id="t-title" name="title" type="text" required maxlength="200" placeholder="e.g. Fix Merchant Center disapprovals for Ocusafe"></div>
-                <div class="fld"><label for="t-assignee">Assign to</label>
-                    <select id="t-assignee" name="assignee_id" required>
-                        <option value="" disabled selected>Choose a person</option>
-                        @foreach($people as $p)
-                            <option value="{{ $p->id }}">{{ $p->name }}{{ $p->is_admin ? ' (admin)' : '' }}{{ $p->is(auth()->user()) ? ' — me' : '' }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="fld"><label for="t-due">Due</label><input id="t-due" name="due_on" type="date"></div>
-            </div>
-            <div class="fld"><label for="t-details">Details <span class="hint">(optional)</span></label><textarea id="t-details" name="details" rows="2" maxlength="4000"></textarea></div>
-            <div class="form-actions">
-                <label class="inline"><input type="checkbox" name="hot" value="1" checked> Add to Hotlist</label>
-                <span class="spacer"></span>
-                <a class="mini" href="{{ route('people.index') }}">Someone missing? Add them on People</a>
-                <button class="btn primary" type="submit">Assign task</button>
-            </div>
-        </form>
-    @endcan
 
     <div class="task-cols">
         <div class="rcol">

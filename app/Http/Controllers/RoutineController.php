@@ -38,9 +38,10 @@ class RoutineController extends Controller
         return redirect()->to(route('dashboard').'#routines')->with('status', $msg);
     }
 
-    public function create(): View
+    /** New routines start on the shared "New routine or task" form. */
+    public function create(): RedirectResponse
     {
-        return $this->form(new Routine(['cadence' => 'daily', 'all_brands' => true, 'sort' => 100]));
+        return redirect()->route('work.create', ['type' => 'routine']);
     }
 
     public function store(Request $request): RedirectResponse
