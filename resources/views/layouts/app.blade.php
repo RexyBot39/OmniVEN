@@ -24,6 +24,10 @@
                 <img src="{{ asset('images/omniven-logo.png') }}" alt="OmniVEN" width="174" height="57">
             </picture>
         </a>
+        <button type="button" class="launch-btn" id="launch-open" aria-haspopup="dialog" aria-keyshortcuts="Meta+K Control+K">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <span>Jump to…</span><kbd class="kbd-mac">⌘K</kbd><kbd class="kbd-pc">Ctrl K</kbd>
+        </button>
         <nav class="who">
             @can('view-activity')
                 <a href="{{ route('activity.index') }}" class="btn ghost">Activity</a>
@@ -51,5 +55,17 @@
 @endif
 
 @yield('content')
+
+@auth
+<dialog id="launcher" class="launcher" aria-label="Jump to anything">
+    <div class="ln-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="ln-q" type="text" autocomplete="off" spellcheck="false" placeholder="Brand, account or tool, e.g. ocusafe insta" aria-label="Search brands, accounts and tools" aria-controls="ln-list">
+        <kbd>Esc</kbd>
+    </div>
+    <ul id="ln-list" class="ln-list" role="listbox" data-src="{{ route('launcher') }}"></ul>
+    <p class="ln-foot sub">↑ ↓ to move · Enter to open · Accounts and tools open in a new tab</p>
+</dialog>
+@endauth
 </body>
 </html>

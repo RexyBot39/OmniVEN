@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\Activity;
+use App\Models\Account;
 use App\Models\Brand;
 use App\Models\Note;
 use App\Models\Routine;
@@ -48,6 +49,10 @@ class DashboardController extends Controller
         }
 
         $people = User::where('is_active', true)->orderBy('name')->get();
+
+        // Brand × platform grid: [brand_id][platform] => first account.
+        $accountGrid = Account::all()->groupBy('brand_id')->map(fn ($as) => $as->groupBy('platform')->map->first());
+        $gridPlatforms = collect(config('omniven.platforms'))->filter(fn ($p) => $p['grid']);
         $postits = $me->postits()->with('items')->get();
 
         // Fresh sign-in, or the logo link (/?home=1): reset to Routines, all brands.
@@ -57,7 +62,7 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome'
+            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms'
         ));
     }
 }

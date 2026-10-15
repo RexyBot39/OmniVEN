@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\BrandController;
@@ -64,9 +65,17 @@ Route::middleware('auth')->group(function () {
         Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
         Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
         Route::post('/people', [UserController::class, 'store'])->name('people.store');
+        Route::resource('accounts', AccountController::class)->except(['index', 'show']);
+        Route::post('/accounts/{account}/verify', [AccountController::class, 'verify'])->name('accounts.verify');
         Route::post('/slack/channels', [SlackController::class, 'store'])->name('slack.channels.store');
         Route::delete('/slack/channels/{channel}', [SlackController::class, 'destroy'])->name('slack.channels.destroy');
         Route::get('/people', [UserController::class, 'index'])->name('people.index');
         Route::patch('/people/{user}', [UserController::class, 'update'])->name('people.update');
     });
+
+    // Brand hubs (after the admin routes so /brands/create isn't read as a brand name).
+    Route::get('/brands/{brand:slug}', [BrandController::class, 'show'])->name('brands.show');
+
+    // Quick launcher index (⌘K).
+    Route::get('/launcher.json', [\App\Http\Controllers\LauncherController::class, 'index'])->name('launcher');
 });
