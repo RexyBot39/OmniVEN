@@ -35,6 +35,7 @@ return [
         'commerce' => 'Shopping & Feeds',
         'search' => 'Search & Analytics',
         'email' => 'Email & SMS',
+        'content' => 'Blog & Content',
         'reviews' => 'Reviews',
         'other' => 'Other',
     ],
@@ -60,6 +61,7 @@ return [
         'bing_webmaster' => ['label' => 'Bing Webmaster', 'short' => 'BW', 'group' => 'search', 'grid' => false, 'home' => 'https://www.bing.com/webmasters'],
         'clarity' => ['label' => 'Clarity', 'short' => 'CL', 'group' => 'search', 'grid' => false, 'home' => 'https://clarity.microsoft.com'],
         'klaviyo' => ['label' => 'Klaviyo', 'short' => 'KL', 'group' => 'email', 'grid' => true, 'home' => 'https://www.klaviyo.com/login'],
+        'contentful' => ['label' => 'Contentful (blog)', 'short' => 'CF', 'group' => 'content', 'grid' => false, 'home' => 'https://app.contentful.com'],
         'google_business' => ['label' => 'Google Business Profile', 'short' => 'GB', 'group' => 'reviews', 'grid' => false, 'home' => 'https://business.google.com'],
         'shopper_approved' => ['label' => 'Shopper Approved', 'short' => 'SA', 'group' => 'reviews', 'grid' => false, 'home' => 'https://www.shopperapproved.com/account/dashboard'],
         'trustpilot' => ['label' => 'Trustpilot', 'short' => 'TP', 'group' => 'reviews', 'grid' => false, 'home' => 'https://business.trustpilot.com'],
@@ -77,6 +79,7 @@ return [
         'Creative & Content',
         'AI & Internal Tools',
         'Affiliate',
+        'Blog',
     ],
 
     'statuses' => [
