@@ -31,6 +31,9 @@ class BrandSocialsSeeder extends Seeder
             ['x', '@ocusleep', 'https://x.com/ocusleep'],
             ['instagram', '@ocusleep', 'https://www.instagram.com/ocusleep'],
         ],
+        'trailview' => [
+            ['instagram', '@trailview.co', 'https://www.instagram.com/trailview.co/'],
+        ],
     ];
 
     public function run(): void
