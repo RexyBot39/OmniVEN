@@ -30,6 +30,7 @@
         </button>
         <nav class="who">
             <a href="{{ route('calendar') }}" class="btn ghost">Calendar</a>
+            <a href="{{ route('help') }}" class="btn ghost">Help</a>
             @can('view-activity')
                 <a href="{{ route('activity.index') }}" class="btn ghost">Activity</a>
             @endcan

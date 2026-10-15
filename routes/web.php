@@ -92,6 +92,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/access-requests', [AccessRequestController::class, 'store'])->middleware('throttle:10,1')->name('access-requests.store');
     Route::delete('/access-requests/{accessRequest}', [AccessRequestController::class, 'destroy'])->name('access-requests.destroy');
 
+    // Help: the field guide, with search.
+    Route::view('/help', 'help.index')->name('help');
+
     // Weekly action calendar: shared checkmarks, boost log and Sunday review note.
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'show'])->name('calendar');
     Route::get('/calendar/export/boosts.csv', [\App\Http\Controllers\CalendarController::class, 'exportBoosts'])->name('calendar.export.boosts');

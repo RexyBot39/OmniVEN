@@ -27,6 +27,7 @@ class LauncherController extends Controller
             $items->push(['k' => 'Page', 't' => $name, 's' => 'OmniVEN tab', 'u' => $home.'#'.$tab, 'x' => false]);
         }
         $items->push(['k' => 'Page', 't' => 'Action calendar', 's' => 'This week\'s runbook, boost log and Sunday review', 'u' => route('calendar'), 'x' => false, 'a' => 'q4 week runbook boost calendar']);
+        $items->push(['k' => 'Page', 't' => 'Help', 's' => 'Field guide: setup, shortcuts and playbooks', 'u' => route('help'), 'x' => false, 'a' => 'guide how to faq field guide']);
         if ($user->can('view-activity')) {
             $items->push(['k' => 'Page', 't' => 'Activity report', 's' => 'Admin', 'u' => route('activity.index'), 'x' => false]);
         }
