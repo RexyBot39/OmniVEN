@@ -17,8 +17,9 @@
                         @php($a = $accountGrid[$srcId][$key] ?? null)
                         <td>
                             @if($a)
-                                <a class="cell-link {{ $a->hasDirectLink() ? '' : 'weak' }} {{ $a->needsVerify() ? 'stale' : '' }}" href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer"
-                                   title="{{ $a->title() }}{{ $a->hasDirectLink() ? '' : ' (no direct link yet)' }}{{ $a->needsVerify() ? ' · access not verified recently' : '' }}">
+                                @php($aBroken = isset($brokenLinks) && $brokenLinks->has('account:'.$a->id))
+                                <a class="cell-link {{ $a->hasDirectLink() ? '' : 'weak' }} {{ $a->needsVerify() ? 'stale' : '' }} {{ $aBroken ? 'broken' : '' }}" href="{{ $a->openUrl() }}" target="_blank" rel="noopener noreferrer"
+                                   title="{{ $a->title() }}{{ $a->hasDirectLink() ? '' : ' (no direct link yet)' }}{{ $a->needsVerify() ? ' · access not verified recently' : '' }}{{ $aBroken ? ' · link broken' : '' }}">
                                     <span class="plat" data-p="{{ $key }}">{{ $p['short'] }}</span>
                                 </a>
                             @elseif($isAdmin && ! $srcName)

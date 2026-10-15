@@ -19,6 +19,7 @@ class BrandController extends Controller
         Launchpad::recordOpen($request->user(), $brand);
         $favKeys = Launchpad::favoriteKeys($request->user());
         $myRequests = \App\Models\AccessRequest::latestFor($request->user());
+        $brokenLinks = $request->user()->can('admin') ? \App\Models\LinkCheck::brokenKeys() : collect();
         $source = $brand->accountSource();
         $source->load(['accounts' => fn ($q) => $q->orderBy('platform')]);
         $tools = \App\Models\Tool::with('brands')->orderBy('sort')->orderBy('name')->get()
@@ -34,7 +35,7 @@ class BrandController extends Controller
             ? collect($platforms)->filter(fn ($p, $k) => $p['grid'] && ! $source->accounts->contains('platform', $k))
             : collect();
 
-        return view('brands.show', compact('brand', 'source', 'tools', 'routines', 'groups', 'missing', 'favKeys', 'myRequests'));
+        return view('brands.show', compact('brand', 'source', 'tools', 'routines', 'groups', 'missing', 'favKeys', 'myRequests', 'brokenLinks'));
     }
 
     public function create(): View

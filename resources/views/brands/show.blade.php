@@ -43,7 +43,7 @@
                                 <article class="acct-card">
                                     <span class="plat" data-p="{{ $a->platform }}">{{ $a->platformInfo()['short'] }}</span>
                                     <div class="acct-main">
-                                        <div class="acct-t"><b>{{ $a->platformLabel() }}</b>@if($a->handle)<span class="acct-handle">{{ $a->handle }}</span>@endif</div>
+                                        <div class="acct-t"><b>{{ $a->platformLabel() }}</b>@if($a->handle)<span class="acct-handle">{{ $a->handle }}</span>@endif @if($brokenLinks->has('account:'.$a->id))<span class="pill link-broken" title="This link failed the last two nightly checks">Link broken</span>@endif</div>
                                         <div class="acct-meta">
                                             @if($a->account_ref)<span>ID {{ $a->account_ref }}</span>@endif
                                             @if($a->login)<span>Login {{ $a->login }}</span>@endif

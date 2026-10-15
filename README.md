@@ -58,6 +58,20 @@ The **Slack** tab shows recent messages from chosen channels and lets people pos
 5. Open the Slack tab. Public channels are joined automatically. For a private channel, type `/invite @OmniVEN` in it, then add it under **Manage channels**.
 6. Access requests: add `OMNIVEN_ACCESS_SLACK_CHANNEL=<channel name>` in Railway to get a short note there whenever someone clicks **Request access** (their name and the tool only, never their reason). Type `/invite @OmniVEN` in that channel so the bot can post. Leave it unset to see requests only on the Access tab.
 
+## 4. Nightly broken-link check (Railway cron)
+
+OmniVEN checks every tool, brand account, brand website, social link and routine link once a night. Admins see the results in **Broken links** on the Access tab and the Access review. A link counts as broken only after failing two nights in a row. Sites that block automated visits (Instagram, Facebook, LinkedIn…) show as "couldn't be checked", not broken. When links newly break, a short note goes to `OMNIVEN_ACCESS_SLACK_CHANNEL`.
+
+Set it up once in Railway:
+
+1. In the OmniVEN project: **New → GitHub Repo** → pick this same repo. Name the new service `omniven-link-check`.
+2. On that service → **Settings**:
+   - **Config-as-code → Railway config file**: `railway.cron.json`. This runs `php artisan omniven:check-links` on the schedule `0 7 * * *` (07:00 UTC, about 3am Eastern), with no web server or health check.
+3. On that service → **Variables**: add the same values as the web service, using references to the web service's variables: `APP_KEY`, `APP_URL`, `APP_TIMEZONE`, `DB_CONNECTION`, `DB_URL`, `CACHE_STORE`, `LOG_CHANNEL`, `SLACK_BOT_TOKEN`, `OMNIVEN_ACCESS_SLACK_CHANNEL`.
+4. Deploy it. The run log should end with a line like "Checked 64 links: 58 OK, 2 broken, 4 couldn't check…".
+
+Admins can also press **Check now** on the Access tab at any time.
+
 ## Local development
 
 ```bash

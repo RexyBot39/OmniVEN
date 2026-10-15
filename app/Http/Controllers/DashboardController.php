@@ -60,6 +60,7 @@ class DashboardController extends Controller
         $favKeys = Launchpad::favoriteKeys($me);
         $myRequests = AccessRequest::latestFor($me);
         $openRequests = $me->can('admin') ? AccessRequest::open()->with('user')->oldest()->get() : collect();
+        $brokenLinks = $me->can('admin') ? \App\Models\LinkCheck::brokenKeys() : collect();
 
         // Fresh sign-in, or the logo link (/?home=1): reset to Routines, all brands.
         $goHome = $request->session()->get('omniven_home', false) || $request->boolean('home');
@@ -68,7 +69,7 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests'
+            'openTasks', 'doneTasks', 'hotlist', 'popup', 'people', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks'
         ));
     }
 }
