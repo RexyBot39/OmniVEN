@@ -6,18 +6,18 @@
 <section data-view="tasks">
     <div class="h2row">
         <h2>Tasks</h2>@include('partials.star', ['key' => 'page:2', 'label' => 'the Tasks tab'])
-        <span class="sub">Everyone’s list, side by side. Routines assigned to someone show in their column when they’re due.</span>
-        <div class="seg" role="group" aria-label="Show">
-            <button type="button" class="seg-b" data-taskfilter="mine" aria-pressed="false">Mine</button>
-            <button type="button" class="seg-b" data-taskfilter="all" aria-pressed="true">Everyone</button>
+        <div class="tb-legend" aria-label="Color key">
+            @foreach($taskBrands as $b)<span><i style="background:var(--c{{ $b->colorSlot() }})"></i>{{ $b->name }}</span>@endforeach
+            <span><i class="tb-routine"></i>Routine</span>
         </div>
-        <a class="btn primary" href="{{ route('work.create', ['type' => 'task']) }}">{{ $me->can('admin') ? '+ New task or routine' : '+ New task' }}</a>
-    </div>
-
-    <div class="tb-legend" aria-label="Color key">
-        @foreach($taskBrands as $b)<span><i style="background:var(--c{{ $b->colorSlot() }})"></i>{{ $b->name }}</span>@endforeach
-        <span><i class="tb-nobrand"></i>No brand</span>
-        <span><i class="tb-routine"></i>Routine</span>
+        <div class="h2-tools">
+            @can('admin')<button type="button" class="seg-b solo" data-stamps aria-pressed="false" title="Show when each task was assigned and finished">Show times</button>@endcan
+            <div class="seg" role="group" aria-label="Show">
+                <button type="button" class="seg-b" data-taskfilter="mine" aria-pressed="false">Mine</button>
+                <button type="button" class="seg-b" data-taskfilter="all" aria-pressed="true">Everyone</button>
+            </div>
+            <a class="btn primary" href="{{ route('work.create', ['type' => 'task']) }}">{{ $me->can('admin') ? '+ New task or routine' : '+ New task' }}</a>
+        </div>
     </div>
 
     <div class="board">
@@ -53,7 +53,7 @@
                         @include('partials.board-routine', ['r' => $r])
                     @endforeach
                     @if($col['tasks']->isEmpty() && $col['routines']->isEmpty())
-                        <p class="sub bcol-empty">Nothing open. Add a task above.</p>
+                        <p class="sub bcol-empty">Nothing open.</p>
                     @endif
                 </div>
             </div>

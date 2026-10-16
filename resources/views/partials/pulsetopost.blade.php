@@ -1,5 +1,5 @@
 {{-- PulseToPost status, read on the server and cached. Every value is escaped; a null figure shows as a gap. --}}
-<section class="p2p wrap" aria-label="PulseToPost">
+<section class="p2p" aria-label="PulseToPost">
     <div class="p2p-in {{ $pulse['ok'] ? '' : 'down' }}">
         <a class="p2p-name" href="{{ $pulse['dashboard'] }}" target="_blank" rel="noopener noreferrer">{{ \App\Support\BrandIcon::html('pulsetopost', 'xs') }}PulseToPost</a>
         @if($pulse['ok'])

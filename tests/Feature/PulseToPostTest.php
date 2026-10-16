@@ -70,7 +70,7 @@ class PulseToPostTest extends TestCase
     private function card(): string
     {
         $html = $this->actingAs($this->me)->get('/')->assertOk()->getContent();
-        $start = strpos($html, 'class="p2p wrap"');
+        $start = strpos($html, 'class="p2p"');
         $this->assertNotFalse($start, 'no PulseToPost card');
 
         return substr($html, $start, strpos($html, '</section>', $start) - $start);
@@ -206,7 +206,7 @@ class PulseToPostTest extends TestCase
         config(['pulsetopost.token' => null]);
         Http::fake();
         $html = $this->actingAs($this->me)->get('/')->assertOk()->getContent();
-        $this->assertStringNotContainsString('class="p2p wrap"', $html);
+        $this->assertStringNotContainsString('class="p2p"', $html);
         Http::assertNothingSent();
     }
 }
