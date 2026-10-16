@@ -17,6 +17,9 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    /** The most finished tasks one view of the Completed list shows. */
+    private const DONE_LIMIT = 500;
+
     public function index(Request $request): View
     {
         $me = $request->user();
@@ -37,8 +40,13 @@ class DashboardController extends Controller
         // Tasks: everything open, plus the last 14 days of finished work.
         $openTasks = Task::with(['assignee', 'creator', 'assigner', 'brand'])->open()
             ->orderByDesc('hot')->orderByRaw('due_on is null')->orderBy('due_on')->latest()->get();
+        $doneRange = $this->doneRange($request);
         $doneTasks = Task::with(['assignee', 'completer', 'assigner', 'brand'])->whereNotNull('completed_at')
-            ->where('completed_at', '>=', now()->subDays(14))->latest('completed_at')->limit(200)->get();
+            ->whereBetween('completed_at', [$doneRange['from']->copy()->utc(), $doneRange['to']->copy()->utc()])
+            ->latest('completed_at')->limit(self::DONE_LIMIT + 1)->get();
+        $doneRange['more'] = $doneTasks->count() > self::DONE_LIMIT;
+        $doneRange += $this->donePresets();
+        $doneTasks = $doneTasks->take(self::DONE_LIMIT);
         $taskBrands = Task::brandChoices();
         $board = $this->board($me, $openTasks, $routines);
         $hotlist = $openTasks->where('hot', true)->values();
@@ -72,8 +80,62 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'taskBrands', 'board', 'hotlist', 'popup', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress', 'pulse'
+            'openTasks', 'doneTasks', 'doneRange', 'taskBrands', 'board', 'hotlist', 'popup', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress', 'pulse'
         ));
+    }
+
+    /**
+     * Which finished tasks the Completed list shows: the last 14 days, or a range picked with
+     * ?done_from=YYYY-MM-DD&done_to=YYYY-MM-DD (either end optional, reversed ends swapped, never past today).
+     */
+    private function doneRange(Request $request): array
+    {
+        $tz = config('app.timezone');
+        $parse = function (?string $v) use ($tz) {
+            if (! is_string($v) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) {
+                return null;
+            }
+            try {
+                $d = \Carbon\Carbon::createFromFormat('!Y-m-d', $v, $tz);
+            } catch (\Throwable) {
+                return null;
+            }
+
+            return $d && $d->format('Y-m-d') === $v ? $d : null;
+        };
+        $from = $parse($request->query('done_from'));
+        $to = $parse($request->query('done_to'));
+        $today = now($tz)->startOfDay();
+
+        if (! $from && ! $to) {
+            return ['custom' => false, 'from' => now($tz)->subDays(14), 'to' => now($tz)->endOfDay(), 'label' => 'Completed in the last 14 days'];
+        }
+        $to = ($to ?? $today)->copy()->min($today);
+        $from = ($from ?? $to->copy()->subDays(13))->copy()->min($today);
+        if ($from->gt($to)) {
+            [$from, $to] = [$to, $from];
+        }
+        $label = $from->isSameDay($to)
+            ? 'Completed on '.$from->format('M j, Y')
+            : 'Completed '.$from->format($from->year === $to->year ? 'M j' : 'M j, Y').' – '.$to->format('M j, Y');
+
+        return ['custom' => true, 'from' => $from->copy()->startOfDay(), 'to' => $to->copy()->endOfDay(), 'label' => $label];
+    }
+
+    /** Quick ranges for the Completed list, as [from, to] dates. */
+    private function donePresets(): array
+    {
+        $today = now(config('app.timezone'));
+        $d = fn ($c) => $c->format('Y-m-d');
+        $lastMonth = $today->copy()->subMonthNoOverflow();
+
+        return ['today' => $d($today), 'presets' => [
+            'Last 30 days' => [$d($today->copy()->subDays(29)), $d($today)],
+            'Last 90 days' => [$d($today->copy()->subDays(89)), $d($today)],
+            'This month' => [$d($today->copy()->startOfMonth()), $d($today)],
+            'Last month' => [$d($lastMonth->copy()->startOfMonth()), $d($lastMonth->copy()->endOfMonth())],
+            'This year' => [$d($today->copy()->startOfYear()), $d($today)],
+        ]];
     }
 
     /**

@@ -60,10 +60,25 @@
         @endforeach
     </div>
 
-    <div class="tb-done">
-        <div class="h2row"><h3>Completed in the last 14 days</h3><span class="sub">{{ $doneTasks->count() }} {{ \Illuminate\Support\Str::plural('task', $doneTasks->count()) }}, everyone’s</span></div>
+    <div class="tb-done" id="done-list">
+        <div class="h2row">
+            <h3>{{ $doneRange['label'] }}</h3>
+            <span class="sub">{{ $doneTasks->count() }}{{ $doneRange['more'] ? '+' : '' }} {{ \Illuminate\Support\Str::plural('task', $doneTasks->count()) }}, everyone’s</span>
+            @if($doneRange['custom'])<a class="mini" href="{{ route('dashboard') }}#tasks">Back to the last 14 days</a>@endif
+        </div>
+        <form class="done-range" method="GET" action="{{ route('dashboard') }}#tasks" aria-label="Show completed tasks from a date range">
+            <label>From <input type="date" name="done_from" value="{{ $doneRange['custom'] ? $doneRange['from']->format('Y-m-d') : '' }}" max="{{ $doneRange['today'] }}"></label>
+            <label>To <input type="date" name="done_to" value="{{ $doneRange['custom'] ? $doneRange['to']->format('Y-m-d') : '' }}" max="{{ $doneRange['today'] }}"></label>
+            <button class="btn" type="submit">Show</button>
+            <span class="done-presets">
+                @foreach($doneRange['presets'] as $name => [$f, $t])
+                    <a href="{{ route('dashboard', ['done_from' => $f, 'done_to' => $t]) }}#tasks" @if($doneRange['custom'] && $doneRange['from']->format('Y-m-d') === $f && $doneRange['to']->format('Y-m-d') === $t) aria-current="true" @endif>{{ $name }}</a>
+                @endforeach
+            </span>
+        </form>
+        @if($doneRange['more'])<p class="sub">Showing the latest 500. Pick a shorter range to see the rest.</p>@endif
         @if($doneTasks->isEmpty())
-            <p class="sub">Finished tasks show here, crossed out, for two weeks.</p>
+            <p class="sub">{{ $doneRange['custom'] ? 'No tasks were finished in that range.' : 'Finished tasks show here, crossed out, for two weeks.' }}</p>
         @else
             <ul class="tb-done-list">
                 @foreach($doneTasks as $t)
@@ -79,7 +94,7 @@
                         <span class="tb-done-m">
                             @if($t->brand)<span class="bpill" style="--bc:var(--c{{ $t->brand->colorSlot() }})">{{ $t->brand->name }}</span>@endif
                             <span class="ok">✓ Done{{ $t->completer ? ' · '.$t->completer->firstName() : '' }}</span>
-                            <span>{{ $t->assignee?->is($t->completer) ? '' : 'for '.$t->assignee?->firstName().' · ' }}{{ $t->completed_at->timezone(config('app.timezone'))->format('D M j') }}</span>
+                            <span>{{ $t->assignee?->is($t->completer) ? '' : 'for '.$t->assignee?->firstName().' · ' }}{{ $t->completed_at->timezone(config('app.timezone'))->format($t->completed_at->year === now()->year ? 'D M j' : 'M j, Y') }}</span>
                         </span>
                         @can('admin')<span></span>@include('partials.stamps', ['assignedAt' => $t->assigned_at ?? $t->created_at, 'assignedBy' => $t->assigner ?? $t->creator, 'doneAt' => $t->completed_at, 'doneBy' => $t->completer])@endcan
                     </li>

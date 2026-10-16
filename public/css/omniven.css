@@ -1043,3 +1043,15 @@ body.show-stamps .main.dash .stamps{display:flex}
   tr:hover td.row-actions > *,tr:focus-within td.row-actions > *,
   .acct-card:hover .acct-admin,.acct-card:focus-within .acct-admin{opacity:1}
 }
+
+/* Completed list: pick a date range to look further back */
+.done-range{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 8px;font-size:13px;color:var(--muted)}
+.done-range label{display:inline-flex;align-items:center;gap:6px}
+.done-range input[type=date]{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:4px 6px;font-size:13px;color:var(--ink)}
+.done-range .btn{padding:4px 12px;font-size:13px}
+.done-presets{display:inline-flex;flex-wrap:wrap;gap:4px;margin-left:4px}
+.done-presets a{padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;font-size:12.5px;white-space:nowrap}
+.done-presets a:hover{border-color:var(--muted)}
+.done-presets a[aria-current="true"]{background:var(--navy);border-color:var(--navy);color:var(--bg)}
+.tb-done .h2row .mini{margin-left:auto}
+.tb-done{scroll-margin-top:130px}
