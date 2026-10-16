@@ -26,8 +26,8 @@
     <div class="wrap bar-in">
         <div class="row1">
             <div class="tabs" role="tablist">
-                <button class="tab" role="tab" data-tab="routines" aria-selected="true">Routines<span class="n">{{ $due }} due</span></button>
-                <button class="tab" role="tab" data-tab="tasks" aria-selected="false">Tasks<span class="n">{{ $myOpen ? $myOpen.' yours' : $openTasks->count() }}</span></button>
+                <button class="tab" role="tab" data-tab="tasks" aria-selected="true">Tasks<span class="n">{{ $myOpen ? $myOpen.' yours' : $openTasks->count() }}</span></button>
+                <button class="tab" role="tab" data-tab="routines" aria-selected="false">Routines<span class="n">{{ $due }} due</span></button>
                 <button class="tab" role="tab" data-tab="postit" aria-selected="false">Sticky Notes</button>
                 <button class="tab" role="tab" data-tab="slack" aria-selected="false">Slack<span class="unread-star" id="slack-star" hidden aria-label="new Slack messages">*</span></button>
                 <button class="tab" role="tab" data-tab="brands" aria-selected="false">Brands<span class="n">{{ $brands->count() }}</span></button>
@@ -173,7 +173,7 @@
 </section>
 
 {{-- ================= ROUTINES ================= --}}
-<section data-view="routines">
+<section data-view="routines" hidden>
     <div class="h2row">
         <h2>Routines</h2>@include('partials.star', ['key' => 'page:1', 'label' => 'the Routines tab'])
         <span class="sub">Ticks reset each day, week, month or quarter (Eastern time).@php($myRoutines = $routines->where('assignee_id', $me->id))@if($myRoutines->isNotEmpty()) <b class="mine-n">{{ $myRoutines->reject->isDone()->count() }} of {{ $myRoutines->count() }} assigned to you still due.</b>@endif</span>
