@@ -21,6 +21,9 @@ class PulseToPost
     private const READ = 'pulsetopost:read';
     private const LAST_GOOD = 'pulsetopost:last-good-at';
 
+    /** Why the last call failed, in words an admin can act on. Never includes the token or the response body. */
+    private static ?string $error = null;
+
     public static function configured(): bool
     {
         return filled(config('pulsetopost.token')) && filled(config('pulsetopost.base_url'));
@@ -41,7 +44,7 @@ class PulseToPost
             $lastGood = Cache::get(self::LAST_GOOD);
         } catch (Throwable $e) {
             Log::warning('PulseToPost card failed', ['error' => class_basename($e)]);
-            $read = ['ok' => false];
+            $read = ['ok' => false, 'error' => 'OmniVEN hit an error while reading PulseToPost ('.class_basename($e).').'];
             $lastGood = null;
         }
 
@@ -57,9 +60,10 @@ class PulseToPost
     /** One live read. The summary decides whether the card is up; /health failing only blanks the status line. */
     private static function read(): array
     {
+        self::$error = null;
         $summary = self::get('summary');
         if (! is_array($summary) || ! is_array($summary['counts'] ?? null)) {
-            return ['ok' => false];
+            return ['ok' => false, 'error' => self::$error ?? 'PulseToPost answered, but /summary had no counts in it.'];
         }
         $health = self::get('health');
         $now = now()->timestamp;
@@ -97,28 +101,51 @@ class PulseToPost
         try {
             $res = Http::withToken((string) config('pulsetopost.token'))->acceptJson()
                 ->connectTimeout(2)->timeout(config('pulsetopost.timeout'))
-                ->get(config('pulsetopost.base_url').'/api/omniven/'.$endpoint);
+                ->get(self::baseUrl().'/api/omniven/'.$endpoint);
             if ($res->successful() && is_array($res->json())) {
                 return $res->json();
             }
+            self::$error = self::explain($res->status(), $res->successful());
             Log::warning('PulseToPost read failed', ['endpoint' => $endpoint, 'status' => $res->status()]);
         } catch (Throwable $e) {
             // Class only: messages can echo response bodies, and the token must never reach the logs.
+            self::$error = $e instanceof \Illuminate\Http\Client\ConnectionException
+                ? 'Couldn’t connect to '.parse_url(self::baseUrl(), PHP_URL_HOST).' (timed out or not found). Check PULSETOPOST_BASE_URL.'
+                : 'Reading PulseToPost failed ('.class_basename($e).').';
             Log::warning('PulseToPost read failed', ['endpoint' => $endpoint, 'error' => class_basename($e)]);
         }
 
         return null;
     }
 
+    private static function explain(int $status, bool $ok): string
+    {
+        return match (true) {
+            $ok => 'PulseToPost answered with a web page instead of data. The API may not be deployed there yet, or it redirected to a sign-in page.',
+            $status === 401, $status === 403 => "PulseToPost refused the token (HTTP {$status}). PULSETOPOST_API_TOKEN in OmniVEN must match the token set on PulseToPost exactly.",
+            $status === 404 => 'PulseToPost has no /api/omniven/summary (HTTP 404). Check PULSETOPOST_BASE_URL is just https://pulsetopost.com, and that the OmniVEN API is deployed on PulseToPost.',
+            $status === 429 => 'PulseToPost is rate-limiting OmniVEN (HTTP 429). It will retry in a minute.',
+            $status >= 500 => "PulseToPost had a server error (HTTP {$status}).",
+            default => "PulseToPost answered HTTP {$status}.",
+        };
+    }
+
+    /** The configured site, forgiving a pasted API path or trailing slash. */
+    private static function baseUrl(): string
+    {
+        return preg_replace('#/api/omniven/?$#', '', rtrim((string) config('pulsetopost.base_url'), '/'));
+    }
+
     /** What the card shows. Nulls stay null so the view renders a gap, not a zero. */
     private static function present(array $read, ?int $lastGood): array
     {
         $tz = config('app.timezone');
-        $base = config('pulsetopost.base_url');
+        $base = self::baseUrl();
         if (! ($read['ok'] ?? false)) {
             return [
                 'ok' => false,
                 'last_good' => $lastGood ? CarbonImmutable::createFromTimestamp($lastGood, $tz) : null,
+                'error' => $read['error'] ?? null,
                 'dashboard' => $base.'/',
             ];
         }
@@ -180,7 +207,7 @@ class PulseToPost
     /** Only https links back into PulseToPost itself; anything else from the API is dropped. */
     private static function link(mixed $url): ?string
     {
-        $host = parse_url(config('pulsetopost.base_url'), PHP_URL_HOST);
+        $host = parse_url(self::baseUrl(), PHP_URL_HOST);
 
         return is_string($url) && str_starts_with($url, 'https://') && filter_var($url, FILTER_VALIDATE_URL)
             && strcasecmp((string) parse_url($url, PHP_URL_HOST), (string) $host) === 0 ? $url : null;

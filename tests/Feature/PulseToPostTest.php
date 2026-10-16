@@ -167,6 +167,40 @@ class PulseToPostTest extends TestCase
         $this->assertStringContainsString('No good read yet', $card);
     }
 
+    public function test_admins_see_why_a_read_failed_and_staff_do_not(): void
+    {
+        Http::fake(['*' => Http::response(['message' => 'Unauthenticated.'], 401)]);
+        $this->assertStringNotContainsString('Admins:', $this->card());
+
+        $this->me->update(['is_admin' => true]);
+        $card = $this->card();
+        $this->assertStringContainsString('PulseToPost refused the token (HTTP 401)', $card);
+        $this->assertStringNotContainsString(self::TOKEN, $card);
+        $this->assertStringNotContainsString('Unauthenticated', $card);
+    }
+
+    public function test_explains_a_missing_api(): void
+    {
+        $this->me->update(['is_admin' => true]);
+        Http::fake(['*' => Http::response('Not found', 404)]);
+        $this->assertStringContainsString('(HTTP 404)', $this->card());
+    }
+
+    public function test_explains_a_login_page_instead_of_data(): void
+    {
+        $this->me->update(['is_admin' => true]);
+        Http::fake(['*' => Http::response('<html>Sign in</html>', 200)]);
+        $this->assertStringContainsString('answered with a web page instead of data', $this->card());
+    }
+
+    public function test_a_pasted_api_path_in_the_base_url_still_works(): void
+    {
+        config(['pulsetopost.base_url' => 'https://pulsetopost.com/api/omniven/']);
+        $this->fake($this->summary());
+        $this->assertStringContainsString('awaiting review', $this->card());
+        Http::assertSent(fn (Request $r) => $r->url() === 'https://pulsetopost.com/api/omniven/summary');
+    }
+
     public function test_no_token_means_no_card_and_no_requests(): void
     {
         config(['pulsetopost.token' => null]);
