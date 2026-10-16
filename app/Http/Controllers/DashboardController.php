@@ -62,6 +62,7 @@ class DashboardController extends Controller
         $openRequests = $me->can('admin') ? AccessRequest::open()->with('user')->oldest()->get() : collect();
         $brokenLinks = $me->can('admin') ? \App\Models\LinkCheck::brokenKeys() : collect();
         $calWeek = \App\Models\CalendarWeek::current();
+        $pulse = \App\Support\PulseToPost::card();
         $calProgress = $calWeek ? ['done' => $calWeek->checks()->count(), 'total' => $calWeek->items()->count()] : null;
 
         // Fresh sign-in, or the logo link (/?home=1): reset to Routines, all brands.
@@ -71,7 +72,7 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'taskBrands', 'board', 'hotlist', 'popup', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress'
+            'openTasks', 'doneTasks', 'taskBrands', 'board', 'hotlist', 'popup', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress', 'pulse'
         ));
     }
 

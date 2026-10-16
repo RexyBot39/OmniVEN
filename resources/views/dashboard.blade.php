@@ -20,6 +20,7 @@
 </section>
 
 @include('partials.hotlist')
+@if($pulse)@include('partials.pulsetopost')@endif
 @include('partials.launchpad')
 
 <div class="bar">
