@@ -15,12 +15,21 @@
     </form>
     <div class="tablewrap">
         <table>
-            <thead><tr><th>Person</th><th>Last sign-in</th><th>Role</th><th>Access</th></tr></thead>
+            <thead><tr><th>Person</th><th>Last sign-in</th><th>Task board</th><th>Role</th><th>Access</th></tr></thead>
             <tbody>
             @foreach($users as $u)
                 <tr>
                     <td><a class="person-link" href="{{ route('people.show', $u) }}"><strong>{{ $u->name }}</strong></a><div class="sub">{{ $u->email }} · <a href="{{ route('people.show', $u) }}">Routines &amp; tasks</a></div></td>
                     <td>{{ $u->last_login_at?->format('M j, Y g:ia') ?? 'Not yet signed in' }}</td>
+                    <td>
+                        <form method="POST" action="{{ route('people.update', $u) }}">@csrf @method('PATCH')
+                            <select name="board_position" aria-label="Task board column for {{ $u->name }}" data-autosubmit>
+                                <option value="" @selected($u->board_position === null)>Not on the board</option>
+                                @for($i = 1; $i <= 8; $i++)<option value="{{ $i }}" @selected($u->board_position === $i)>Column {{ $i }}</option>@endfor
+                            </select>
+                            <noscript><button class="btn" type="submit">Save</button></noscript>
+                        </form>
+                    </td>
                     <td>
                         @if($u->is(auth()->user()) || $u->isConfiguredAdmin())
                             <span class="pill active">{{ $u->is_admin ? 'Admin' : 'Staff' }}</span>

@@ -35,10 +35,12 @@ class DashboardController extends Controller
         $uncategorized = $tools->whereNull('category')->values();
 
         // Tasks: everything open, plus the last 14 days of finished work.
-        $openTasks = Task::with(['assignee', 'creator', 'assigner'])->open()
+        $openTasks = Task::with(['assignee', 'creator', 'assigner', 'brand'])->open()
             ->orderByDesc('hot')->orderByRaw('due_on is null')->orderBy('due_on')->latest()->get();
-        $doneTasks = Task::with(['assignee', 'completer', 'assigner'])->whereNotNull('completed_at')
-            ->where('completed_at', '>=', now()->subDays(14))->latest('completed_at')->limit(50)->get();
+        $doneTasks = Task::with(['assignee', 'completer', 'assigner', 'brand'])->whereNotNull('completed_at')
+            ->where('completed_at', '>=', now()->subDays(14))->latest('completed_at')->limit(200)->get();
+        $taskBrands = Task::brandChoices();
+        $board = $this->board($me, $openTasks, $routines);
         $hotlist = $openTasks->where('hot', true)->values();
 
         // Once a day, pop up the hot items assigned to the person signing in.
@@ -69,7 +71,29 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'hotlist', 'popup', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress'
+            'openTasks', 'doneTasks', 'taskBrands', 'board', 'hotlist', 'popup', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress'
         ));
+    }
+
+    /**
+     * The task board: one column per marketing person (Leona, Chanley, Kaylie…), then anyone else with
+     * open work, and always you. Each column holds that person's open tasks and the routines assigned to
+     * them for the current day, week, month or quarter (done ones stay, crossed out, until they reset).
+     */
+    private function board(User $me, $openTasks, $routines)
+    {
+        $cadenceOrder = array_flip(array_keys(config('omniven.cadences')));
+        $people = User::where('is_active', true)->whereNotNull('board_position')->orderBy('board_position')->orderBy('name')->get();
+        $others = User::where('is_active', true)->whereNull('board_position')
+            ->where(fn ($q) => $q->whereIn('id', $openTasks->pluck('assignee_id'))->orWhereIn('id', $routines->pluck('assignee_id')->filter())->orWhere('id', $me->id))
+            ->orderBy('name')->get();
+
+        return $people->concat($others)->map(fn (User $u) => [
+            'user' => $u,
+            'tasks' => $openTasks->where('assignee_id', $u->id)
+                ->sortBy(fn ($t) => [$t->hot ? 0 : 1, $t->isOverdue() ? 0 : 1, $t->due_on?->timestamp ?? PHP_INT_MAX, -$t->created_at->timestamp])->values(),
+            'routines' => $routines->where('assignee_id', $u->id)
+                ->sortBy(fn ($r) => [$r->isDone() ? 1 : 0, $cadenceOrder[$r->cadence] ?? 9, $r->sort])->values(),
+        ])->values();
     }
 }

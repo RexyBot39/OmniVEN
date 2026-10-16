@@ -35,7 +35,10 @@ class RoutineController extends Controller
             $msg = "Marked “{$routine->title}” done.";
         }
 
-        return redirect()->to(route('dashboard').'#routines')->with('status', $msg);
+        // Ticked from someone's column on the task board: stay on Tasks.
+        $tab = $request->input('return') === 'tasks' ? '#tasks' : '#routines';
+
+        return redirect()->to(route('dashboard').$tab)->with('status', $msg);
     }
 
     /** New routines start on the shared "New routine or task" form. */

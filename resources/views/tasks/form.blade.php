@@ -18,6 +18,12 @@
             </div>
             <div class="fld"><label for="due_on">Due</label><input id="due_on" name="due_on" type="date" value="{{ old('due_on', $task->due_on?->format('Y-m-d')) }}"></div>
         </div>
+        <div class="fld"><label for="brand_id">Brand</label>
+            <select id="brand_id" name="brand_id">
+                <option value="">No brand</option>
+                @foreach($taskBrands as $b)<option value="{{ $b->id }}" @selected((string) old('brand_id', $task->brand_id) === (string) $b->id)>{{ $b->name }}</option>@endforeach
+            </select>
+        </div>
         <div class="fld"><label for="details">Details</label><textarea id="details" name="details" maxlength="4000" rows="4">{{ old('details', $task->details) }}</textarea></div>
         <label class="inline"><input type="checkbox" name="hot" value="1" @checked(old('hot', $task->hot))> On the Hotlist</label>
         <div class="form-actions"><span class="spacer"></span><a class="btn" href="{{ route('dashboard') }}#tasks">Cancel</a><button class="btn primary" type="submit">Save task</button></div>

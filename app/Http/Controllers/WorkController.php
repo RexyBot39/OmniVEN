@@ -25,6 +25,7 @@ class WorkController extends Controller
             'fromPerson' => $assignee && $request->query('from') === 'person' && $request->user()->can('admin'),
             'brands' => Brand::orderBy('sort')->get(),
             'people' => User::where('is_active', true)->orderBy('name')->get(),
+            'taskBrands' => \App\Models\Task::brandChoices(),
         ]);
     }
 

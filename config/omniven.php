@@ -29,6 +29,13 @@ return [
 
     // Platforms an Account can be on. 'grid' = shown as a column in the brand × platform grid.
     // 'home' = generic sign-in page, used when an account has no direct link yet.
+    // The task board: people who get their own column, by first name, and the column order.
+    // Matched on name or email when someone is added or signs in; admins change it on People.
+    'task_board' => ['leona' => 1, 'chanley' => 2, 'kaylie' => 3],
+
+    // Brands a task can be labelled with, in dropdown order.
+    'task_brands' => ['39dg', 'ocusafe', 'ocusleep'],
+
     'platform_groups' => [
         'social' => 'Social',
         'ads' => 'Advertising',

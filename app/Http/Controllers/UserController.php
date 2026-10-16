@@ -77,7 +77,16 @@ class UserController extends Controller
         $data = $request->validate([
             'is_admin' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
+            'board_position' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:20'],
         ]);
+
+        // Task board column: anyone can be moved on or off, yourself included.
+        if (array_key_exists('board_position', $data)) {
+            $user->update(['board_position' => $data['board_position']]);
+            Activity::log('person.updated', "{$user->name}: ".($data['board_position'] ? "task board column {$data['board_position']}" : 'removed from the task board'), $user);
+
+            return back()->with('status', $data['board_position'] ? "{$user->firstName()} is in column {$data['board_position']} on the task board." : "{$user->firstName()} is off the task board.");
+        }
         $data = array_map(fn ($v) => filter_var($v, FILTER_VALIDATE_BOOLEAN), $data);
 
         if ($user->is($request->user())) {

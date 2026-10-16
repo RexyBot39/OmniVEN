@@ -18,6 +18,9 @@
     }
   });
 
+  // Selects that save as soon as they change (e.g. a person's task board column).
+  document.querySelectorAll('select[data-autosubmit]').forEach((s) => s.addEventListener('change', () => s.form.submit()));
+
   // Selects that jump to a page (e.g. the person switcher on a staff page).
   document.querySelectorAll('select[data-nav]').forEach((s) => s.addEventListener('change', () => { if (s.value) location.href = s.value; }));
 
@@ -380,11 +383,11 @@
   // Home: right after sign-in, or via the logo, start on Routines for all brands.
   const goHome = document.getElementById('session-expiry')?.dataset.home === '1';
   if (goHome) {
-    store.set('tab', 'routines');
+    store.set('tab', 'tasks');
     store.set('brand', 'all');
     history.replaceState(null, '', location.pathname);
   }
-  const state = { tab: 'routines', brand: store.get('brand') || 'all', q: '' };
+  const state = { tab: 'tasks', brand: store.get('brand') || 'all', q: '' };
 
   // ---- Omni search: the search box also looks across all of OmniVEN ----
   const omni = document.getElementById('omni');
@@ -532,16 +535,16 @@
   });
 
   function setTab(t, push) {
-    if (!views.some((v) => v.dataset.view === t)) t = 'routines';
+    if (!views.some((v) => v.dataset.view === t)) t = 'tasks';
     if (t === 'slack') loadSlack();
     state.tab = t;
     tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
     views.forEach((v) => { v.hidden = v.dataset.view !== t; });
-    // Brand chips only filter tools, brands, routines and access.
+    // Brand chips filter tasks, routines, brands, tools and access.
     const chips = document.querySelector('.chips');
-    if (chips) chips.hidden = t === 'tasks' || t === 'postit' || t === 'slack';
+    if (chips) chips.hidden = t === 'postit' || t === 'slack';
     store.set('tab', t);
-    if (push) history.replaceState(null, '', t === 'routines' ? location.pathname : '#' + t);
+    if (push) history.replaceState(null, '', t === 'tasks' ? location.pathname + location.search : '#' + t);
   }
 
   function apply() {
@@ -590,23 +593,17 @@
 
   // Tasks: Mine / Everyone.
   const me = exp?.dataset.me;
+  // Mine shows only your column and your finished tasks; Everyone shows every column.
+  // (Brand chips and the search box filter the items themselves.)
   function filterTasks(mode) {
     store.set('taskfilter', mode);
     document.querySelectorAll('[data-taskfilter]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.taskfilter === mode)));
-    let anyOpen = false;
-    document.querySelectorAll('.task[data-assignee]').forEach((t) => {
-      const show = mode === 'all' || t.dataset.assignee === me;
-      t.hidden = !show || (state.q && !(t.dataset.search || '').includes(state.q));
-      if (!t.hidden && !t.classList.contains('done')) anyOpen = true;
-    });
-    const none = document.querySelector('.task-none');
-    if (none) none.hidden = anyOpen || mode === 'all';
+    document.querySelector('section[data-view="tasks"]')?.classList.toggle('only-mine', mode === 'mine');
   }
   document.querySelectorAll('[data-taskfilter]').forEach((b) => b.addEventListener('click', () => filterTasks(b.dataset.taskfilter)));
-  q.addEventListener('input', () => setTimeout(() => filterTasks(store.get('taskfilter') || 'all'), 150));
 
   window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (t) setTab(t, false); });
-  setTab(goHome ? 'routines' : (location.hash.slice(1) || store.get('tab') || 'routines'), false);
+  setTab(goHome ? 'tasks' : (location.hash.slice(1) || store.get('tab') || 'tasks'), false);
   apply();
   checkUnread();
   filterTasks(store.get('taskfilter') || 'all');

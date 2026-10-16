@@ -21,12 +21,14 @@ class TaskController extends Controller
         ]);
         Activity::log('task.assigned', "Assigned “{$task->title}” to {$task->assignee->name}".($task->hot ? ' (Hotlist)' : ''), $task);
 
-        return $this->back("Assigned “{$task->title}” to {$task->assignee->firstName()}.");
+        return $this->back($task->assignee->is($request->user())
+            ? "Added “{$task->title}” to your list."
+            : "Assigned “{$task->title}” to {$task->assignee->firstName()}.");
     }
 
     public function edit(Task $task): View
     {
-        return view('tasks.form', ['task' => $task, 'people' => $this->people()]);
+        return view('tasks.form', ['task' => $task, 'people' => $this->people(), 'taskBrands' => Task::brandChoices()]);
     }
 
     public function update(Request $request, Task $task): RedirectResponse
@@ -88,7 +90,9 @@ class TaskController extends Controller
             'details' => ['nullable', 'string', 'max:4000'],
             'assignee_id' => ['required', Rule::exists('users', 'id')->where('is_active', true)],
             'due_on' => ['nullable', 'date'],
+            'brand_id' => ['nullable', Rule::in(Task::brandChoices()->pluck('id')->all())],
         ]);
+        $data['brand_id'] = $data['brand_id'] ?? null;
         $data['hot'] = $request->boolean('hot');
 
         return $data;

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
-    protected $fillable = ['title', 'details', 'assignee_id', 'created_by', 'hot', 'due_on', 'completed_at', 'completed_by', 'assigned_at', 'assigned_by'];
+    protected $fillable = ['title', 'details', 'brand_id', 'assignee_id', 'created_by', 'hot', 'due_on', 'completed_at', 'completed_by', 'assigned_at', 'assigned_by'];
 
     protected function casts(): array
     {
@@ -18,6 +18,20 @@ class Task extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assignee_id');
+    }
+
+    /** The brand it's for (39DollarGlasses, Ocusafe or Ocusleep), if labelled. */
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    /** Brands a task can be labelled with, in dropdown order. */
+    public static function brandChoices(): \Illuminate\Support\Collection
+    {
+        $order = config('omniven.task_brands');
+
+        return Brand::whereIn('slug', $order)->get()->sortBy(fn ($b) => array_search($b->slug, $order, true))->values();
     }
 
     public function creator(): BelongsTo

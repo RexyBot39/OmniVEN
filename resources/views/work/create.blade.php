@@ -53,6 +53,13 @@
             </div>@endif
         </div>
 
+        <div class="fld" data-kind="task"><label for="brand_id">Brand @if($isAdmin)<span class="hint">(task)</span>@endif</label>
+            <select id="brand_id" name="brand_id">
+                <option value="">No brand</option>
+                @foreach($taskBrands as $b)<option value="{{ $b->id }}" @selected((string) old('brand_id') === (string) $b->id)>{{ $b->name }}</option>@endforeach
+            </select>
+        </div>
+
         <div class="fld"><label for="details">Details <span class="hint">(optional)</span></label><textarea id="details" name="details" maxlength="4000" rows="3" placeholder="Write it as the first step: “Open Merchant Center, fix disapprovals.”">{{ old('details') }}</textarea></div>
 
         @if($isAdmin)<div class="fld" data-kind="routine"><label for="link">Link to open <span class="hint">(routine)</span></label><input id="link" name="link" type="url" placeholder="https://" maxlength="1024" value="{{ old('link') }}"></div>@endif
