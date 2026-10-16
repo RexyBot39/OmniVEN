@@ -541,8 +541,8 @@
     tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
     views.forEach((v) => { v.hidden = v.dataset.view !== t; });
     // Brand chips filter tasks, routines, brands, tools and access.
-    const chips = document.querySelector('.chips');
-    if (chips) chips.hidden = t === 'postit' || t === 'slack';
+    const pick = document.getElementById('brandpick');
+    if (pick) pick.hidden = t === 'postit' || t === 'slack';
     store.set('tab', t);
     if (push) history.replaceState(null, '', t === 'tasks' ? location.pathname + location.search : '#' + t);
   }
@@ -551,6 +551,15 @@
     const chips = document.querySelectorAll('.chip');
     if (![...chips].some((c) => c.dataset.brand === state.brand)) state.brand = 'all';
     chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.brand === state.brand)));
+    // The brand picker's button names the brand in force, with its color dot.
+    const on = [...chips].find((c) => c.dataset.brand === state.brand);
+    const label = document.getElementById('brandpick-label');
+    if (label && on) {
+      label.textContent = on.textContent.trim();
+      const dot = on.querySelector('.dot');
+      document.getElementById('brandpick-dot').style.background = dot ? dot.style.background : '';
+      document.getElementById('brandpick').classList.toggle('on', state.brand !== 'all');
+    }
 
     const match = (el) => {
       const brands = (el.dataset.brands || 'all').split(' ');
@@ -578,7 +587,9 @@
   tabs.forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab, true)));
   document.addEventListener('click', (e) => {
     const chip = e.target.closest('.chip[data-brand]');
-    if (chip) { state.brand = chip.dataset.brand; store.set('brand', state.brand); apply(); return; }
+    if (chip) { state.brand = chip.dataset.brand; store.set('brand', state.brand); apply(); chip.closest('details')?.removeAttribute('open'); return; }
+    const pick = document.getElementById('brandpick');
+    if (pick?.open && !pick.contains(e.target)) pick.removeAttribute('open');
     const show = e.target.closest('[data-showtools]');
     if (show) { state.brand = show.dataset.showtools; store.set('brand', state.brand); setTab('tools', true); apply(); window.scrollTo({ top: 0 }); }
   });
@@ -590,6 +601,22 @@
     setTab(b.dataset.goto, true);
     document.querySelector('.bar')?.scrollIntoView({ block: 'start' });
   }));
+
+  // Admins: assignment and completion times stay folded away until asked for.
+  const stampBtns = document.querySelectorAll('[data-stamps]');
+  if (stampBtns.length) {
+    const showStamps = (on) => {
+      document.body.classList.toggle('show-stamps', on);
+      stampBtns.forEach((b) => b.setAttribute('aria-pressed', String(on)));
+      store.set('stamps', on ? '1' : '0');
+    };
+    showStamps(store.get('stamps') === '1');
+    stampBtns.forEach((b) => b.addEventListener('click', () => showStamps(!document.body.classList.contains('show-stamps'))));
+  }
+  document.addEventListener('keydown', (e) => {
+    const pick = document.getElementById('brandpick');
+    if (e.key === 'Escape' && pick?.open) { pick.removeAttribute('open'); pick.querySelector('summary').focus(); }
+  });
 
   // Tasks: Mine / Everyone.
   const me = exp?.dataset.me;

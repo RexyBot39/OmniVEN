@@ -2,7 +2,7 @@
      The same stars come first in Jump to (⌘K). $arranging shows the reorder controls. --}}
 @php($arranging = $arranging ?? false)
 <section class="launchpad wrap {{ $arranging ? 'arranging' : '' }}" id="launchpad" aria-label="My launchpad" data-order="{{ route('launchpad.order') }}">
-    <div class="lp-row" @if($arranging) role="list" aria-label="Your stars, in order" @endif>
+    <div class="lp-row {{ $launchpad['favorites']->isEmpty() ? 'lp-empty' : '' }}" @if($arranging) role="list" aria-label="Your stars, in order" @endif>
         <span class="lp-h">My launchpad</span>
         @forelse($launchpad['favorites'] as $i)
             @if($arranging)

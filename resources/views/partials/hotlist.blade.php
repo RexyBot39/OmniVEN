@@ -1,5 +1,5 @@
 {{-- Quick strip of flagged tasks that aren't done yet. Shown on every tab. --}}
-<section class="hotlist wrap" aria-label="Hotlist">
+<section class="hotlist" aria-label="Hotlist">
     <div class="hot-head">
         <span class="hot-title"><span class="flame" aria-hidden="true"></span>Hotlist</span>
         <span class="sub">{{ $hotlist->count() ? $hotlist->count().' open · '.$hotlist->where('assignee_id', auth()->id())->count().' yours' : 'Nothing urgent right now' }}</span>

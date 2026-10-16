@@ -9,18 +9,14 @@
 
 @section('content')
 <section class="hero wrap">
-    <div class="eyebrow">
-        <span>Marketing control center</span>
-        <span><b>{{ $brands->count() }}</b> brands</span>
-        <span><b>{{ $tools->count() }}</b> tools</span>
-        <span><b>{{ $due }}</b> routines due</span>
-        <span>{{ now()->format('D, M j, Y') }}</span>
-    </div>
-    <h1>Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ auth()->user()->firstName() }}.</h1>
+    <h1>Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ rtrim(auth()->user()->firstName(), '.') }}.</h1>
+    <span class="hero-date">{{ now()->format('l, F j') }}</span>
 </section>
 
-@include('partials.hotlist')
-@if($pulse)@include('partials.pulsetopost')@endif
+<div class="today wrap {{ $pulse ? 'has-p2p' : '' }}">
+    @include('partials.hotlist')
+    @if($pulse)@include('partials.pulsetopost')@endif
+</div>
 @include('partials.launchpad')
 
 <div class="bar">
@@ -42,17 +38,20 @@
                 </label>
                 <div class="omni" id="omni" role="listbox" aria-label="Search results" data-src="{{ route('search') }}" data-icons="{{ \App\Support\BrandIcon::spriteUrl() }}" hidden></div>
             </div>
-        </div>
-        <div class="chips" aria-label="Filter by brand">
-            <button class="chip" data-brand="all" aria-pressed="true">All brands</button>
-            @foreach($brands as $b)
-                <button class="chip" data-brand="{{ $b->slug }}" aria-pressed="false"><span class="dot" style="background:var(--c{{ $b->colorSlot() }})"></span>{{ $b->name }}</button>
-            @endforeach
+            <details class="brandpick" id="brandpick">
+                <summary><span class="dot" id="brandpick-dot"></span><span id="brandpick-label">All brands</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                <div class="chips" role="group" aria-label="Filter by brand">
+                    <button class="chip" data-brand="all" aria-pressed="true">All brands</button>
+                    @foreach($brands as $b)
+                        <button class="chip" data-brand="{{ $b->slug }}" aria-pressed="false"><span class="dot" style="background:var(--c{{ $b->colorSlot() }})"></span>{{ $b->name }}</button>
+                    @endforeach
+                </div>
+            </details>
         </div>
     </div>
 </div>
 
-<main class="wrap main">
+<main class="wrap main dash">
 
 {{-- ================= TOOLS ================= --}}
 <div data-view="tools" hidden>
@@ -91,15 +90,13 @@
     </section>
 
     <section>
-        <div class="h2row"><h2>Platform consoles</h2><span class="sub">The ad, shopping and search accounts we open most</span></div>
+        <div class="h2row"><h2>Platform consoles</h2></div>
         <div class="consoles">
             @forelse($tools->where('featured', true) as $t)
-                <a class="console" href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" data-lp="{{ $t->launchKey() }}" data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->description.' '.$t->category) }}">
+                <a class="console" href="{{ $t->url }}" target="_blank" rel="noopener noreferrer" title="{{ $t->description }}" data-lp="{{ $t->launchKey() }}" data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->description.' '.$t->category) }}">
                     @php($ic = \App\Support\BrandIcon::forTool($t))
-                    @if($ic){{ \App\Support\BrandIcon::html($ic, 'lg', $t->name) }}@else<span class="mono" style="--c:var(--c{{ $t->categorySlot() }})">{{ $t->initials() }}</span>@endif
-                    <span class="name">{{ $t->name }}</span>
-                    <span class="d">{{ $t->description }}</span>
-                    <span class="go">{{ $t->host() }} ↗</span>
+                    @if($ic){{ \App\Support\BrandIcon::html($ic, 'md', $t->name) }}@else<span class="mono" style="--c:var(--c{{ $t->categorySlot() }})">{{ $t->initials() }}</span>@endif
+                    <span class="c-txt"><span class="name">{{ $t->name }}</span><span class="go">{{ $t->host() }} ↗</span></span>
                 </a>
             @empty
                 <div class="empty">No consoles pinned yet. Admins can tick “Show in Platform consoles” on any tool.</div>
@@ -177,8 +174,8 @@
 <section data-view="routines" hidden>
     <div class="h2row">
         <h2>Routines</h2>@include('partials.star', ['key' => 'page:1', 'label' => 'the Routines tab'])
-        <span class="sub">Ticks reset each day, week, month or quarter (Eastern time).@php($myRoutines = $routines->where('assignee_id', $me->id))@if($myRoutines->isNotEmpty()) <b class="mine-n">{{ $myRoutines->reject->isDone()->count() }} of {{ $myRoutines->count() }} assigned to you still due.</b>@endif</span>
-        @if($isAdmin)<a class="btn primary" href="{{ route('work.create', ['type' => 'routine']) }}">+ New routine or task</a>@endif
+        <span class="sub">@php($myRoutines = $routines->where('assignee_id', $me->id))@if($myRoutines->isNotEmpty())<b class="mine-n">{{ $myRoutines->reject->isDone()->count() }} of {{ $myRoutines->count() }} assigned to you still due.</b>@endif</span>
+        @if($isAdmin)<div class="h2-tools"><button type="button" class="seg-b solo" data-stamps aria-pressed="false" title="Show when each routine was assigned and last done">Show times</button><a class="btn primary" href="{{ route('work.create', ['type' => 'routine']) }}">+ New routine or task</a></div>@endif
     </div>
     @if($calWeek)
         <a class="cal-strip" href="{{ route('calendar') }}">
@@ -236,7 +233,7 @@
 {{-- ================= ACCESS ================= --}}
 <section data-view="access" hidden>
     @if($isAdmin)@include('partials.access-requests')@include('partials.broken-links')@endif
-    <div class="h2row"><h2>Access &amp; owners</h2>@include('partials.star', ['key' => 'page:7', 'label' => 'the Access tab'])<span class="sub">Which account each tool lives under and how to get in. Need a login? Use Request access.</span>@if($isAdmin)<a class="btn" href="{{ route('access.review') }}">Access review</a><a class="btn primary" href="{{ route('tools.create', ['return' => 'access']) }}">+ Add item</a>@endif</div>
+    <div class="h2row"><h2>Access &amp; owners</h2>@include('partials.star', ['key' => 'page:7', 'label' => 'the Access tab'])<span class="sub">Need a login? Press Request access on its row.</span>@if($isAdmin)<a class="btn" href="{{ route('access.review') }}">Access review</a><a class="btn primary" href="{{ route('tools.create', ['return' => 'access']) }}">+ Add item</a>@endif</div>
     <div class="callout">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         <div>Never put passwords or 2FA codes in OmniVEN. List the login account and who grants access; credentials stay in the password manager.</div>
@@ -248,7 +245,7 @@
                 @foreach($tools->sortBy(fn ($t) => [array_search($t->category, config('omniven.categories')) ?: 99, $t->name]) as $t)
                     <tr data-brands="{{ $t->brandFilterAttr() }}" data-search="{{ strtolower($t->name.' '.$t->login.' '.$t->owner.' '.$t->access_note.' '.$t->category) }}">
                         <td>@php($ic = \App\Support\BrandIcon::forTool($t))@if($t->url)<a href="{{ $t->url }}" target="_blank" rel="noopener noreferrer">{{ \App\Support\BrandIcon::html($ic, 'xs') }}{{ $t->name }}</a>@else{{ \App\Support\BrandIcon::html($ic, 'xs') }}{{ $t->name }}@endif<div class="sub">{{ $t->category }}</div></td>
-                        <td><span class="pill {{ $t->status }}">{{ $t->statusLabel() }}</span></td>
+                        <td>@if($t->status !== 'active')<span class="pill {{ $t->status }}">{{ $t->statusLabel() }}</span>@else<span class="sub">Active</span>@endif</td>
                         <td>{!! $t->login ? e($t->login) : '<span class="missing">Add</span>' !!}</td>
                         <td>{!! $t->owner ? e($t->owner) : '<span class="missing">Add</span>' !!}</td>
                         <td>{!! $t->access_note ? e($t->access_note) : '<span class="missing">—</span>' !!}</td>

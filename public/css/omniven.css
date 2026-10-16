@@ -926,3 +926,120 @@ h2 .star{font-size:18px}
 .tb-done-t s{text-decoration-thickness:1.5px}
 .tb-done-m{font-size:12px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .tb-done-m .ok{color:var(--good);font-weight:600}
+
+/* ================= Calm layout =================
+   Fewer things on screen at once: a one-line greeting, Hotlist and PulseToPost side by side, brands in a
+   picker instead of a chip row, and secondary controls (Edit, stars, admin times) that appear when you
+   point at an item. On touch screens, where there is no pointing, they always show. */
+.hero{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;padding-block:22px 14px}
+.hero h1{font-size:clamp(22px,3vw,28px);margin:0}
+.hero-date{color:var(--muted);font-size:14px}
+
+.today{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);padding-bottom:12px}
+.today > *{min-width:0}
+@media (min-width:980px){.today.has-p2p{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.today .hotlist,.today .p2p{padding:0}
+.today .hotlist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.today .hot-head{margin-bottom:8px}
+.today .hot-title{font-size:13px}
+.today .hotlist .hot-items{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px}
+.today .hot-item{border:0;border-left:3px solid var(--coral);background:var(--bg);padding:7px 10px}
+.today .hotlist:not(:has(.hot-items)) .hot-head{margin:0}
+.today .p2p-in{height:100%;align-content:center}
+
+.launchpad{padding-block:0 10px}
+.launchpad .lp-row > .sub{font-size:12.5px}
+@media (max-width:640px){.launchpad .lp-empty{display:none}}
+
+.bar-in{padding-block:8px;gap:0}
+.brandpick{position:relative;flex:none}
+.brandpick > summary{list-style:none;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);cursor:pointer;font-size:14px;white-space:nowrap;user-select:none}
+.brandpick > summary::-webkit-details-marker{display:none}
+.brandpick > summary:hover{border-color:var(--muted)}
+.brandpick > summary svg{color:var(--muted)}
+.brandpick > summary .dot{width:9px;height:9px;border-radius:50%;background:conic-gradient(var(--c1),var(--c2),var(--c3),var(--c4),var(--c5),var(--c1))}
+.brandpick.on > summary{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy);font-weight:600}
+.brandpick .chips{position:absolute;right:0;top:calc(100% + 6px);z-index:30;display:flex;flex-direction:column;gap:2px;min-width:220px;padding:6px;overflow:visible;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px -18px rgb(4 38 78 / .45)}
+.brandpick .chip{border:0;border-radius:8px;background:none;justify-content:flex-start;padding:7px 10px;font-size:14px;color:var(--ink)}
+.brandpick .chip:hover{background:var(--sunk)}
+.brandpick .chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink);font-weight:600}
+@media (max-width:640px){.brandpick .chips{left:0;right:auto}}
+
+.main.dash{gap:28px}
+.h2row{align-items:center}
+.h2-tools{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.h2-tools .seg{margin-left:0}
+.seg-b.solo{background:var(--sunk);border-radius:8px;padding:8px 12px}
+.seg-b.solo[aria-pressed="true"]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.h2row .tb-legend{margin:0;font-size:12.5px;gap:4px 12px}
+.tb-legend i{width:11px;height:11px;border-radius:3px}
+
+/* Admin times: hidden on the dashboard until Show times is on. */
+.main.dash .stamps{display:none}
+body.show-stamps .main.dash .stamps{display:flex}
+
+/* Task board */
+.bcol{background:color-mix(in srgb,var(--sunk) 70%,var(--bg));gap:8px;padding:10px}
+.bcol-h h3{font-size:16px}
+.bcol-h .sub{font-size:12px}
+.bcol-av{width:30px;height:30px;font-size:13px}
+.bcol-add{background:transparent;border:1px dashed color-mix(in srgb,var(--muted) 40%,transparent);padding:3px 8px;gap:6px}
+.bcol-add:focus-within,.bcol-add:has(input[type=text]:not(:placeholder-shown)){background:var(--surface);border-style:solid;border-color:var(--line);padding:6px 8px}
+.bcol-add:not(:focus-within):has(input[type=text]:placeholder-shown) .bcol-add-row{display:none}
+.bcol-add input[type=text]{font-size:13.5px}
+.bt{border-left-width:4px;padding:8px 10px;gap:8px}
+.bt.routine{border-left-width:4px}
+.bt-t{font-size:14px}
+.bt-m{font-size:12px;gap:3px 8px}
+.bt .stamps{margin-top:2px}
+
+.tb-done{margin-top:8px}
+.tb-done .h2row{margin-bottom:4px}
+.tb-done h3{font-size:16px}
+.tb-done-list{gap:0 28px;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+.tb-done-list li{grid-template-columns:18px minmax(0,1fr) auto;align-items:center;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:6px 2px;gap:2px 10px}
+.tb-done-list li form,.tb-done-list .tick-static{grid-row:auto}
+.tb-done-list .tick{width:18px;height:18px;border-radius:5px}
+.tb-done-list .tick svg{width:10px;height:10px}
+.tb-done-t{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-done-m{font-size:11.5px;flex-wrap:nowrap;white-space:nowrap}
+.tb-done-m .bpill{font-size:10.5px}
+.tb-done-list .stamps{grid-column:2/-1;margin:0}
+
+/* Routines */
+.r{padding:9px 14px}
+.rd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px}
+.rm{font-size:10.5px}
+
+/* Tools */
+.consoles{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.console{flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+.console:hover{transform:none}
+.console .c-txt{display:flex;flex-direction:column;min-width:0}
+.console .name{font-size:15px;line-height:1.2}
+.console .go{margin:0;font-size:11.5px}
+.grid{gap:8px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.tool{position:relative;padding:12px 14px;gap:2px 12px;align-content:start}
+.tool .t{padding-right:0}
+.tool:has(.acts .star[aria-pressed="true"]) .t{padding-right:24px}
+.tool .d{font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tool .foot{margin-top:4px}
+.tool .acts{position:absolute;top:8px;right:8px;display:flex;align-items:center;gap:2px;background:var(--surface);border-radius:8px;padding:0 2px}
+.notes{gap:8px}
+.note{padding:12px 14px}
+
+/* Access */
+.callout{font-size:13px;padding:9px 12px}
+.tablewrap td:first-child a{white-space:nowrap}
+.tablewrap td:first-child{min-width:190px}
+.missing{opacity:.6;font-size:12.5px}
+
+/* Secondary controls appear on hover or keyboard focus, where a pointer can hover. */
+@media (hover:hover){
+  .bt > .mini,.r > .mini,.tool .acts,.note .meta .mini,td.row-actions > *,.acct-admin{opacity:0;transition:opacity .12s}
+  .bt:hover > .mini,.bt:focus-within > .mini,.r:hover > .mini,.r:focus-within > .mini,
+  .tool:hover .acts,.tool:focus-within .acts,.tool .acts:has(.star[aria-pressed="true"]),
+  .note:hover .meta .mini,.note:focus-within .meta .mini,
+  tr:hover td.row-actions > *,tr:focus-within td.row-actions > *,
+  .acct-card:hover .acct-admin,.acct-card:focus-within .acct-admin{opacity:1}
+}
