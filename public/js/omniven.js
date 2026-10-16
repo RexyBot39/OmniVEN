@@ -631,6 +631,8 @@
 
   window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (t) setTab(t, false); });
   setTab(goHome ? 'tasks' : (location.hash.slice(1) || store.get('tab') || 'tasks'), false);
+  // A completed-tasks date range was just picked: go straight to the list.
+  if (/[?&]done_(from|to)=/.test(location.search)) document.getElementById('done-list')?.scrollIntoView({ block: 'start' });
   apply();
   checkUnread();
   filterTasks(store.get('taskfilter') || 'all');
