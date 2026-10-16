@@ -26,7 +26,7 @@
                 <span class="sub">as of {{ $pulse['as_of']->format('M j, g:i A') }}</span>
             </p>
         @else
-            <p class="p2p-status"><span class="p2p-run bad">Status unavailable</span><span class="sub">{{ $pulse['last_good'] ? 'Last good read '.$pulse['last_good']->format('M j, g:i A') : 'No good read yet' }}</span></p>
+            <p class="p2p-status"><span class="p2p-run bad">Status unavailable</span><span class="sub">{{ $pulse['last_good'] ? 'Last good read '.$pulse['last_good']->format('M j, g:i A') : 'No good read yet' }}</span>@can('admin')@if($pulse['error'])<span class="p2p-why">Admins: {{ $pulse['error'] }}</span>@endif @endcan</p>
         @endif
     </div>
 </section>
