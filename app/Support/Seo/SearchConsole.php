@@ -122,9 +122,39 @@ class SearchConsole
             'branded' => ['now' => (int) $branded($qa), 'before' => (int) $branded($qb), 'has_terms' => $terms !== []],
             'queries' => self::movers($qa, $qb, fn ($k) => ! self::isBranded($k, $terms)),
             'pages' => self::movers($pa, $pb),
+            'gap_rows' => self::gapRows($site, $a1, $a2, $qa, $terms),
             'top_queries' => array_map(fn ($r) => ['key' => $r['keys'][0], 'clicks' => (int) $r['clicks'], 'impressions' => (int) $r['impressions'], 'position' => round((float) $r['position'], 1)],
                 array_slice(array_values(array_filter($qa, fn ($r) => ! self::isBranded($r['keys'][0], $terms))), 0, 10)),
         ];
+    }
+
+    /**
+     * Non-branded searches with enough impressions to matter, each with the page that shows most for
+     * it, for the Content gaps queue (which decides what each one needs). Search terms only.
+     */
+    private static function gapRows(string $site, CarbonImmutable $from, CarbonImmutable $to, array $queries, array $terms): array
+    {
+        $pages = [];
+        foreach (self::query($site, $from, $to, ['query', 'page'], 5000) as $r) {
+            $q = (string) $r['keys'][0];
+            if (isset($r['keys'][1]) && ($pages[$q]['impressions'] ?? -1) < $r['impressions']) {
+                $pages[$q] = ['page' => (string) $r['keys'][1], 'impressions' => $r['impressions']];
+            }
+        }
+        $rows = [];
+        foreach ($queries as $r) {
+            $q = (string) $r['keys'][0];
+            if ($r['impressions'] < config('search_console.gaps.min_impressions') || self::isBranded($q, $terms)) {
+                continue;
+            }
+            $rows[] = ['query' => mb_substr($q, 0, 300), 'page' => $pages[$q]['page'] ?? null, 'clicks' => (int) $r['clicks'],
+                'impressions' => (int) $r['impressions'], 'position' => round((float) $r['position'], 1)];
+            if (count($rows) >= 400) {
+                break;
+            }
+        }
+
+        return $rows;
     }
 
     public static function isBranded(string $query, array $terms): bool

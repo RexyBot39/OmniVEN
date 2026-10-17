@@ -20,5 +20,17 @@ return [
     'lag_days' => 3,
     'window_days' => 28,
     'refresh_minutes' => 360,
+
+    // Content gaps: which non-branded searches need work. Impressions are over the last 28 days.
+    'gaps' => [
+        'min_impressions' => 30,
+        // Ranks in the top 5 but few people click: the title and description need work.
+        'ctr' => ['max_position' => 5, 'min_impressions' => 200, 'below_ctr' => 0.02],
+        // Position 8–20: a better section on the page could reach the top 5.
+        'striking' => ['from' => 8, 'to' => 20, 'min_impressions' => 100],
+        // A question people ask where we're past the top 10: needs a page that answers it.
+        'question' => ['beyond' => 10, 'min_impressions' => 30],
+        'per_brand' => 40,
+    ],
     'timeout' => 30,
 ];

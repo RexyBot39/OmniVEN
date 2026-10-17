@@ -46,6 +46,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/my-day/toggle', [\App\Http\Controllers\MyDayController::class, 'toggle'])->name('my-day.toggle');
     Route::post('/my-day/send', [\App\Http\Controllers\MyDayController::class, 'send'])->middleware('throttle:5,10')->name('my-day.send');
     Route::get('/seo', [\App\Http\Controllers\SeoController::class, 'index'])->name('seo');
+    Route::get('/content-gaps', [\App\Http\Controllers\ContentGapController::class, 'index'])->name('content-gaps');
+    Route::post('/content-gaps/task', [\App\Http\Controllers\ContentGapController::class, 'task'])->middleware('throttle:60,1')->name('content-gaps.task');
+    Route::post('/content-gaps/dismiss', [\App\Http\Controllers\ContentGapController::class, 'dismiss'])->middleware('throttle:60,1')->name('content-gaps.dismiss');
+    Route::delete('/content-gaps/{gap}', [\App\Http\Controllers\ContentGapController::class, 'restore'])->name('content-gaps.restore');
     Route::get('/reviews', [\App\Http\Controllers\ReviewsController::class, 'index'])->name('reviews');
     Route::post('/reviews/rating', [\App\Http\Controllers\ReviewsController::class, 'snapshot'])->name('reviews.rating');
     Route::get('/links', [\App\Http\Controllers\LinkController::class, 'index'])->name('links.index');

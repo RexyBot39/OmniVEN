@@ -7,6 +7,7 @@
         <div>
             <div class="eyebrow"><span>AI answer tracking</span><span>Checked monthly</span></div>
             <h1 class="form-h">AI answers @include('partials.star', ['key' => 'page:16', 'label' => 'AI answers'])</h1>
+            <p class="sub">Questions no assistant mentioned us for go to <a href="{{ route('content-gaps', ['kind' => 'ai']) }}">Content gaps →</a></p>
             <p class="sub aians-why">Shoppers now ask ChatGPT, Google and other assistants where to buy. Each month, ask each one the questions below and record whether the answer recommends us, mentions us, or leaves us out. Use a private or logged-out window so past chats don’t sway the answer.</p>
         </div>
     </div>
