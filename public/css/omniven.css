@@ -1312,3 +1312,40 @@ td .delta-w{display:none}
 @media (max-width:720px){.cgap{grid-template-columns:minmax(0,1fr)}.gap-act{align-items:stretch}.gap-task{justify-content:flex-start}}
 .gap-act button.mini{border:0;background:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .gap-act button.mini:hover{color:var(--navy)}
+
+/* Site check */
+.sitec-feeds{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:12px}
+.sitec-feed{padding:14px 16px;border-left:5px solid var(--bc,var(--line));min-width:0}
+.sitec-feed h3{margin:0;font-family:var(--f-display);font-size:16px;color:var(--navy)}
+.sitec-feed p{margin:8px 0 0;font-size:13.5px}
+.sitec-t{width:100%;min-width:0;border-collapse:collapse;margin-top:8px;font-size:13px}
+.sitec-t td{padding:6px 0;border-top:1px solid var(--line);vertical-align:top}
+.sitec-t td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;padding-left:10px}
+.sitec-t .sub{font-size:11.5px;overflow-wrap:anywhere}
+.sitec-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:var(--muted);vertical-align:middle}
+.lv-fail .sitec-dot{background:var(--bad)}
+.lv-warn .sitec-dot{background:#d79a1e}
+.lv-info .sitec-dot{background:var(--line)}
+.sitec-ok{color:var(--good);font-weight:600}
+.sitec-bad{color:var(--bad)}
+.sitec-err{color:var(--bad);font-size:13px;margin:6px 0 0;flex-basis:100%}
+.sitec-pages{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.sitec-page{padding:12px 16px;border-left:5px solid var(--line);min-width:0}
+.sitec-page.st-fail{border-left-color:var(--bad)}
+.sitec-page.st-warn{border-left-color:#d79a1e}
+.sitec-page.st-ok{border-left-color:var(--good)}
+.sitec-ph{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.sitec-st{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.st-fail .sitec-st{color:var(--bad)}
+.st-warn .sitec-st{color:#9a5b00}
+.st-ok .sitec-st{color:var(--good)}
+.sitec-url{font-weight:600;overflow-wrap:anywhere;min-width:0}
+.sitec-issues{list-style:none;margin:8px 0 0;padding:0;font-size:13.5px;display:grid;gap:3px}
+.sitec-foot{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;margin-top:8px}
+.sitec-foot .sub{font-size:12px}
+.sitec-add{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:end;padding:12px 16px;margin-top:12px}
+.sitec-add label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.sitec-add label.grow{flex:1 1 280px}
+.sitec-add input,.sitec-add select{font:inherit;font-size:13.5px;padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
+button.linkish{border:0;background:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+@media (prefers-color-scheme:dark){.st-warn .sitec-st{color:#e0a64a}}
