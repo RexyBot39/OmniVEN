@@ -706,3 +706,31 @@ document.addEventListener('change', (e) => {
   const td = s.closest('td');
   td.className = td.className.replace(/\br-\S+/, '') + ' r-' + (s.value || 'none');
 });
+
+// Launch templates: show each step's due date as the start day changes.
+(() => {
+  const form = document.getElementById('tpl-run');
+  if (!form) return;
+  const steps = JSON.parse(form.dataset.steps || '[]');
+  const fmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const update = () => {
+    const v = form.elements.starts_on.value;
+    steps.forEach((s) => {
+      const cell = form.querySelector('[data-due="' + s.id + '"]');
+      if (!cell) return;
+      if (!v) { cell.textContent = '—'; return; }
+      const d = new Date(v + 'T00:00:00Z');
+      d.setUTCDate(d.getUTCDate() + s.offset);
+      cell.textContent = fmt.format(d);
+    });
+  };
+  form.elements.starts_on.addEventListener('input', update);
+  // Show step titles with the launch name filled in.
+  const names = () => {
+    const n = form.elements.name.value.trim() || '{name}';
+    form.querySelectorAll('[data-tpl]').forEach((el) => { el.textContent = el.dataset.tpl.split('{name}').join(n); });
+  };
+  form.elements.name.addEventListener('input', names);
+  update();
+  names();
+})();

@@ -32,6 +32,16 @@ Route::middleware('auth')->group(function () {
         Route::patch('/ai-answers/questions/{question}', [\App\Http\Controllers\AiAnswersController::class, 'updateQuestion'])->name('ai-answers.questions.update');
         Route::delete('/ai-answers/questions/{question}', [\App\Http\Controllers\AiAnswersController::class, 'destroyQuestion'])->name('ai-answers.questions.destroy');
     });
+    Route::get('/templates', [\App\Http\Controllers\TemplateController::class, 'index'])->name('templates.index');
+    Route::get('/templates/{template}/run', [\App\Http\Controllers\TemplateController::class, 'runForm'])->name('templates.run-form');
+    Route::post('/templates/{template}/run', [\App\Http\Controllers\TemplateController::class, 'run'])->name('templates.run');
+    Route::get('/templates/runs/{run}', [\App\Http\Controllers\TemplateController::class, 'showRun'])->name('templates.show-run');
+    Route::middleware('can:admin')->group(function () {
+        Route::post('/templates', [\App\Http\Controllers\TemplateController::class, 'store'])->name('templates.store');
+        Route::get('/templates/{template}/edit', [\App\Http\Controllers\TemplateController::class, 'edit'])->name('templates.edit');
+        Route::put('/templates/{template}', [\App\Http\Controllers\TemplateController::class, 'update'])->name('templates.update');
+        Route::delete('/templates/{template}', [\App\Http\Controllers\TemplateController::class, 'destroy'])->name('templates.destroy');
+    });
     Route::get('/my-day', [\App\Http\Controllers\MyDayController::class, 'show'])->name('my-day');
     Route::post('/my-day/toggle', [\App\Http\Controllers\MyDayController::class, 'toggle'])->name('my-day.toggle');
     Route::post('/my-day/send', [\App\Http\Controllers\MyDayController::class, 'send'])->middleware('throttle:5,10')->name('my-day.send');
