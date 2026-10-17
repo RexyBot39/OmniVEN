@@ -36,6 +36,7 @@
         <env name="AWIN_API_TOKEN" value=""/>
         <env name="SHOPPERAPPROVED_API_TOKEN" value=""/>
         <env name="TRUSTPILOT_API_KEY" value=""/>
+        <env name="KLAVIYO_PRIVATE_KEY" value=""/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
     </php>
