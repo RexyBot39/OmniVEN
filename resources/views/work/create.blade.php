@@ -67,7 +67,7 @@
         <div class="fld"><label for="details">Details <span class="hint">(optional)</span></label><textarea id="details" name="details" maxlength="4000" rows="3" placeholder="Write it as the first step: “Open Merchant Center, fix disapprovals.”">{{ old('details', request('details')) }}</textarea></div>
 
         @if($isAdmin)<div class="fld" data-kind="routine"><label for="link">Link to open <span class="hint">(routine)</span></label><input id="link" name="link" type="url" placeholder="https://" maxlength="1024" value="{{ old('link') }}"></div>@endif
-        @if($isAdmin)<div data-kind="routine">@include('partials.brand-checks', ['item' => $routine])</div>@endif
+        @if($isAdmin)<div data-kind="routine">@include('partials.brand-checks', ['item' => $routine, 'perBrand' => true])</div>@endif
         @if($isAdmin)<div class="fld narrow" data-kind="routine"><label for="sort">Sort order <span class="hint">(routine)</span></label><input id="sort" name="sort" type="number" min="0" max="9999" value="{{ old('sort', $routine->sort) }}"></div>@endif
 
         <div class="form-actions">

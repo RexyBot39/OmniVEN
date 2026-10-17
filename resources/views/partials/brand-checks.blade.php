@@ -8,4 +8,8 @@
         @endforeach
     </div>
     <span class="hint">“All brands” overrides individual picks.</span>
+    @if(! empty($perBrand))
+        <label class="inline"><input type="checkbox" name="per_brand" value="1" @checked(old('per_brand', $item->per_brand))> Tick off each brand separately</label>
+        <span class="hint">Done once every brand is ticked. “All brands” means {{ \App\Models\Task::brandChoices()->pluck('name')->implode(', ') }}.</span>
+    @endif
 </fieldset>

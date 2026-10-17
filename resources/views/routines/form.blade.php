@@ -24,7 +24,7 @@
         </div>
         <div class="fld"><label for="description">Details</label><textarea id="description" name="description" maxlength="1000">{{ old('description', $routine->description) }}</textarea></div>
         <div class="fld"><label for="link">Link to open</label><input id="link" name="link" type="url" placeholder="https://" maxlength="1024" value="{{ old('link', $routine->link) }}"></div>
-        @include('partials.brand-checks', ['item' => $routine])
+        @include('partials.brand-checks', ['item' => $routine, 'perBrand' => true])
         <div class="form-actions"><span class="spacer"></span><a class="btn" href="{{ route('dashboard') }}#routines">Cancel</a><button class="btn primary" type="submit">Save routine</button></div>
     </form>
     @if($routine->exists)

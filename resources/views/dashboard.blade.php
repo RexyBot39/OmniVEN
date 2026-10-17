@@ -210,6 +210,7 @@
                                 @endif
                                 <span>{{ implode(', ', $r->brandLabels()) }}</span>
                             </div>
+                            @include('partials.routine-brands', ['r' => $r])
                             @if($isAdmin)@include('partials.stamps', ['assignedAt' => $r->assignee_id ? $r->assigned_at : null, 'assignedBy' => $r->assigner, 'assignedTo' => $r->assignee, 'doneAt' => $r->latestCompletion?->completed_at, 'doneBy' => $r->latestCompletion?->user, 'doneLabel' => $done ? 'Done' : 'Last done'])@endif
                         </div>
                         @if($isAdmin)<a class="mini" href="{{ route('routines.edit', $r) }}">Edit</a>@endif
