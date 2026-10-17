@@ -1233,3 +1233,22 @@ td .delta-w{display:none}
 .myday-preview{padding:14px 18px;max-width:720px}
 .myday-from{margin-bottom:6px}
 .myday-text{font-size:14.5px;line-height:1.55;white-space:normal;overflow-wrap:anywhere}
+
+/* Launch templates */
+.tpl-cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.tpl-card{padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.tpl-card h2{margin:0;font-family:var(--f-display);font-size:18px;color:var(--navy)}
+.tpl-card p{margin:0}
+.tpl-foot{margin-top:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tpl-foot .btn{margin-left:auto}
+.tpl-new input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px}
+.tpl-new .btn{align-self:flex-start}
+.tpl-run{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.tpl-steps{min-width:760px}
+.tpl-steps td{vertical-align:middle}
+.tpl-steps select{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:4px 6px;font-size:13px;max-width:190px}
+.tpl-due{white-space:nowrap;font-variant-numeric:tabular-nums}
+.tpl-edit input[type=text],.tpl-edit textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:5px 8px;font:inherit;font-size:13.5px}
+.tpl-edit textarea{margin-top:4px;font-size:12.5px;resize:vertical;min-height:30px}
+.tpl-edit input[type=number]{width:70px;border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:5px 6px}
+.tpl-blank input[type=text]{border-style:dashed}

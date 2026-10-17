@@ -16,6 +16,7 @@
                 <button type="button" class="seg-b" data-taskfilter="mine" aria-pressed="false">Mine</button>
                 <button type="button" class="seg-b" data-taskfilter="all" aria-pressed="true">Everyone</button>
             </div>
+            <a class="btn" href="{{ route('templates.index') }}">From a template</a>
             <a class="btn primary" href="{{ route('work.create', ['type' => 'task']) }}">{{ $me->can('admin') ? '+ New task or routine' : '+ New task' }}</a>
         </div>
     </div>
