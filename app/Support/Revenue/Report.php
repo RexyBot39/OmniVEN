@@ -86,7 +86,8 @@ class Report
 
         return [
             'yesterday' => self::figures($t->subDay(), $t->subDay()),
-            'mtd' => self::figures($t->startOfMonth(), $t),
+            'mtd' => $mtd = self::figures($t->startOfMonth(), $t),
+            'pace' => self::pace($mtd['cents']),
             'brands' => $brands->map(fn ($b) => ['brand' => $b] + self::figures($t->startOfMonth(), $t, $b->id))->values(),
         ];
     }
@@ -149,6 +150,27 @@ class Report
         usort($rows, fn ($a, $b) => $b['cents'] <=> $a['cents']);
 
         return ['rows' => $rows, 'has_ly' => $hasLy, 'week_start' => $weekStart];
+    }
+
+    /**
+     * Progress toward this month's goal: the share of the goal reached and whether that's on pace for
+     * the share of the month gone. $brandId null sums every brand's goal. Null when no goal is set.
+     */
+    public static function pace(int $cents, ?int $brandId = null): ?array
+    {
+        $t = self::today();
+        $q = DB::table('revenue_goals')->where('month', $t->startOfMonth()->format('Y-m-d'));
+        if ($brandId) {
+            $q->where('brand_id', $brandId);
+        }
+        $goal = (int) $q->sum('goal_cents');
+        if ($goal <= 0) {
+            return null;
+        }
+        $share = $cents / $goal;
+        $expected = $t->day / $t->daysInMonth;
+
+        return ['goal_cents' => $goal, 'share' => $share, 'expected' => $expected, 'on_pace' => $share >= $expected * 0.97];
     }
 
     private static function change(float|int $now, float|int $then): ?float
