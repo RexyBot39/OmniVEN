@@ -30,6 +30,7 @@
         </button>
         <nav class="who">
             @can('see-revenue')<a href="{{ route('sales') }}" class="btn ghost">Sales</a>@endcan
+            <a href="{{ route('links.index') }}" class="btn ghost">Links</a>
             <a href="{{ route('calendar') }}" class="btn ghost">Calendar</a>
             <a href="{{ route('help') }}" class="btn ghost">Help</a>
             @can('view-activity')

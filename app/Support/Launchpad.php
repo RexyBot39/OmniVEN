@@ -40,6 +40,8 @@ class Launchpad
         11 => ['Activity report', 'Admin', 'activity.index', null, 'view-activity'],
         12 => ['People', 'Admin', 'people.index', null, 'admin'],
         13 => ['Access review', 'Admin · quarterly', 'access.review', null, 'admin'],
+        14 => ['Sales', 'Revenue by channel and brand', 'sales', null, 'see-revenue'],
+        15 => ['Campaign links', 'UTM link builder', 'links.index', null, null],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */
