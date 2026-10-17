@@ -51,6 +51,7 @@ class Launchpad
         22 => ['Monthly report', 'Marketing results for leadership', 'reports.monthly', null, 'see-revenue'],
         23 => ['Content gaps', 'Searches and AI questions that need a page', 'content-gaps', null, null],
         24 => ['Site check', 'Structured data and product feeds', 'site-check', null, null],
+        25 => ['Reddit', 'Threads worth a reply', 'reddit', null, null],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */

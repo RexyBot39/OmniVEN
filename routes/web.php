@@ -50,6 +50,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/content-gaps/task', [\App\Http\Controllers\ContentGapController::class, 'task'])->middleware('throttle:60,1')->name('content-gaps.task');
     Route::post('/content-gaps/dismiss', [\App\Http\Controllers\ContentGapController::class, 'dismiss'])->middleware('throttle:60,1')->name('content-gaps.dismiss');
     Route::delete('/content-gaps/{gap}', [\App\Http\Controllers\ContentGapController::class, 'restore'])->name('content-gaps.restore');
+    Route::get('/reddit', [\App\Http\Controllers\RedditController::class, 'index'])->name('reddit');
+    Route::post('/reddit/{thread}/task', [\App\Http\Controllers\RedditController::class, 'task'])->middleware('throttle:60,1')->name('reddit.task');
+    Route::post('/reddit/{thread}/skip', [\App\Http\Controllers\RedditController::class, 'skip'])->middleware('throttle:60,1')->name('reddit.skip');
+    Route::post('/reddit/{thread}/restore', [\App\Http\Controllers\RedditController::class, 'restore'])->name('reddit.restore');
     Route::get('/site-check', [\App\Http\Controllers\SiteCheckController::class, 'index'])->name('site-check');
     Route::middleware('can:admin')->group(function () {
         Route::post('/site-check/pages', [\App\Http\Controllers\SiteCheckController::class, 'store'])->middleware('throttle:30,1')->name('site-check.store');

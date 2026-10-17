@@ -1349,3 +1349,7 @@ td .delta-w{display:none}
 .sitec-add input,.sitec-add select{font:inherit;font-size:13.5px;padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
 button.linkish{border:0;background:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 @media (prefers-color-scheme:dark){.st-warn .sitec-st{color:#e0a64a}}
+.gap-q a{color:inherit;text-decoration:none}
+.gap-q a:hover{text-decoration:underline}
+.gap-top .sub{font-size:12px}
+.gap-kind.k-complaint{color:var(--bad)}

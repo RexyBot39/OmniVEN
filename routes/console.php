@@ -80,3 +80,9 @@ Artisan::command('omniven:site-check', function () {
     \App\Support\Seo\SiteCheck::run();
     $this->info('Site check done.');
 })->purpose('Check structured data on the listed pages and the product feeds');
+
+// Reddit opportunities (also refreshed by itself when the Reddit page is opened).
+Artisan::command('omniven:reddit-sync', function () {
+    $ok = \App\Support\Reddit::refresh();
+    $ok ? $this->info('Reddit threads updated.') : $this->error((string) \Illuminate\Support\Facades\Cache::get('reddit:error'));
+})->purpose('Find Reddit threads worth a reply');
