@@ -50,6 +50,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/content-gaps/task', [\App\Http\Controllers\ContentGapController::class, 'task'])->middleware('throttle:60,1')->name('content-gaps.task');
     Route::post('/content-gaps/dismiss', [\App\Http\Controllers\ContentGapController::class, 'dismiss'])->middleware('throttle:60,1')->name('content-gaps.dismiss');
     Route::delete('/content-gaps/{gap}', [\App\Http\Controllers\ContentGapController::class, 'restore'])->name('content-gaps.restore');
+    Route::get('/site-check', [\App\Http\Controllers\SiteCheckController::class, 'index'])->name('site-check');
+    Route::middleware('can:admin')->group(function () {
+        Route::post('/site-check/pages', [\App\Http\Controllers\SiteCheckController::class, 'store'])->middleware('throttle:30,1')->name('site-check.store');
+        Route::post('/site-check/homes', [\App\Http\Controllers\SiteCheckController::class, 'addHomes'])->middleware('throttle:10,1')->name('site-check.homes');
+        Route::delete('/site-check/pages/{page}', [\App\Http\Controllers\SiteCheckController::class, 'destroy'])->name('site-check.destroy');
+        Route::post('/site-check/run', [\App\Http\Controllers\SiteCheckController::class, 'run'])->middleware('throttle:6,10')->name('site-check.run');
+    });
     Route::get('/reviews', [\App\Http\Controllers\ReviewsController::class, 'index'])->name('reviews');
     Route::post('/reviews/rating', [\App\Http\Controllers\ReviewsController::class, 'snapshot'])->name('reviews.rating');
     Route::get('/links', [\App\Http\Controllers\LinkController::class, 'index'])->name('links.index');

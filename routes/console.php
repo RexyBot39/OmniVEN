@@ -74,3 +74,9 @@ Artisan::command('omniven:my-day {--force : Send even on a weekend}', function (
 
     return collect(array_keys($counts))->contains(fn ($k) => str_starts_with($k, 'error')) ? 1 : 0;
 })->purpose('Send each person their morning summary in Slack');
+
+// Daily structured data and product feed check (also runs by itself when the Site check page is opened).
+Artisan::command('omniven:site-check', function () {
+    \App\Support\Seo\SiteCheck::run();
+    $this->info('Site check done.');
+})->purpose('Check structured data on the listed pages and the product feeds');
