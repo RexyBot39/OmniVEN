@@ -21,6 +21,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'hotlist_popup_on' => 'date',
+            'myday_slack' => 'boolean',
+            'myday_sent_on' => 'date',
             'password' => 'hashed',
             'is_admin' => 'boolean',
             'is_active' => 'boolean',
