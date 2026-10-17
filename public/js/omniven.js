@@ -651,3 +651,50 @@
   const pop = document.getElementById('hotlist-popup');
   if (pop && typeof pop.showModal === 'function') pop.showModal();
 })();
+
+// Copy buttons: data-copy="#input-id" copies that input's value.
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-copy]');
+  if (!b) return;
+  const el = document.querySelector(b.dataset.copy);
+  if (!el) return;
+  const done = () => { const t = b.textContent; b.textContent = 'Copied ✓'; setTimeout(() => { b.textContent = t; }, 1600); };
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(el.value).then(done, () => { el.select(); document.execCommand('copy'); done(); });
+  else { el.select(); document.execCommand('copy'); done(); }
+});
+
+// Campaign links: show the fields a preset needs, fill in the brand's site, and preview the link.
+(() => {
+  const form = document.getElementById('link-form');
+  if (!form) return;
+  const $ = (n) => form.elements[n];
+  const clean = (v) => String(v || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]+/g, '').replace(/-{2,}/g, '-').replace(/^-|-$/g, '');
+  const hint = document.getElementById('preset-hint');
+  const preview = document.getElementById('utm-preview');
+  const opt = () => $('preset').selectedOptions[0];
+
+  function update() {
+    const o = opt();
+    const fixedSource = o?.dataset.source || '', fixedMedium = o?.dataset.medium || '';
+    form.querySelector('[data-utm="source"]').hidden = !!fixedSource;
+    form.querySelector('[data-utm="medium"]').hidden = !!fixedMedium;
+    $('source').required = !fixedSource; $('medium').required = !fixedMedium;
+    hint.textContent = o?.dataset.channel ? 'Counts as ' + o.dataset.channel + ' on the Sales page.' : '';
+
+    const utm = { source: clean(fixedSource || $('source').value), medium: clean(fixedMedium || $('medium').value), campaign: clean($('campaign').value), content: clean($('content').value), term: clean($('term').value) };
+    let url;
+    try { url = new URL($('base_url').value.trim()); } catch { preview.textContent = '—'; return; }
+    [...url.searchParams.keys()].filter((k) => k.toLowerCase().startsWith('utm_')).forEach((k) => url.searchParams.delete(k));
+    Object.entries(utm).forEach(([k, v]) => { if (v) url.searchParams.set('utm_' + k, v); });
+    preview.textContent = url.toString();
+  }
+
+  $('brand_id').addEventListener('change', () => {
+    const site = $('brand_id').selectedOptions[0]?.dataset.site;
+    if (site && !$('base_url').value.trim()) { $('base_url').value = /^https?:\/\//.test(site) ? site : 'https://' + site; }
+    update();
+  });
+  form.addEventListener('input', update);
+  form.addEventListener('change', update);
+  update();
+})();

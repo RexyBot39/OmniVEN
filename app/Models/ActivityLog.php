@@ -26,6 +26,7 @@ class ActivityLog extends Model
             'brand.created', 'brand.updated', 'brand.deleted',
             'routine.created', 'routine.updated', 'routine.deleted',
             'note.posted', 'note.updated', 'note.deleted',
+            'link.created',
             'account.created', 'account.updated', 'account.deleted', 'account.verified',
         ]],
         'postit' => ['label' => 'Sticky Notes', 'actions' => ['postit.created', 'postit.deleted', 'postit.item_added', 'postit.item_done', 'postit.item_undone', 'postit.cleared', 'postit.stuck', 'postit.unstuck']],
