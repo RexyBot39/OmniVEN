@@ -91,6 +91,11 @@ class MonthlyReportController extends Controller
                 'byBrand' => $done->groupBy(fn ($t) => $t->brand?->name ?? 'No brand')->map->count()->sortDesc(),
             ],
             'shipped' => $done->filter(fn ($t) => $t->outcome || $t->outcome_url)->sortBy('completed_at')->values(),
+            'outreach' => [
+                'pitched' => \App\Models\OutreachEvent::where('kind', 'pitched')->whereBetween('created_at', $between)->distinct()->count('publisher_id'),
+                'replied' => \App\Models\OutreachEvent::where('kind', 'replied')->whereBetween('created_at', $between)->distinct()->count('publisher_id'),
+                'live' => \App\Models\Publisher::where('stage', 'live')->whereBetween('live_at', $between)->orderBy('live_at')->get(),
+            ],
             'launches' => TemplateRun::withCount(['tasks', 'tasks as done_count' => fn ($q) => $q->whereNotNull('completed_at')])
                 ->whereBetween('starts_on', [$a, $month->endOfMonth()->format('Y-m-d')])->orderBy('starts_on')->get(),
             'notes' => SalesNote::with('user')->whereBetween('week', [$month->startOfWeek(CarbonImmutable::MONDAY)->format('Y-m-d'), $b])->orderBy('week')->get(),

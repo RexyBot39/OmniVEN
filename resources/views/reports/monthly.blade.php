@@ -88,6 +88,16 @@
         </section>
     @endif
 
+    @if($outreach['pitched'] || $outreach['live']->isNotEmpty())
+        <section>
+            <div class="h2row"><h2>Outreach</h2><span class="sub">Publishers, review sites and creators</span></div>
+            <div class="card report-box">
+                <p><b>{{ $outreach['pitched'] }}</b> pitched, <b>{{ $outreach['replied'] }}</b> replied, <b>{{ $outreach['live']->count() }}</b> went live.</p>
+                @if($outreach['live']->isNotEmpty())<ul>@foreach($outreach['live'] as $p)<li>{{ $p->name }}@if($p->result_url) · <a href="{{ $p->result_url }}" target="_blank" rel="noopener noreferrer">{{ Str::limit(preg_replace('#^https?://(www\.)?#', '', $p->result_url), 60) }}</a>@endif</li>@endforeach</ul>@endif
+            </div>
+        </section>
+    @endif
+
     @if($launches->isNotEmpty())
         <section>
             <div class="h2row"><h2>Launches and promotions</h2></div>
