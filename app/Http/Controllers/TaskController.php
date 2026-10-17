@@ -110,8 +110,13 @@ class TaskController extends Controller
             'assignee_id' => ['required', Rule::exists('users', 'id')->where('is_active', true)],
             'due_on' => ['nullable', 'date'],
             'brand_id' => ['nullable', Rule::in(Task::brandChoices()->pluck('id')->all())],
+            'campaign_id' => ['nullable', Rule::exists('campaigns', 'id')],
         ]);
         $data['brand_id'] = $data['brand_id'] ?? null;
+        // Forms without the campaign field leave a task's campaign as it is.
+        if (! $request->has('campaign_id')) {
+            unset($data['campaign_id']);
+        }
         $data['hot'] = $request->boolean('hot');
 
         return $data;

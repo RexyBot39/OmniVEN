@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /** One use of a template, e.g. "Black Friday 2026" for 39DollarGlasses starting Nov 27. */
 class TemplateRun extends Model
 {
-    protected $fillable = ['task_template_id', 'name', 'brand_id', 'starts_on', 'user_id'];
+    protected $fillable = ['task_template_id', 'name', 'brand_id', 'starts_on', 'user_id', 'campaign_id'];
 
     protected function casts(): array
     {
@@ -34,5 +34,10 @@ class TemplateRun extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    public function campaign(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Campaign::class);
     }
 }

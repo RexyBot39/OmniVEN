@@ -38,6 +38,8 @@ class TemplateController extends Controller
             'people' => $this->people(),
             'taskBrands' => Task::brandChoices(),
             'defaultStart' => CarbonImmutable::now(config('app.timezone'))->addDays(max(0, -(int) $template->items->min('offset_days')))->format('Y-m-d'),
+            'campaigns' => \App\Models\Campaign::where('ends_on', '>=', CarbonImmutable::now(config('app.timezone'))->format('Y-m-d'))->orderBy('starts_on')->get(),
+            'campaign' => \App\Models\Campaign::find(request()->integer('campaign')),
         ]);
     }
 
@@ -52,6 +54,7 @@ class TemplateController extends Controller
             'assignees' => ['array'],
             'assignees.*' => ['nullable', Rule::in($ids)],
             'skip' => ['array'],
+            'campaign_id' => ['nullable', Rule::exists('campaigns', 'id')],
         ], ['assignee_id.required' => 'Choose who gets the steps nobody else is picked for.']);
 
         $start = CarbonImmutable::parse($data['starts_on'], config('app.timezone'));
@@ -63,7 +66,7 @@ class TemplateController extends Controller
         $me = $request->user();
         $run = DB::transaction(function () use ($template, $data, $start, $items, $me, $request) {
             $run = TemplateRun::create(['task_template_id' => $template->id, 'name' => trim($data['name']), 'brand_id' => $data['brand_id'] ?? null,
-                'starts_on' => $start->format('Y-m-d'), 'user_id' => $me->id]);
+                'starts_on' => $start->format('Y-m-d'), 'user_id' => $me->id, 'campaign_id' => $data['campaign_id'] ?? null]);
             foreach ($items as $i) {
                 Task::create([
                     'title' => mb_substr(TaskTemplateItem::withName($i->title, $run->name), 0, 200),
@@ -74,6 +77,7 @@ class TemplateController extends Controller
                     'due_on' => $start->addDays($i->offset_days)->format('Y-m-d'),
                     'created_by' => $me->id, 'assigned_at' => now(), 'assigned_by' => $me->id,
                     'template_run_id' => $run->id,
+                    'campaign_id' => $run->campaign_id,
                 ]);
             }
 

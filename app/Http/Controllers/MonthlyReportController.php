@@ -91,6 +91,8 @@ class MonthlyReportController extends Controller
                 'byBrand' => $done->groupBy(fn ($t) => $t->brand?->name ?? 'No brand')->map->count()->sortDesc(),
             ],
             'shipped' => $done->filter(fn ($t) => $t->outcome || $t->outcome_url)->sortBy('completed_at')->values(),
+            'campaigns' => \App\Models\Campaign::with('brand')->during($month, $month->endOfMonth())
+                ->withCount(['tasks', 'tasks as done_count' => fn ($q) => $q->whereNotNull('completed_at'), 'links'])->orderBy('starts_on')->get(),
             'outreach' => [
                 'pitched' => \App\Models\OutreachEvent::where('kind', 'pitched')->whereBetween('created_at', $between)->distinct()->count('publisher_id'),
                 'replied' => \App\Models\OutreachEvent::where('kind', 'replied')->whereBetween('created_at', $between)->distinct()->count('publisher_id'),

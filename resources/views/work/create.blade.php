@@ -35,6 +35,10 @@
         <input type="hidden" name="kind" value="task">
         @endif
 
+        @if($campaign)
+            <input type="hidden" name="campaign_id" value="{{ $campaign->id }}">
+            <p class="callout" data-kind="task">Part of the campaign <b>{{ $campaign->name }}</b> ({{ $campaign->dateLabel() }}). It will show on the campaign and the Action Calendar.</p>
+        @endif
         <div class="fld"><label for="title">What needs doing</label><input id="title" name="title" type="text" required maxlength="200" value="{{ old('title', request('title')) }}" placeholder="e.g. Fix Merchant Center disapprovals for Ocusafe"></div>
 
         <div class="two">
@@ -56,7 +60,7 @@
         <div class="fld" data-kind="task"><label for="brand_id">Brand @if($isAdmin)<span class="hint">(task)</span>@endif</label>
             <select id="brand_id" name="brand_id">
                 <option value="">No brand</option>
-                @foreach($taskBrands as $b)<option value="{{ $b->id }}" @selected((string) old('brand_id') === (string) $b->id)>{{ $b->name }}</option>@endforeach
+                @foreach($taskBrands as $b)<option value="{{ $b->id }}" @selected((string) old('brand_id', $campaign?->brand_id) === (string) $b->id)>{{ $b->name }}</option>@endforeach
             </select>
         </div>
 

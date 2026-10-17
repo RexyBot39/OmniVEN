@@ -50,6 +50,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/content-gaps/task', [\App\Http\Controllers\ContentGapController::class, 'task'])->middleware('throttle:60,1')->name('content-gaps.task');
     Route::post('/content-gaps/dismiss', [\App\Http\Controllers\ContentGapController::class, 'dismiss'])->middleware('throttle:60,1')->name('content-gaps.dismiss');
     Route::delete('/content-gaps/{gap}', [\App\Http\Controllers\ContentGapController::class, 'restore'])->name('content-gaps.restore');
+    Route::get('/campaigns', [\App\Http\Controllers\CampaignController::class, 'index'])->name('campaigns.index');
+    Route::get('/campaigns/new', [\App\Http\Controllers\CampaignController::class, 'create'])->name('campaigns.create');
+    Route::post('/campaigns', [\App\Http\Controllers\CampaignController::class, 'store'])->middleware('throttle:30,1')->name('campaigns.store');
+    Route::get('/campaigns/{campaign}', [\App\Http\Controllers\CampaignController::class, 'show'])->name('campaigns.show');
+    Route::get('/campaigns/{campaign}/edit', [\App\Http\Controllers\CampaignController::class, 'edit'])->name('campaigns.edit');
+    Route::put('/campaigns/{campaign}', [\App\Http\Controllers\CampaignController::class, 'update'])->name('campaigns.update');
+    Route::delete('/campaigns/{campaign}', [\App\Http\Controllers\CampaignController::class, 'destroy'])->name('campaigns.destroy');
     Route::get('/assets', [\App\Http\Controllers\AssetController::class, 'index'])->name('assets.index');
     Route::get('/assets/{asset}/file', [\App\Http\Controllers\AssetController::class, 'file'])->name('assets.file');
     Route::middleware('can:admin')->group(function () {
