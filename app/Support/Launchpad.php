@@ -48,6 +48,7 @@ class Launchpad
         19 => ['Email & SMS', 'Klaviyo health', 'email', null, 'see-revenue'],
         20 => ['Search', 'Google Search Console by brand', 'seo', null, null],
         21 => ['Launch templates', 'Product launch and sale checklists', 'templates.index', null, null],
+        22 => ['Monthly report', 'Marketing results for leadership', 'reports.monthly', null, 'see-revenue'],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */

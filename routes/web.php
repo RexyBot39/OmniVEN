@@ -52,6 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/links', [\App\Http\Controllers\LinkController::class, 'store'])->name('links.store');
     Route::delete('/links/{link}', [\App\Http\Controllers\LinkController::class, 'destroy'])->name('links.destroy');
     Route::get('/affiliates', [\App\Http\Controllers\AffiliatesController::class, 'index'])->middleware('can:see-revenue')->name('affiliates');
+    Route::get('/reports/monthly', [\App\Http\Controllers\MonthlyReportController::class, 'show'])->middleware('can:see-revenue')->name('reports.monthly');
     Route::get('/email', [\App\Http\Controllers\EmailController::class, 'index'])->middleware('can:see-revenue')->name('email');
     Route::get('/sales', [\App\Http\Controllers\SalesController::class, 'index'])->middleware('can:see-revenue')->name('sales');
     Route::post('/sales/notes', [\App\Http\Controllers\SalesController::class, 'note'])->middleware('can:see-revenue')->name('sales.note');

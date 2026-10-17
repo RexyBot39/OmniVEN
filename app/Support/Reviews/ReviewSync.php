@@ -172,7 +172,8 @@ class ReviewSync
     private static function store(string $platform, ?Brand $brand, array $r): void
     {
         try {
-            $at = $r['at'] ? CarbonImmutable::parse($r['at']) : CarbonImmutable::now();
+            // Store in the app timezone, like every other timestamp in OmniVEN.
+            $at = ($r['at'] ? CarbonImmutable::parse($r['at']) : CarbonImmutable::now())->setTimezone(config('app.timezone'));
         } catch (Throwable) {
             $at = CarbonImmutable::now();
         }
