@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/links', [\App\Http\Controllers\LinkController::class, 'index'])->name('links.index');
     Route::post('/links', [\App\Http\Controllers\LinkController::class, 'store'])->name('links.store');
     Route::delete('/links/{link}', [\App\Http\Controllers\LinkController::class, 'destroy'])->name('links.destroy');
+    Route::get('/affiliates', [\App\Http\Controllers\AffiliatesController::class, 'index'])->middleware('can:see-revenue')->name('affiliates');
     Route::get('/sales', [\App\Http\Controllers\SalesController::class, 'index'])->middleware('can:see-revenue')->name('sales');
 
     // Everyone signed in: tick routines, post and manage their own notes.

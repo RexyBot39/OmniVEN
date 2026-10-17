@@ -11,8 +11,9 @@
     <div class="act-head">
         <div>
             <div class="eyebrow"><span>Sales</span><span>From Google Analytics 4</span>@if($status['last'])<span>Updated {{ $status['last']->format('M j, g:i A') }}</span>@endif</div>
-            <h1 class="form-h">Revenue by channel</h1>
+            <h1 class="form-h">Revenue by channel @include('partials.star', ['key' => 'page:14', 'label' => 'Sales'])</h1>
         </div>
+        <nav class="seg" aria-label="Sales pages"><a class="seg-b" href="{{ route('sales') }}" aria-pressed="true">Revenue by channel</a><a class="seg-b" href="{{ route('affiliates') }}" aria-pressed="false">Affiliates</a></nav>
     </div>
 
     @if(! $configured)

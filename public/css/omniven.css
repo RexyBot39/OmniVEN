@@ -1154,3 +1154,6 @@ td .delta-w{display:none}
 .aians-qrow input[type=text]{flex:1 1 320px;min-width:0}
 .aians-qlist form[data-confirm]{margin:0}
 .aians-split > *{min-width:0}
+.share.wide{width:160px}
+.act-head > .seg{margin-left:0}
+.act-head > .seg .seg-b{text-decoration:none}

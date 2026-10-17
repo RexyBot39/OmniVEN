@@ -42,3 +42,20 @@ Artisan::command('omniven:revenue-sync {--history : Fill in the full history now
 
     return $ok ? 0 : 1;
 })->purpose('Refresh sales totals from Google Analytics 4');
+
+// Pull affiliate totals from CJ and Awin. --history fills in the last 13 months now.
+Artisan::command('omniven:affiliate-sync {--history : Fill in the full history now}', function () {
+    if (! \App\Support\Affiliate\Affiliates::configured()) {
+        $this->warn('Neither CJ nor Awin is set up: add CJ_API_TOKEN + CJ_ADVERTISER_ID and/or AWIN_API_TOKEN.');
+
+        return 1;
+    }
+    $ok = \App\Support\Affiliate\Affiliates::refresh((bool) $this->option('history'));
+    foreach (\App\Support\Affiliate\Affiliates::status() as $s) {
+        if ($s['configured']) {
+            $s['error'] ? $this->error($s['label'].': '.$s['error']) : $this->info($s['label'].': updated.');
+        }
+    }
+
+    return $ok ? 0 : 1;
+})->purpose('Refresh affiliate totals from CJ and Awin');
