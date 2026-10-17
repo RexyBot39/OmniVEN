@@ -50,6 +50,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/content-gaps/task', [\App\Http\Controllers\ContentGapController::class, 'task'])->middleware('throttle:60,1')->name('content-gaps.task');
     Route::post('/content-gaps/dismiss', [\App\Http\Controllers\ContentGapController::class, 'dismiss'])->middleware('throttle:60,1')->name('content-gaps.dismiss');
     Route::delete('/content-gaps/{gap}', [\App\Http\Controllers\ContentGapController::class, 'restore'])->name('content-gaps.restore');
+    Route::get('/assets', [\App\Http\Controllers\AssetController::class, 'index'])->name('assets.index');
+    Route::get('/assets/{asset}/file', [\App\Http\Controllers\AssetController::class, 'file'])->name('assets.file');
+    Route::middleware('can:admin')->group(function () {
+        Route::get('/assets/new', [\App\Http\Controllers\AssetController::class, 'create'])->name('assets.create');
+        Route::post('/assets', [\App\Http\Controllers\AssetController::class, 'store'])->middleware('throttle:30,1')->name('assets.store');
+        Route::post('/assets/share', [\App\Http\Controllers\AssetController::class, 'share'])->middleware('throttle:20,1')->name('assets.share');
+        Route::get('/assets/{asset}/edit', [\App\Http\Controllers\AssetController::class, 'edit'])->name('assets.edit');
+        Route::put('/assets/{asset}', [\App\Http\Controllers\AssetController::class, 'update'])->name('assets.update');
+        Route::delete('/assets/{asset}', [\App\Http\Controllers\AssetController::class, 'destroy'])->name('assets.destroy');
+    });
     Route::get('/outreach', [\App\Http\Controllers\OutreachController::class, 'index'])->name('outreach.index');
     Route::get('/outreach/new', [\App\Http\Controllers\OutreachController::class, 'create'])->name('outreach.create');
     Route::post('/outreach', [\App\Http\Controllers\OutreachController::class, 'store'])->middleware('throttle:60,1')->name('outreach.store');
@@ -176,4 +186,10 @@ Route::middleware('auth')->group(function () {
 
     // Quick launcher index (⌘K).
     Route::get('/launcher.json', [\App\Http\Controllers\LauncherController::class, 'index'])->name('launcher');
+});
+
+// A publisher's asset kit: no sign-in; the link is signed and expires (made on the Affiliate assets page).
+Route::middleware(['signed', 'throttle:120,1'])->group(function () {
+    Route::get('/kit', [\App\Http\Controllers\AssetController::class, 'kit'])->name('kit');
+    Route::get('/kit/{asset}', [\App\Http\Controllers\AssetController::class, 'kitFile'])->name('kit.file');
 });

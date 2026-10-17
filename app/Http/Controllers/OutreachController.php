@@ -109,7 +109,8 @@ class OutreachController extends Controller
                 'year' => $rows->sum('sale_cents'), 'orders' => $rows->sum('orders'), 'comm' => $rows->sum('commission_cents')];
         }
 
-        return view('outreach.show', ['publisher' => $publisher->load(['owner', 'brand', 'events.user']), 'sales' => $sales] + $this->choices());
+        return view('outreach.show', ['publisher' => $publisher->load(['owner', 'brand', 'events.user']), 'sales' => $sales,
+            'codes' => \App\Models\AffiliateAsset::where('kind', 'code')->where('publisher_id', $publisher->id)->orderByDesc('id')->get()] + $this->choices());
     }
 
     public function edit(Publisher $publisher): View

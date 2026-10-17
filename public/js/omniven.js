@@ -740,3 +740,15 @@ document.addEventListener('click', (e) => { if (e.target.closest('[data-print]')
 
 // A task result was just saved (or needs fixing): bring that finished task into view.
 document.querySelector('[data-scroll-here]')?.scrollIntoView({ block: 'center' });
+
+// Affiliate asset form: show the fields the chosen kind needs.
+(() => {
+  const form = document.getElementById('asset-form');
+  if (!form) return;
+  const sync = () => {
+    const kind = form.querySelector('input[name="kind"]:checked')?.value || 'image';
+    form.querySelectorAll('[data-for]').forEach((el) => { el.hidden = !el.dataset.for.split(' ').includes(kind); });
+  };
+  form.addEventListener('change', (e) => { if (e.target.name === 'kind') sync(); });
+  sync();
+})();
