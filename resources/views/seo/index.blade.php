@@ -7,6 +7,7 @@
         <div>
             <div class="eyebrow"><span>Search</span><span>From {{ \App\Support\BrandIcon::html('google', 'xs') }}Google Search Console</span>@if($s)<span>{{ \Carbon\Carbon::parse($s['from'])->format('M j') }} – {{ \Carbon\Carbon::parse($s['to'])->format('M j') }} vs the 28 days before</span>@endif</div>
             <h1 class="form-h">Search @include('partials.star', ['key' => 'page:20', 'label' => 'Search'])</h1>
+            <p class="sub"><a href="{{ route('content-gaps', array_filter(['brand' => $brand?->slug])) }}">Content gaps →</a> searches that need a page, a better page or a better title.</p>
         </div>
         @if($brands->count() > 1)
             <nav class="sales-brands" aria-label="Brand">
