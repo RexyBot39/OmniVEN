@@ -53,6 +53,7 @@ class Launchpad
         24 => ['Site check', 'Structured data and product feeds', 'site-check', null, null],
         25 => ['Reddit', 'Threads worth a reply', 'reddit', null, null],
         26 => ['Outreach', 'Publishers, review sites and creators we pitch', 'outreach.index', null, null],
+        27 => ['Affiliate assets', 'Banners, codes and copy for publishers', 'assets.index', null, null],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */

@@ -62,6 +62,21 @@
                     </div>
                 @endif
             </form>
+            <div class="h2row"><h2>Codes and kit</h2>@can('admin')<a class="mini" href="{{ route('assets.create', ['kind' => 'code', 'publisher' => $publisher->id]) }}">+ Their own code</a>@endcan</div>
+            <div class="card report-box">
+                @if($codes->isNotEmpty())
+                    <ul>@foreach($codes as $c)<li><b class="asset-code">{{ $c->body }}</b> · {{ $c->title }}@if($c->state() === 'ended') <span class="pill">Ended</span>@elseif($c->ends_on) <span class="sub">until {{ $c->ends_on->format('M j') }}</span>@endif</li>@endforeach</ul>
+                @else
+                    <p class="sub">No codes just for them. Shared codes and banners are in <a href="{{ route('assets.index', array_filter(['brand' => $publisher->brand?->slug])) }}">Affiliate assets</a>.</p>
+                @endif
+                @can('admin')
+                    @if(session('kit_link'))
+                        <div class="asset-copy"><input type="text" readonly id="kit-link" value="{{ session('kit_link') }}" aria-label="Kit link"><button type="button" class="btn primary" data-copy="#kit-link">Copy link</button></div>
+                    @else
+                        <form method="POST" action="{{ route('assets.share') }}">@csrf<input type="hidden" name="publisher_id" value="{{ $publisher->id }}"><input type="hidden" name="brand_id" value="{{ $publisher->brand_id }}"><input type="hidden" name="days" value="30"><button class="btn" type="submit">Make a kit link for them (30 days)</button></form>
+                    @endif
+                @endcan
+            </div>
             @if($publisher->notes)
                 <div class="h2row"><h2>Notes</h2></div>
                 <div class="card report-box"><p class="or-notes">{{ $publisher->notes }}</p></div>
