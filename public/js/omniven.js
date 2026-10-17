@@ -698,3 +698,11 @@ document.addEventListener('click', (e) => {
   form.addEventListener('change', update);
   update();
 })();
+
+// AI answers: color a cell by what the assistant said as soon as it's picked.
+document.addEventListener('change', (e) => {
+  const s = e.target.closest('select[data-aians]');
+  if (!s) return;
+  const td = s.closest('td');
+  td.className = td.className.replace(/\br-\S+/, '') + ' r-' + (s.value || 'none');
+});
