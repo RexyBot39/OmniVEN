@@ -4,7 +4,7 @@
         <a class="rev-name" href="{{ route('sales') }}">Sales</a>
         @if($revenue['mtd']['has_data'] || $revenue['yesterday']['has_data'])
             <div class="rev-fig"><span class="rev-l">Yesterday</span><b>{{ \App\Support\Revenue\Report::money($revenue['yesterday']['cents']) }}</b><span class="sub">{{ number_format($revenue['yesterday']['orders']) }} {{ Str::plural('order', $revenue['yesterday']['orders']) }}</span></div>
-            <div class="rev-fig head"><span class="rev-l">Month to date</span><b>{{ \App\Support\Revenue\Report::money($revenue['mtd']['cents']) }}</b>@include('partials.delta', ['v' => $revenue['mtd']['vs']['cents']])</div>
+            <div class="rev-fig head"><span class="rev-l">Month to date</span><b>{{ \App\Support\Revenue\Report::money($revenue['mtd']['cents']) }}</b>@include('partials.delta', ['v' => $revenue['mtd']['vs']['cents']])@include('partials.pace', ['p' => $revenue['pace'] ?? null])</div>
             <div class="rev-fig"><span class="rev-l">Conversion</span><b>{{ \App\Support\Revenue\Report::pct($revenue['mtd']['conv'], 2) }}</b>@include('partials.delta', ['v' => $revenue['mtd']['vs']['conv'], 'pts' => true])</div>
             @if($revenue['brands']->count() > 1)
                 <ul class="rev-brands" aria-label="Month to date by brand">

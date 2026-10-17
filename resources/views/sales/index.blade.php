@@ -53,7 +53,7 @@
         </form>
 
         <section class="tiles sales-tiles" aria-label="{{ Report::PERIODS[$period] }} at a glance">
-            <div class="tile"><span class="tl">Revenue</span><span class="tv">{{ Report::money($figures['cents']) }}</span>@include('partials.delta', ['v' => $figures['vs']['cents']])</div>
+            <div class="tile"><span class="tl">Revenue</span><span class="tv">{{ Report::money($figures['cents']) }}</span>@include('partials.delta', ['v' => $figures['vs']['cents']])@include('partials.pace', ['p' => $pace])</div>
             <div class="tile"><span class="tl">Orders</span><span class="tv">{{ number_format($figures['orders']) }}</span>@include('partials.delta', ['v' => $figures['vs']['orders']])</div>
             <div class="tile"><span class="tl">Conversion rate</span><span class="tv">{{ Report::pct($figures['conv'], 2) }}</span>@include('partials.delta', ['v' => $figures['vs']['conv'], 'pts' => true])</div>
             <div class="tile"><span class="tl">Average order</span><span class="tv">{{ Report::money($figures['aov_cents'] !== null ? (int) round($figures['aov_cents']) : null, true) }}</span>@include('partials.delta', ['v' => $figures['vs']['aov']])</div>
@@ -98,13 +98,14 @@
                 <div class="h2row"><h2>By brand</h2></div>
                 <div class="tablewrap">
                     <table class="sales-ch">
-                        <thead><tr><th>Brand</th><th class="n">Revenue</th><th class="n">vs last year</th><th class="n">Orders</th><th class="n">Conv.</th><th class="n">Average order</th></tr></thead>
+                        <thead><tr><th>Brand</th><th class="n">Revenue</th><th class="n">vs last year</th>@if($period === 'mtd')<th>This month’s goal</th>@endif<th class="n">Orders</th><th class="n">Conv.</th><th class="n">Average order</th></tr></thead>
                         <tbody>
                             @foreach($byBrand as $b)
                                 <tr>
                                     <td><a href="{{ route('sales', $q(['brand' => $b['brand']->slug])) }}"><span class="dot" style="background:var(--c{{ $b['brand']->colorSlot() }})"></span>{{ $b['brand']->name }}</a></td>
                                     <td class="n">{{ Report::money($b['cents']) }}</td>
                                     <td class="n">@include('partials.delta', ['v' => $b['vs']['cents']])</td>
+                                    @if($period === 'mtd')<td>@if($brandPace[$b['brand']->id] ?? null)@include('partials.pace', ['p' => $brandPace[$b['brand']->id]])@else<span class="sub">No goal</span>@endif</td>@endif
                                     <td class="n">{{ number_format($b['orders']) }}</td>
                                     <td class="n">{{ Report::pct($b['conv'], 2) }}</td>
                                     <td class="n">{{ Report::money($b['aov_cents'] !== null ? (int) round($b['aov_cents']) : null, true) }}</td>
@@ -115,6 +116,38 @@
                 </div>
             </section>
         @endif
+        @can('admin')
+            <details class="card goals-form" @if($goals->isEmpty()) open @endif>
+                <summary><b>{{ $goals->isEmpty() ? 'Set this month’s revenue goals' : 'Edit '.now()->format('F').' goals' }}</b> <span class="sub">Admins · per brand, in dollars · blank clears</span></summary>
+                <form method="POST" action="{{ route('sales.goals') }}">
+                    @csrf
+                    <div class="goals-grid">
+                        @foreach($brands as $b)
+                            <label><span><span class="dot" style="background:var(--c{{ $b->colorSlot() }})"></span>{{ $b->name }}</span><input type="number" name="goal[{{ $b->id }}]" min="0" step="100" value="{{ isset($goals[$b->id]) ? (int) round($goals[$b->id] / 100) : '' }}" placeholder="e.g. 250000"></label>
+                        @endforeach
+                    </div>
+                    <button class="btn primary" type="submit">Save goals</button>
+                </form>
+            </details>
+        @endcan
+
+        <section id="review">
+            <div class="h2row"><h2>Weekly review</h2><span class="sub">What moved this week, and why. One note per week.</span></div>
+            @php $mine = $notes->first(fn ($n) => \Carbon\Carbon::parse($n->week)->isSameDay($week)); @endphp
+            <form method="POST" action="{{ route('sales.note') }}" class="card review-form">
+                @csrf
+                <label for="review-body"><b>Week of {{ $week->format('M j') }}</b>@if($mine) <span class="sub">· last edited by {{ $mine->user?->firstName() ?? 'someone' }}</span>@endif</label>
+                <textarea id="review-body" name="body" maxlength="2000" required placeholder="e.g. Organic search up 18% after the progressive-lens guide; Ocusafe behind goal because Meta ads paused Tuesday.">{{ old('body', $mine?->body) }}</textarea>
+                <div class="form-actions"><button class="btn primary" type="submit">{{ $mine ? 'Update note' : 'Save note' }}</button></div>
+            </form>
+            @if($notes->reject(fn ($n) => $mine && $n->is($mine))->isNotEmpty())
+                <ul class="review-list">
+                    @foreach($notes->reject(fn ($n) => $mine && $n->is($mine)) as $n)
+                        <li><div class="sub"><b>Week of {{ \Carbon\Carbon::parse($n->week)->format('M j, Y') }}</b> · {{ $n->user?->firstName() ?? '—' }}</div><p>{{ $n->body }}</p></li>
+                    @endforeach
+                </ul>
+            @endif
+        </section>
     @endif
 </main>
 @endsection

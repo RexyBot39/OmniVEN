@@ -40,6 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/affiliates', [\App\Http\Controllers\AffiliatesController::class, 'index'])->middleware('can:see-revenue')->name('affiliates');
     Route::get('/email', [\App\Http\Controllers\EmailController::class, 'index'])->middleware('can:see-revenue')->name('email');
     Route::get('/sales', [\App\Http\Controllers\SalesController::class, 'index'])->middleware('can:see-revenue')->name('sales');
+    Route::post('/sales/notes', [\App\Http\Controllers\SalesController::class, 'note'])->middleware('can:see-revenue')->name('sales.note');
+    Route::post('/sales/goals', [\App\Http\Controllers\SalesController::class, 'goals'])->middleware('can:admin')->name('sales.goals');
 
     // Everyone signed in: tick routines, post and manage their own notes.
     Route::post('/routines/{routine}/toggle', [RoutineController::class, 'toggle'])->name('routines.toggle');
