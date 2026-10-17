@@ -59,3 +59,18 @@ Artisan::command('omniven:affiliate-sync {--history : Fill in the full history n
 
     return $ok ? 0 : 1;
 })->purpose('Refresh affiliate totals from CJ and Awin');
+
+// The morning "my day" Slack DM for everyone who has it on (weekdays). Run by railway.myday.json.
+Artisan::command('omniven:my-day {--force : Send even on a weekend}', function () {
+    if (! \App\Support\Slack::configured()) {
+        $this->warn('Slack isn’t set up (SLACK_BOT_TOKEN).');
+
+        return 1;
+    }
+    $counts = \App\Support\MyDay::sendAll((bool) $this->option('force'));
+    foreach ($counts as $what => $n) {
+        $this->line("{$what}: {$n}");
+    }
+
+    return collect(array_keys($counts))->contains(fn ($k) => str_starts_with($k, 'error')) ? 1 : 0;
+})->purpose('Send each person their morning summary in Slack');

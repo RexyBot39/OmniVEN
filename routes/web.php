@@ -32,6 +32,9 @@ Route::middleware('auth')->group(function () {
         Route::patch('/ai-answers/questions/{question}', [\App\Http\Controllers\AiAnswersController::class, 'updateQuestion'])->name('ai-answers.questions.update');
         Route::delete('/ai-answers/questions/{question}', [\App\Http\Controllers\AiAnswersController::class, 'destroyQuestion'])->name('ai-answers.questions.destroy');
     });
+    Route::get('/my-day', [\App\Http\Controllers\MyDayController::class, 'show'])->name('my-day');
+    Route::post('/my-day/toggle', [\App\Http\Controllers\MyDayController::class, 'toggle'])->name('my-day.toggle');
+    Route::post('/my-day/send', [\App\Http\Controllers\MyDayController::class, 'send'])->middleware('throttle:5,10')->name('my-day.send');
     Route::get('/seo', [\App\Http\Controllers\SeoController::class, 'index'])->name('seo');
     Route::get('/reviews', [\App\Http\Controllers\ReviewsController::class, 'index'])->name('reviews');
     Route::post('/reviews/rating', [\App\Http\Controllers\ReviewsController::class, 'snapshot'])->name('reviews.rating');

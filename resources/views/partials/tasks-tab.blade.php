@@ -30,6 +30,7 @@
                     <div>
                         <h3>{{ $u->is($me) ? $u->firstName().' (you)' : $u->firstName() }}</h3>
                         <span class="sub">{{ $col['tasks']->count() }} {{ \Illuminate\Support\Str::plural('task', $col['tasks']->count()) }} · {{ $due }} {{ \Illuminate\Support\Str::plural('routine', $due) }} due</span>
+                        @if($u->is($me))<a class="mini myday-link" href="{{ route('my-day') }}">Morning Slack summary: {{ ($me->myday_slack ?? true) ? 'on' : 'off' }}</a>@endif
                     </div>
                 </div>
                 <form method="POST" action="{{ route('tasks.store') }}" class="bcol-add">
