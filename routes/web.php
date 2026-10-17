@@ -32,6 +32,8 @@ Route::middleware('auth')->group(function () {
         Route::patch('/ai-answers/questions/{question}', [\App\Http\Controllers\AiAnswersController::class, 'updateQuestion'])->name('ai-answers.questions.update');
         Route::delete('/ai-answers/questions/{question}', [\App\Http\Controllers\AiAnswersController::class, 'destroyQuestion'])->name('ai-answers.questions.destroy');
     });
+    Route::get('/reviews', [\App\Http\Controllers\ReviewsController::class, 'index'])->name('reviews');
+    Route::post('/reviews/rating', [\App\Http\Controllers\ReviewsController::class, 'snapshot'])->name('reviews.rating');
     Route::get('/links', [\App\Http\Controllers\LinkController::class, 'index'])->name('links.index');
     Route::post('/links', [\App\Http\Controllers\LinkController::class, 'store'])->name('links.store');
     Route::delete('/links/{link}', [\App\Http\Controllers\LinkController::class, 'destroy'])->name('links.destroy');
