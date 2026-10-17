@@ -18,6 +18,7 @@
                 <div class="rv-body">
                     <div class="rv-meta"><b>{{ $t->assignee?->firstName() }}</b> · {{ $t->completed_at ? 'Done '.$t->completed_at->timezone(config('app.timezone'))->format('M j') : ($t->dueLabel() ?? '') }}</div>
                     <p>@if($t->completed_at)<s>{{ $t->title }}</s>@else{{ $t->title }}@endif</p>
+                    @if($t->outcome || $t->outcome_url)<p class="outcome-v">→ {{ $t->outcome }}@if($t->outcome_url) <a href="{{ $t->outcome_url }}" target="_blank" rel="noopener noreferrer">{{ $t->outcome ? 'Open' : Str::limit(preg_replace('#^https?://(www\.)?#', '', $t->outcome_url), 60) }}</a>@endif</p>@endif
                 </div>
             </li>
         @endforeach

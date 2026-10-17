@@ -84,7 +84,7 @@
         @else
             <ul class="tb-done-list">
                 @foreach($doneTasks as $t)
-                    <li class="task done {{ $t->assignee_id === $me->id ? 'mine-item' : '' }}" data-assignee="{{ $t->assignee_id }}" data-brands="{{ $t->brand?->slug ?? 'all' }}" data-search="{{ strtolower($t->title.' '.$t->details.' '.$t->assignee?->name.' '.$t->brand?->name) }}" style="--bc:{{ $t->brand ? 'var(--c'.$t->brand->colorSlot().')' : 'var(--line)' }}">
+                    <li class="task done {{ $t->assignee_id === $me->id ? 'mine-item' : '' }}" @if(session('outcome_saved') === $t->id || (int) old('outcome_task') === $t->id) data-scroll-here @endif data-assignee="{{ $t->assignee_id }}" data-brands="{{ $t->brand?->slug ?? 'all' }}" data-search="{{ strtolower($t->title.' '.$t->details.' '.$t->outcome.' '.$t->assignee?->name.' '.$t->brand?->name) }}" style="--bc:{{ $t->brand ? 'var(--c'.$t->brand->colorSlot().')' : 'var(--line)' }}">
                         @can('complete-task', $t)
                             <form method="POST" action="{{ route('tasks.toggle', $t) }}">@csrf
                                 <button class="tick" type="submit" aria-pressed="true" aria-label="Reopen: {{ $t->title }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button>
@@ -98,6 +98,7 @@
                             <span class="ok">✓ Done{{ $t->completer ? ' · '.$t->completer->firstName() : '' }}</span>
                             <span>{{ $t->assignee?->is($t->completer) ? '' : 'for '.$t->assignee?->firstName().' · ' }}{{ $t->completed_at->timezone(config('app.timezone'))->format($t->completed_at->year === now()->year ? 'D M j' : 'M j, Y') }}</span>
                         </span>
+                        @include('partials.task-outcome', ['t' => $t])
                         @can('admin')<span></span>@include('partials.stamps', ['assignedAt' => $t->assigned_at ?? $t->created_at, 'assignedBy' => $t->assigner ?? $t->creator, 'doneAt' => $t->completed_at, 'doneBy' => $t->completer])@endcan
                     </li>
                 @endforeach

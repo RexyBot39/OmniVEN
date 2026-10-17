@@ -90,6 +90,7 @@ class MonthlyReportController extends Controller
                 'byPerson' => $byPerson,
                 'byBrand' => $done->groupBy(fn ($t) => $t->brand?->name ?? 'No brand')->map->count()->sortDesc(),
             ],
+            'shipped' => $done->filter(fn ($t) => $t->outcome || $t->outcome_url)->sortBy('completed_at')->values(),
             'launches' => TemplateRun::withCount(['tasks', 'tasks as done_count' => fn ($q) => $q->whereNotNull('completed_at')])
                 ->whereBetween('starts_on', [$a, $month->endOfMonth()->format('Y-m-d')])->orderBy('starts_on')->get(),
             'notes' => SalesNote::with('user')->whereBetween('week', [$month->startOfWeek(CarbonImmutable::MONDAY)->format('Y-m-d'), $b])->orderBy('week')->get(),
