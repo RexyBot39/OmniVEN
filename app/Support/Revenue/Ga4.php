@@ -77,16 +77,24 @@ class Ga4
 
     private static function token(): string
     {
-        return Cache::get(self::TOKEN_CACHE) ?? self::freshToken();
+        return self::accessToken(self::SCOPE);
     }
 
-    private static function freshToken(): string
+    /** An access token for the service account with one read-only scope (GA4, Search Console…), cached. */
+    public static function accessToken(string $scope): string
+    {
+        $cache = $scope === self::SCOPE ? self::TOKEN_CACHE : 'google:token:'.md5($scope);
+
+        return Cache::get($cache) ?? self::freshToken($scope, $cache);
+    }
+
+    private static function freshToken(string $scope, string $cache): string
     {
         $key = self::credentials() ?? throw new RuntimeException('GA4_CREDENTIALS is missing or isn’t a service account JSON key.');
         $now = time();
         $b64 = fn (string $s) => rtrim(strtr(base64_encode($s), '+/', '-_'), '=');
         $unsigned = $b64(json_encode(['alg' => 'RS256', 'typ' => 'JWT'])).'.'.$b64(json_encode([
-            'iss' => $key['client_email'], 'scope' => self::SCOPE, 'aud' => self::TOKEN_URL, 'iat' => $now, 'exp' => $now + 3600,
+            'iss' => $key['client_email'], 'scope' => $scope, 'aud' => self::TOKEN_URL, 'iat' => $now, 'exp' => $now + 3600,
         ]));
         $pkey = openssl_pkey_get_private($key['private_key']);
         if ($pkey === false || ! openssl_sign($unsigned, $sig, $pkey, OPENSSL_ALGO_SHA256)) {
@@ -101,7 +109,7 @@ class Ga4
         if (! $res->successful() || ! is_string($token)) {
             throw new RuntimeException('Google refused the service account sign-in (HTTP '.$res->status().'). Check the key in GA4_CREDENTIALS is current.');
         }
-        Cache::put(self::TOKEN_CACHE, $token, max(60, (int) ($res->json('expires_in') ?? 3600) - 300));
+        Cache::put($cache, $token, max(60, (int) ($res->json('expires_in') ?? 3600) - 300));
 
         return $token;
     }

@@ -35,7 +35,7 @@
         <input type="hidden" name="kind" value="task">
         @endif
 
-        <div class="fld"><label for="title">What needs doing</label><input id="title" name="title" type="text" required maxlength="200" value="{{ old('title') }}" placeholder="e.g. Fix Merchant Center disapprovals for Ocusafe"></div>
+        <div class="fld"><label for="title">What needs doing</label><input id="title" name="title" type="text" required maxlength="200" value="{{ old('title', request('title')) }}" placeholder="e.g. Fix Merchant Center disapprovals for Ocusafe"></div>
 
         <div class="two">
             <div class="fld"><label for="assignee_id">Assigned to</label>
@@ -60,7 +60,7 @@
             </select>
         </div>
 
-        <div class="fld"><label for="details">Details <span class="hint">(optional)</span></label><textarea id="details" name="details" maxlength="4000" rows="3" placeholder="Write it as the first step: “Open Merchant Center, fix disapprovals.”">{{ old('details') }}</textarea></div>
+        <div class="fld"><label for="details">Details <span class="hint">(optional)</span></label><textarea id="details" name="details" maxlength="4000" rows="3" placeholder="Write it as the first step: “Open Merchant Center, fix disapprovals.”">{{ old('details', request('details')) }}</textarea></div>
 
         @if($isAdmin)<div class="fld" data-kind="routine"><label for="link">Link to open <span class="hint">(routine)</span></label><input id="link" name="link" type="url" placeholder="https://" maxlength="1024" value="{{ old('link') }}"></div>@endif
         @if($isAdmin)<div data-kind="routine">@include('partials.brand-checks', ['item' => $routine])</div>@endif
