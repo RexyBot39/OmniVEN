@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [GoogleController::class, 'logout'])->name('logout');
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/sales', [\App\Http\Controllers\SalesController::class, 'index'])->middleware('can:see-revenue')->name('sales');
 
     // Everyone signed in: tick routines, post and manage their own notes.
     Route::post('/routines/{routine}/toggle', [RoutineController::class, 'toggle'])->name('routines.toggle');
