@@ -38,7 +38,15 @@ class CalendarController extends Controller
         $quarterDone = $progress->sum('done');
         $quarterTotal = $progress->sum('total');
 
+        $from = \Carbon\CarbonImmutable::parse($week->starts_on->format('Y-m-d'), config('app.timezone'));
+        $to = $from->addDays(6);
+        $campaigns = \App\Models\Campaign::with('brand')->during($from, $to)
+            ->withCount(['tasks', 'tasks as done_count' => fn ($q) => $q->whereNotNull('completed_at'), 'links'])
+            ->with(['tasks' => fn ($q) => $q->with('assignee')->whereNull('completed_at')->whereNotNull('due_on')->whereBetween('due_on', [$from->format('Y-m-d'), $to->format('Y-m-d').' 23:59:59'])->orderBy('due_on')])
+            ->orderBy('starts_on')->get();
+
         return view('calendar.show', [
+            'campaigns' => $campaigns, 'weekFrom' => $from, 'weekTo' => $to,
             'week' => $week, 'current' => $current, 'weeks' => $weeks, 'progress' => $progress,
             'items' => $items, 'checks' => $checks, 'boosts' => $boosts,
             'brands' => Brand::all()->keyBy('slug'),

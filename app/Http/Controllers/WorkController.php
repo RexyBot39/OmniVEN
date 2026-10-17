@@ -26,6 +26,7 @@ class WorkController extends Controller
             'brands' => Brand::orderBy('sort')->get(),
             'people' => User::where('is_active', true)->orderBy('name')->get(),
             'taskBrands' => \App\Models\Task::brandChoices(),
+            'campaign' => \App\Models\Campaign::find($request->integer('campaign') ?: (int) $request->old('campaign_id')),
         ]);
     }
 
@@ -56,8 +57,12 @@ class WorkController extends Controller
 
         $person = $request->boolean('back_to_person') && $request->user()->can('admin') ? User::find($request->integer('assignee_id')) : null;
 
-        return $person
-            ? redirect()->route('people.show', $person)->with('status', session('status'))
-            : $response;
+        $campaign = $request->input('kind') === 'task' ? \App\Models\Campaign::find($request->integer('campaign_id')) : null;
+
+        return match (true) {
+            (bool) $person => redirect()->route('people.show', $person)->with('status', session('status')),
+            (bool) $campaign => redirect()->route('campaigns.show', $campaign)->with('status', session('status')),
+            default => $response,
+        };
     }
 }

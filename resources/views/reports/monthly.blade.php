@@ -88,6 +88,13 @@
         </section>
     @endif
 
+    @if($campaigns->isNotEmpty())
+        <section>
+            <div class="h2row"><h2>Campaigns</h2></div>
+            <ul class="review-list">@foreach($campaigns as $cmp)<li><b>{{ $cmp->name }}</b> <span class="sub">· {{ $cmp->dateLabel() }}@if($cmp->brand) · {{ $cmp->brand->name }}@endif · {{ $cmp->done_count }} of {{ $cmp->tasks_count }} tasks done · {{ $cmp->links_count }} tracked {{ Str::plural('link', $cmp->links_count) }}</span>@if($cmp->goal)<p>{{ $cmp->goal }}</p>@endif</li>@endforeach</ul>
+        </section>
+    @endif
+
     @if($outreach['pitched'] || $outreach['live']->isNotEmpty())
         <section>
             <div class="h2row"><h2>Outreach</h2><span class="sub">Publishers, review sites and creators</span></div>

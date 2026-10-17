@@ -27,7 +27,7 @@
             <div class="fld"><label for="brand_id">Brand</label>
                 <select id="brand_id" name="brand_id">
                     <option value="">No brand</option>
-                    @foreach($brands as $b)<option value="{{ $b->id }}" data-site="{{ $b->site }}" @selected((string) old('brand_id', $from?->brand_id) === (string) $b->id)>{{ $b->name }}</option>@endforeach
+                    @foreach($brands as $b)<option value="{{ $b->id }}" data-site="{{ $b->site }}" @selected((string) old('brand_id', $from?->brand_id ?? request('brand_id')) === (string) $b->id)>{{ $b->name }}</option>@endforeach
                 </select>
             </div>
             <div class="fld span2"><label for="base_url">Page the link goes to</label>
@@ -53,7 +53,7 @@
                 <input id="medium" name="medium" type="text" maxlength="100" value="{{ old('medium', $from?->medium) }}">
             </div>
             <div class="fld"><label for="campaign">Campaign</label>
-                <input id="campaign" name="campaign" type="text" required maxlength="150" list="past-campaigns" placeholder="e.g. fall-sale-2026" value="{{ old('campaign', $from?->campaign) }}">
+                <input id="campaign" name="campaign" type="text" required maxlength="150" list="past-campaigns" placeholder="e.g. fall-sale-2026" value="{{ old('campaign', $from?->campaign ?? request('campaign')) }}">
                 <datalist id="past-campaigns">@foreach($campaigns as $c)<option value="{{ $c }}">@endforeach</datalist>
                 <span class="hint">Pick an existing name when it’s the same campaign.</span>
             </div>

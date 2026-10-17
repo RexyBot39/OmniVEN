@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
-    protected $fillable = ['title', 'details', 'brand_id', 'assignee_id', 'created_by', 'hot', 'due_on', 'completed_at', 'completed_by', 'assigned_at', 'assigned_by', 'template_run_id', 'outcome', 'outcome_url'];
+    protected $fillable = ['title', 'details', 'brand_id', 'assignee_id', 'created_by', 'hot', 'due_on', 'completed_at', 'completed_by', 'assigned_at', 'assigned_by', 'template_run_id', 'outcome', 'outcome_url', 'campaign_id'];
 
     protected function casts(): array
     {
@@ -84,5 +84,10 @@ class Task extends Model
         }
 
         return ($this->isOverdue() ? 'Overdue · ' : 'Due ').$this->due_on->format('M j');
+    }
+
+    public function campaign(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Campaign::class);
     }
 }

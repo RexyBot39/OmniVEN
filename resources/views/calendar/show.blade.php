@@ -80,6 +80,24 @@
             @endforeach
         </section>
 
+        <section class="panel" id="campaigns">
+            <h2>Campaigns this week<span class="c">{{ $campaigns->isEmpty() ? 'none running' : $campaigns->count().' running' }}</span><a class="btn add-item" href="{{ route('campaigns.create', ['starts_on' => $weekFrom->format('Y-m-d')]) }}">+ Plan one</a></h2>
+            @forelse($campaigns as $cmp)
+                <div class="cal-cmp" style="--bc:{{ $cmp->brand ? 'var(--c'.$cmp->brand->colorSlot().')' : 'var(--line)' }}">
+                    <div class="cal-cmp-h">
+                        <a href="{{ route('campaigns.show', $cmp) }}"><b>{{ $cmp->name }}</b></a>
+                        <span class="sub">{{ $cmp->dateLabel() }}@if($cmp->starts_on->between($weekFrom, $weekTo)) · starts {{ $cmp->starts_on->format('D') }}@endif @if($cmp->ends_on->between($weekFrom, $weekTo)) · ends {{ $cmp->ends_on->format('D') }}@endif · {{ $cmp->tasks_count ? $cmp->done_count.' of '.$cmp->tasks_count.' tasks done' : 'no tasks yet' }} · {{ $cmp->links_count }} {{ \Illuminate\Support\Str::plural('link', $cmp->links_count) }}</span>
+                    </div>
+                    <div class="cal-cmp-days" aria-hidden="true">@foreach(range(0, 6) as $i)<i class="{{ $weekFrom->addDays($i)->between($cmp->starts_on, $cmp->ends_on) ? 'on' : '' }}" title="{{ $weekFrom->addDays($i)->format('D M j') }}"></i>@endforeach</div>
+                    @if($cmp->tasks->isNotEmpty())
+                        <ul class="cal-cmp-tasks">@foreach($cmp->tasks as $t)<li><span class="sub">{{ $t->due_on->format('D') }}</span> {{ $t->title }} <span class="sub">· {{ $t->assignee?->firstName() }}</span></li>@endforeach</ul>
+                    @endif
+                </div>
+            @empty
+                <p class="sub cal-cmp-none">No campaign runs this week. Plan one to see its dates, tasks due and tracked links here.</p>
+            @endforelse
+        </section>
+
         <section class="panel" id="boost-log">
             <h2>Boost log<span class="c">{{ $boosts->isEmpty() ? 'no decisions logged yet' : $boosted.' boosted · $'.number_format($spendWeek).' this week' }}</span></h2>
             @include('partials.form-errors')
