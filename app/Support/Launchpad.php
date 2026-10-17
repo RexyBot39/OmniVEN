@@ -45,6 +45,7 @@ class Launchpad
         16 => ['AI answers', 'What AI assistants say about us', 'ai-answers', null, null],
         17 => ['Affiliate scoreboard', 'CJ and Awin sales and commission', 'affiliates', null, 'see-revenue'],
         18 => ['Reviews', 'Ratings and low reviews to answer', 'reviews', null, null],
+        19 => ['Email & SMS', 'Klaviyo health', 'email', null, 'see-revenue'],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */

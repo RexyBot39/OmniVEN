@@ -8,7 +8,7 @@
             <div class="eyebrow"><span>Sales</span><span>From CJ and Awin</span>@foreach($status as $s)@if($s['last'])<span>{{ $s['label'] }} updated {{ $s['last']->format('M j, g:i A') }}</span>@endif @endforeach</div>
             <h1 class="form-h">Affiliate scoreboard @include('partials.star', ['key' => 'page:17', 'label' => 'the Affiliate scoreboard'])</h1>
         </div>
-        <nav class="seg" aria-label="Sales pages"><a class="seg-b" href="{{ route('sales') }}" aria-pressed="false">Revenue by channel</a><a class="seg-b" href="{{ route('affiliates') }}" aria-pressed="true">Affiliates</a></nav>
+        @include('partials.sales-nav')
     </div>
 
     @if(! $configured)
