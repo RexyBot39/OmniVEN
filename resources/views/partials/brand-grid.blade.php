@@ -34,4 +34,4 @@
         </tbody>
     </table>
 </div>
-<p class="legend sub">Click a square to open that account. Faded squares have no direct link yet; a dot in the corner means access hasn't been verified in 90 days.{{ $isAdmin ? ' + adds a missing account.' : '' }} Brands marked “uses …” share that brand's accounts.</p>
+<p class="legend sub">Click a square to open that account. Faded squares have no direct link yet; a dot in the corner means access hasn't been verified in 90 days.{{ $isAdmin ? ' + adds a missing account.' : '' }} Brands marked “uses …” share that brand's accounts. <a href="{{ route('coverage') }}">Every platform and what’s missing →</a></p>

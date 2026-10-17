@@ -50,6 +50,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/content-gaps/task', [\App\Http\Controllers\ContentGapController::class, 'task'])->middleware('throttle:60,1')->name('content-gaps.task');
     Route::post('/content-gaps/dismiss', [\App\Http\Controllers\ContentGapController::class, 'dismiss'])->middleware('throttle:60,1')->name('content-gaps.dismiss');
     Route::delete('/content-gaps/{gap}', [\App\Http\Controllers\ContentGapController::class, 'restore'])->name('content-gaps.restore');
+    Route::get('/coverage', [\App\Http\Controllers\CoverageController::class, 'index'])->name('coverage');
+    Route::post('/coverage/skip', [\App\Http\Controllers\CoverageController::class, 'skip'])->middleware(['can:admin', 'throttle:60,1'])->name('coverage.skip');
     Route::get('/campaigns', [\App\Http\Controllers\CampaignController::class, 'index'])->name('campaigns.index');
     Route::get('/campaigns/new', [\App\Http\Controllers\CampaignController::class, 'create'])->name('campaigns.create');
     Route::post('/campaigns', [\App\Http\Controllers\CampaignController::class, 'store'])->middleware('throttle:30,1')->name('campaigns.store');
