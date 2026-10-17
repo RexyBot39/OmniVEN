@@ -33,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('view-activity', fn (User $user) => in_array(strtolower($user->email), config('omniven.activity_viewers'), true));
         Gate::define('complete-task', fn (User $user, Task $task) => $user->is_admin || $task->assignee_id === $user->id);
         Gate::define('own-postit', fn (User $user, PostIt $postit) => $postit->user_id === $user->id);
+        Gate::define('see-revenue', fn (User $user) => \App\Support\Revenue\Revenue::canSee($user));
         Gate::define('manage-note', fn (User $user, Note $note) => $user->is_admin || $note->user_id === $user->id);
     }
 }

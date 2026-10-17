@@ -1055,3 +1055,48 @@ body.show-stamps .main.dash .stamps{display:flex}
 .done-presets a[aria-current="true"]{background:var(--navy);border-color:var(--navy);color:var(--bg)}
 .tb-done .h2row .mini{margin-left:auto}
 .tb-done{scroll-margin-top:130px}
+
+/* Sales: revenue strip on the dashboard and the Sales page */
+.rev{padding-bottom:12px}
+.rev-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px 26px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--good);border-radius:var(--r);padding:10px 16px}
+.rev-name{font-family:var(--f-display);font-weight:800;font-size:15px;color:var(--ink);text-decoration:none}
+.rev-fig{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.rev-l{font-size:12px;color:var(--muted)}
+.rev-fig b{font-family:var(--f-display);font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+.rev-fig.head b{font-size:22px}
+.rev-brands{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.rev-brands li{display:inline-flex;align-items:center;gap:5px}
+.rev-brands b{color:var(--ink);font-variant-numeric:tabular-nums}
+.rev .dot,.sales .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.rev-brands .dot{margin-right:0}
+.rev-more{margin-left:auto}
+.delta{font-size:12px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.delta.up{color:var(--good)} .delta.down{color:var(--bad)} .delta.flat,.delta.none{color:var(--muted);font-weight:500}
+.delta-w{font-weight:400;color:var(--muted)}
+td .delta-w{display:none}
+.sales{padding-block:22px 64px;display:flex;flex-direction:column;gap:22px}
+.sales-filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.sales-filters .seg{margin-left:0}
+.sales-filters .seg-b{text-decoration:none}
+.sales-brands{display:flex;flex-wrap:wrap;gap:4px}
+.sales-brands a{display:inline-flex;align-items:center;padding:4px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:13px}
+.sales-brands a[aria-current="true"]{background:var(--navy);border-color:var(--navy);color:var(--bg)}
+.sales-tiles .tile{display:flex;flex-direction:column;gap:4px}
+.sales-ch{min-width:680px}
+.sales-ch td,.sales-ch th{vertical-align:middle}
+.sales-ch .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sales-ch td a{color:var(--ink);font-weight:600}
+.share{display:inline-block;width:80px;height:6px;border-radius:3px;background:var(--sunk);vertical-align:middle;overflow:hidden}
+.share i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.share-t{font-size:12px;color:var(--muted);margin-left:8px;font-variant-numeric:tabular-nums}
+.spark{display:block;overflow:visible}
+.spark rect{fill:var(--accent)}
+.spark rect.now{opacity:.45}
+.spark rect.base{fill:var(--line);opacity:1}
+.spark rect:hover{fill:var(--navy)}
+.sales-note{margin:8px 0 0}
+.sales-setup{text-align:left}
+.sales-setup ol{margin:8px 0 0;padding-left:20px;line-height:1.6}
+.warn-callout{background:color-mix(in srgb,var(--warn) 14%,var(--surface))}
+.sales-filters .seg{overflow-x:auto;max-width:100%}
+.sales-filters .seg-b{white-space:nowrap}
