@@ -737,3 +737,6 @@ document.addEventListener('change', (e) => {
 
 // "Print or save as PDF" buttons.
 document.addEventListener('click', (e) => { if (e.target.closest('[data-print]')) window.print(); });
+
+// A task result was just saved (or needs fixing): bring that finished task into view.
+document.querySelector('[data-scroll-here]')?.scrollIntoView({ block: 'center' });

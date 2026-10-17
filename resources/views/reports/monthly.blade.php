@@ -79,6 +79,15 @@
         </section>
     </div>
 
+    @if($shipped->isNotEmpty())
+        <section>
+            <div class="h2row"><h2>What we shipped</h2><span class="sub">{{ $shipped->count() }} finished {{ Str::plural('task', $shipped->count()) }} with a result</span></div>
+            <ul class="review-list shipped">@foreach($shipped->take(40) as $t)<li><b>{{ $t->title }}</b>@if($t->brand) <span class="sub">· {{ $t->brand->name }}</span>@endif<span class="sub"> · {{ $t->completer?->firstName() }} · {{ $t->completed_at->format('M j') }}</span>
+                <p>@if($t->outcome){{ $t->outcome }}@endif @if($t->outcome_url)<a href="{{ $t->outcome_url }}" target="_blank" rel="noopener noreferrer">{{ Str::limit(preg_replace('#^https?://(www\.)?#', '', $t->outcome_url), 70) }}</a>@endif</p></li>@endforeach</ul>
+            @if($shipped->count() > 40)<p class="sub">And {{ $shipped->count() - 40 }} more.</p>@endif
+        </section>
+    @endif
+
     @if($launches->isNotEmpty())
         <section>
             <div class="h2row"><h2>Launches and promotions</h2></div>

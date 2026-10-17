@@ -65,12 +65,31 @@ class TaskController extends Controller
             $task->update(['completed_at' => now(), 'completed_by' => $request->user()->id]);
             $late = $task->due_on && $task->due_on->lt(today()) ? ' (late, due '.$task->due_on->format('M j').')' : '';
             Activity::log('task.completed', "Completed task “{$task->title}”".$late, $task);
-            $msg = "Marked “{$task->title}” done.";
+            $msg = "Marked “{$task->title}” done. Add the link to what it produced under Finished.";
+            // Open its "Add result" box in the finished list, so the link is one paste away.
+            session()->flash('outcome_for', $task->id);
         }
 
         return $request->input('return') === 'hotlist'
             ? redirect()->route('dashboard')->with('status', $msg)
             : $this->back($msg);
+    }
+
+    /** What a finished task produced: a short note and a link. Whoever can tick the task can add it. */
+    public function outcome(Request $request, Task $task): RedirectResponse
+    {
+        Gate::authorize('complete-task', $task);
+        abort_unless($task->isDone(), 422, 'Finish the task first.');
+        $data = $request->validate([
+            'outcome' => ['nullable', 'string', 'max:300'],
+            'outcome_url' => ['nullable', 'url:http,https', 'max:1024'],
+        ], ['outcome_url.url' => 'The link must start with http:// or https://.']);
+        $task->update(['outcome' => trim((string) ($data['outcome'] ?? '')) ?: null, 'outcome_url' => $data['outcome_url'] ?? null]);
+        if ($task->outcome || $task->outcome_url) {
+            Activity::log('task.outcome', "Added the result of “{$task->title}”", $task);
+        }
+
+        return redirect()->to(route('dashboard').'#tasks')->with(['status' => $task->outcome || $task->outcome_url ? 'Result saved.' : 'Result removed.', 'outcome_saved' => $task->id]);
     }
 
     private function back(string $msg): RedirectResponse
