@@ -32,6 +32,8 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="PULSETOPOST_API_TOKEN" value=""/>
         <env name="GA4_CREDENTIALS" value=""/>
+        <env name="CJ_API_TOKEN" value=""/>
+        <env name="AWIN_API_TOKEN" value=""/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
     </php>
