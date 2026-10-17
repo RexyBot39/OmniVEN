@@ -13,11 +13,11 @@ class Routine extends Model
 {
     use HasBrandScope;
 
-    protected $fillable = ['title', 'cadence', 'description', 'link', 'all_brands', 'sort', 'assignee_id', 'assigned_at', 'assigned_by'];
+    protected $fillable = ['title', 'cadence', 'description', 'link', 'all_brands', 'sort', 'assignee_id', 'assigned_at', 'assigned_by', 'per_brand'];
 
     protected function casts(): array
     {
-        return ['all_brands' => 'boolean', 'sort' => 'integer', 'assigned_at' => 'datetime'];
+        return ['all_brands' => 'boolean', 'per_brand' => 'boolean', 'sort' => 'integer', 'assigned_at' => 'datetime'];
     }
 
     public function brands(): BelongsToMany
@@ -70,5 +70,48 @@ class Routine extends Model
         $c = $this->latestCompletion;
 
         return $c !== null && $c->period_key === $this->currentPeriodKey();
+    }
+
+    public function brandChecks(): HasMany
+    {
+        return $this->hasMany(RoutineBrandCheck::class);
+    }
+
+    /** The brands a per-brand routine is ticked for: its own brands, or for "all brands" the brands we sell. */
+    public function splitBrands(): \Illuminate\Support\Collection
+    {
+        return $this->all_brands ? Task::brandChoices() : $this->brands->sortBy('sort')->values();
+    }
+
+    /** Ticked brand by brand: switched on and covering at least two brands. */
+    public function isSplit(): bool
+    {
+        return $this->per_brand && $this->splitBrands()->count() >= 2;
+    }
+
+    /** brand_id => check for the current period. Uses the loaded brandChecks when there are any. */
+    public function currentBrandChecks(): \Illuminate\Support\Collection
+    {
+        $key = $this->currentPeriodKey();
+        $checks = $this->relationLoaded('brandChecks') ? $this->brandChecks : $this->brandChecks()->where('period_key', $key)->get();
+
+        return $checks->where('period_key', $key)->keyBy('brand_id');
+    }
+
+    /** Every brand ticked for this period: add the routine's completion; otherwise remove it. */
+    public function syncSplitCompletion(?int $userId): bool
+    {
+        $key = $this->currentPeriodKey();
+        $ticked = $this->brandChecks()->where('period_key', $key)->pluck('brand_id');
+        $all = $this->splitBrands()->pluck('id')->diff($ticked)->isEmpty();
+        $existing = $this->completions()->where('period_key', $key)->first();
+        if ($all && ! $existing) {
+            $this->completions()->create(['user_id' => $userId, 'period_key' => $key, 'completed_at' => now()]);
+        } elseif (! $all && $existing) {
+            $existing->delete();
+        }
+        $this->unsetRelation('latestCompletion');
+
+        return $all;
     }
 }

@@ -13,5 +13,6 @@
             @if($done)<span class="ok">Done {{ $r->cadence === 'daily' ? 'today' : 'this '.['weekly' => 'week', 'monthly' => 'month', 'quarterly' => 'quarter'][$r->cadence] ?? 'period' }}</span>@endif
             @if($r->link)<a href="{{ $r->link }}" target="_blank" rel="noopener noreferrer">Open ↗</a>@endif
         </div>
+        @include('partials.routine-brands', ['r' => $r, 'return' => 'tasks'])
     </div>
 </div>

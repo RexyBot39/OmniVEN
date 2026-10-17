@@ -27,7 +27,8 @@ class DashboardController extends Controller
 
         $brands = Brand::orderBy('sort')->orderBy('name')->get();
         $tools = Tool::with('brands')->orderBy('sort')->orderBy('name')->get();
-        $routines = Routine::with(['brands', 'latestCompletion.user', 'assignee', 'assigner'])->orderBy('sort')->orderBy('title')->get();
+        $periodKeys = collect(array_keys(config('omniven.cadences')))->map(fn ($c) => Routine::periodKey($c))->all();
+        $routines = Routine::with(['brands', 'latestCompletion.user', 'assignee', 'assigner', 'brandChecks' => fn ($q) => $q->whereIn('period_key', $periodKeys)->with('user')])->orderBy('sort')->orderBy('title')->get();
         $notes = Note::with('user')->orderByDesc('pinned')->latest()->limit(12)->get();
 
         $categories = collect(config('omniven.categories'))

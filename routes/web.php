@@ -101,6 +101,7 @@ Route::middleware('auth')->group(function () {
 
     // Everyone signed in: tick routines, post and manage their own notes.
     Route::post('/routines/{routine}/toggle', [RoutineController::class, 'toggle'])->name('routines.toggle');
+    Route::post('/routines/{routine}/brands/{brand}', [RoutineController::class, 'toggleBrand'])->name('routines.toggle-brand');
     Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
     Route::get('/notes/{note}/edit', [NoteController::class, 'edit'])->name('notes.edit');
     Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update');

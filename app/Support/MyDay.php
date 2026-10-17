@@ -71,7 +71,8 @@ class MyDay
             $section('🔥 Hotlist', $d['hot'], $line),
             $section('⚠️ Overdue', $d['overdue'], $line),
             $section('📅 Due today', $d['dueToday'], $line),
-            $section('↻ Routines due', $d['routines'], fn ($r) => '• '.$esc($r->title).' _('.strtolower(config('omniven.cadences.'.$r->cadence, $r->cadence)).')_'),
+            $section('↻ Routines due', $d['routines'], fn ($r) => '• '.$esc($r->title).' _('.strtolower(config('omniven.cadences.'.$r->cadence, $r->cadence)).')_'
+                .($r->isSplit() ? ' · still to do: '.$esc($r->splitBrands()->reject(fn ($b) => $r->currentBrandChecks()->has($b->id))->pluck('name')->implode(', ')) : '')),
             ($d['rest'] > 0 ? $d['rest'].' more open '.($d['rest'] === 1 ? 'task' : 'tasks').' later on. ' : '').'<'.route('dashboard').'#tasks|Open your board in OmniVEN>',
         ]);
 

@@ -23,9 +23,16 @@ class RoutineController extends Controller
 
         if ($existing) {
             $existing->delete();
+            // A per-brand routine reopens every brand when it's unticked as a whole.
+            $routine->brandChecks()->where('period_key', $key)->delete();
             Activity::log('routine.undone', "Unticked routine “{$routine->title}”", $routine);
             $msg = "Unmarked “{$routine->title}”.";
         } else {
+            if ($routine->isSplit()) {
+                foreach ($routine->splitBrands() as $b) {
+                    $routine->brandChecks()->firstOrCreate(['brand_id' => $b->id, 'period_key' => $key], ['user_id' => $request->user()->id, 'checked_at' => now()]);
+                }
+            }
             $routine->completions()->create([
                 'user_id' => $request->user()->id,
                 'period_key' => $key,
@@ -36,6 +43,30 @@ class RoutineController extends Controller
         }
 
         // Ticked from someone's column on the task board: stay on Tasks.
+        $tab = $request->input('return') === 'tasks' ? '#tasks' : '#routines';
+
+        return redirect()->to(route('dashboard').$tab)->with('status', $msg);
+    }
+
+    /** Tick or untick one brand of a per-brand routine; the routine is done once every brand is. */
+    public function toggleBrand(Request $request, Routine $routine, \App\Models\Brand $brand): RedirectResponse
+    {
+        abort_unless($routine->isSplit() && $routine->splitBrands()->contains('id', $brand->id), 404);
+        $key = $routine->currentPeriodKey();
+        $check = $routine->brandChecks()->where('brand_id', $brand->id)->where('period_key', $key)->first();
+        if ($check) {
+            $check->delete();
+            $msg = "Unticked {$brand->name} for “{$routine->title}”.";
+        } else {
+            $routine->brandChecks()->create(['brand_id' => $brand->id, 'period_key' => $key, 'user_id' => $request->user()->id, 'checked_at' => now()]);
+            $msg = "Ticked {$brand->name} for “{$routine->title}”.";
+        }
+        $wasDone = $routine->completions()->where('period_key', $key)->exists();
+        $done = $routine->syncSplitCompletion($request->user()->id);
+        Activity::log('routine.brand', ($check ? 'Unticked ' : 'Ticked ')."{$brand->name} for routine “{$routine->title}”".($done && ! $wasDone ? ' · routine done' : ''), $routine);
+        if ($done && ! $wasDone) {
+            $msg = "All brands done. “{$routine->title}” is done.";
+        }
         $tab = $request->input('return') === 'tasks' ? '#tasks' : '#routines';
 
         return redirect()->to(route('dashboard').$tab)->with('status', $msg);
@@ -126,6 +157,7 @@ class RoutineController extends Controller
         }
         unset($data['brands']);
         $data['sort'] ??= 100;
+        $data['per_brand'] = $request->boolean('per_brand');
 
         return $data;
     }
