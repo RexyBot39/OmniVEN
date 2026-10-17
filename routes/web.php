@@ -25,6 +25,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [GoogleController::class, 'logout'])->name('logout');
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/ai-answers', [\App\Http\Controllers\AiAnswersController::class, 'index'])->name('ai-answers');
+    Route::post('/ai-answers', [\App\Http\Controllers\AiAnswersController::class, 'save'])->name('ai-answers.save');
+    Route::middleware('can:admin')->group(function () {
+        Route::post('/ai-answers/questions', [\App\Http\Controllers\AiAnswersController::class, 'storeQuestion'])->name('ai-answers.questions.store');
+        Route::patch('/ai-answers/questions/{question}', [\App\Http\Controllers\AiAnswersController::class, 'updateQuestion'])->name('ai-answers.questions.update');
+        Route::delete('/ai-answers/questions/{question}', [\App\Http\Controllers\AiAnswersController::class, 'destroyQuestion'])->name('ai-answers.questions.destroy');
+    });
     Route::get('/links', [\App\Http\Controllers\LinkController::class, 'index'])->name('links.index');
     Route::post('/links', [\App\Http\Controllers\LinkController::class, 'store'])->name('links.store');
     Route::delete('/links/{link}', [\App\Http\Controllers\LinkController::class, 'destroy'])->name('links.destroy');

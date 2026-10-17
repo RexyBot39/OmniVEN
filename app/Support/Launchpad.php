@@ -42,6 +42,7 @@ class Launchpad
         13 => ['Access review', 'Admin · quarterly', 'access.review', null, 'admin'],
         14 => ['Sales', 'Revenue by channel and brand', 'sales', null, 'see-revenue'],
         15 => ['Campaign links', 'UTM link builder', 'links.index', null, null],
+        16 => ['AI answers', 'What AI assistants say about us', 'ai-answers', null, null],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */

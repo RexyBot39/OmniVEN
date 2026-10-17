@@ -88,7 +88,7 @@
                         </tbody>
                     </table>
                 </div>
-                <p class="sub sales-note">“AI assistants” counts visits from ChatGPT, Perplexity, Gemini, Copilot and Claude. “Affiliate” counts CJ and Awin links. Revenue is what GA4 records, which usually runs a little below the store’s own total.</p>
+                <p class="sub sales-note">“AI assistants” counts visits from ChatGPT, Perplexity, Gemini, Copilot and Claude. “Affiliate” counts CJ and Awin links. Revenue is what GA4 records, which usually runs a little below the store’s own total. <a href="{{ route('ai-answers') }}">How often AI assistants mention us →</a></p>
             @endif
         </section>
 
