@@ -71,4 +71,12 @@ class CompletedRangeTest extends TestCase
         // A single day.
         $this->assertStringContainsString('Completed on Aug 3, 2026', $this->done(['done_from' => '2026-08-03', 'done_to' => '2026-08-03']));
     }
+
+    public function test_a_task_finished_late_on_the_last_day_is_in_the_range(): void
+    {
+        // 10:30 pm Eastern on Aug 31 is already Sep 1 in UTC; it still belongs to August.
+        Task::create(['title' => 'Late-night wrap-up', 'assignee_id' => $this->me->id, 'created_by' => $this->me->id, 'completed_at' => Carbon::parse('2026-08-31 22:30', config('app.timezone')), 'completed_by' => $this->me->id]);
+        $this->assertStringContainsString('<s>Late-night wrap-up</s>', $this->done(['done_from' => '2026-08-01', 'done_to' => '2026-08-31']));
+        $this->assertStringNotContainsString('Late-night wrap-up', $this->done(['done_from' => '2026-09-01', 'done_to' => '2026-09-30']));
+    }
 }

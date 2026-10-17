@@ -734,3 +734,6 @@ document.addEventListener('change', (e) => {
   update();
   names();
 })();
+
+// "Print or save as PDF" buttons.
+document.addEventListener('click', (e) => { if (e.target.closest('[data-print]')) window.print(); });

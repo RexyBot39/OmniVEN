@@ -42,7 +42,7 @@ class DashboardController extends Controller
             ->orderByDesc('hot')->orderByRaw('due_on is null')->orderBy('due_on')->latest()->get();
         $doneRange = $this->doneRange($request);
         $doneTasks = Task::with(['assignee', 'completer', 'assigner', 'brand'])->whereNotNull('completed_at')
-            ->whereBetween('completed_at', [$doneRange['from']->copy()->utc(), $doneRange['to']->copy()->utc()])
+            ->whereBetween('completed_at', [$doneRange['from']->copy(), $doneRange['to']->copy()])
             ->latest('completed_at')->limit(self::DONE_LIMIT + 1)->get();
         $doneRange['more'] = $doneTasks->count() > self::DONE_LIMIT;
         $doneRange += $this->donePresets();
