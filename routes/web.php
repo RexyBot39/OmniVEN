@@ -50,6 +50,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/content-gaps/task', [\App\Http\Controllers\ContentGapController::class, 'task'])->middleware('throttle:60,1')->name('content-gaps.task');
     Route::post('/content-gaps/dismiss', [\App\Http\Controllers\ContentGapController::class, 'dismiss'])->middleware('throttle:60,1')->name('content-gaps.dismiss');
     Route::delete('/content-gaps/{gap}', [\App\Http\Controllers\ContentGapController::class, 'restore'])->name('content-gaps.restore');
+    Route::get('/outreach', [\App\Http\Controllers\OutreachController::class, 'index'])->name('outreach.index');
+    Route::get('/outreach/new', [\App\Http\Controllers\OutreachController::class, 'create'])->name('outreach.create');
+    Route::post('/outreach', [\App\Http\Controllers\OutreachController::class, 'store'])->middleware('throttle:60,1')->name('outreach.store');
+    Route::post('/outreach/bulk', [\App\Http\Controllers\OutreachController::class, 'bulk'])->middleware('throttle:10,1')->name('outreach.bulk');
+    Route::get('/outreach/{publisher}', [\App\Http\Controllers\OutreachController::class, 'show'])->name('outreach.show');
+    Route::get('/outreach/{publisher}/edit', [\App\Http\Controllers\OutreachController::class, 'edit'])->name('outreach.edit');
+    Route::put('/outreach/{publisher}', [\App\Http\Controllers\OutreachController::class, 'update'])->name('outreach.update');
+    Route::post('/outreach/{publisher}/act', [\App\Http\Controllers\OutreachController::class, 'act'])->middleware('throttle:60,1')->name('outreach.act');
+    Route::delete('/outreach/{publisher}', [\App\Http\Controllers\OutreachController::class, 'destroy'])->name('outreach.destroy');
     Route::get('/reddit', [\App\Http\Controllers\RedditController::class, 'index'])->name('reddit');
     Route::post('/reddit/{thread}/task', [\App\Http\Controllers\RedditController::class, 'task'])->middleware('throttle:60,1')->name('reddit.task');
     Route::post('/reddit/{thread}/skip', [\App\Http\Controllers\RedditController::class, 'skip'])->middleware('throttle:60,1')->name('reddit.skip');
