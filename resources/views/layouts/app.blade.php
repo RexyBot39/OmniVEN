@@ -16,7 +16,8 @@
 </head>
 <body>
 @auth
-<header class="appbar">
+@php($menu = \App\Support\Menu::for(auth()->user()))
+<header class="appbar" id="appbar">
     <div class="wrap appbar-in">
         <a href="{{ route('dashboard', ['home' => 1]) }}" class="logo" aria-label="OmniVEN home: Routines for all brands">
             <picture>
@@ -24,35 +25,79 @@
                 <img src="{{ asset('images/omniven-logo.png') }}" alt="OmniVEN" width="174" height="57">
             </picture>
         </a>
-        <button type="button" class="launch-btn" id="launch-open" aria-haspopup="dialog" aria-keyshortcuts="Meta+K Control+K">
+        <button type="button" class="launch-btn" id="launch-open" aria-haspopup="dialog" aria-keyshortcuts="Meta+K Control+K" aria-label="Jump to anything">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
             <span>Jump to…</span><kbd class="kbd-mac">⌘K</kbd><kbd class="kbd-pc">Ctrl K</kbd>
         </button>
-        <nav class="who">
-            @can('see-revenue')<a href="{{ route('sales') }}" class="btn ghost">Sales</a>@endcan
-            @if(\App\Support\Assistant\Assistant::configured())<a href="{{ route('assistant') }}" class="btn ghost">Ask</a>@endif
-            <a href="{{ route('seo') }}" class="btn ghost">Search</a>
-            <a href="{{ route('reviews') }}" class="btn ghost">Reviews</a>
-            <a href="{{ route('links.index') }}" class="btn ghost">Links</a>
-            <a href="{{ route('calendar') }}" class="btn ghost">Calendar</a>
-            <a href="{{ route('help') }}" class="btn ghost">Help</a>
-            @can('view-activity')
-                <a href="{{ route('activity.index') }}" class="btn ghost">Activity</a>
-            @endcan
-            @can('admin')
-                <a href="{{ route('people.index') }}" class="btn ghost">People</a>
-            @endcan
-            <span class="me">
+        @if($menu['ai'])
+            <a href="{{ route('assistant') }}" class="ai-btn ai-top" @if(request()->routeIs('assistant*')) aria-current="page" @endif>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.6L19.5 9l-5.7 1.6L12 16l-1.8-5.4L4.5 9l5.7-1.4zM19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9zM5 15l.7 1.8 1.8.7-1.8.7L5 20l-.7-1.8-1.8-.7 1.8-.7z"/></svg>
+                <span>Ask OmniVEN AI</span>
+            </a>
+        @endif
+        <details class="me-menu" data-menu>
+            <summary aria-label="Your account and admin pages">
                 @if(auth()->user()->avatar)
                     <img src="{{ auth()->user()->avatar }}" alt="" width="28" height="28" referrerpolicy="no-referrer">
+                @else
+                    <span class="mm-ini" aria-hidden="true">{{ mb_substr(auth()->user()->firstName(), 0, 1) }}</span>
                 @endif
-                <span>{{ auth()->user()->firstName() }}</span>
+                <span class="mm-name">{{ auth()->user()->firstName() }}</span>
                 @if(auth()->user()->is_admin)<span class="role">Admin</span>@endif
-            </span>
-            <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn ghost" type="submit">Sign out</button></form>
-        </nav>
+                <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="mm-panel">
+                <p class="mm-who"><b>{{ auth()->user()->name }}</b><span>{{ auth()->user()->email }}</span></p>
+                <ul>
+                    @foreach($menu['account'] as $i)
+                        <li><a href="{{ $i['u'] }}" @if(request()->routeIs($i['route'])) aria-current="page" @endif><b>{{ $i['t'] }}</b><span>{{ $i['s'] }}</span></a></li>
+                    @endforeach
+                </ul>
+                <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn ghost" type="submit">Sign out</button></form>
+            </div>
+        </details>
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="mainnav">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path class="nt-a" d="M4 7h16"/><path class="nt-b" d="M4 12h16"/><path class="nt-c" d="M4 17h16"/></svg>
+            <span>Menu</span>
+        </button>
     </div>
+    <nav class="mainnav" id="mainnav" aria-label="Main">
+        <div class="wrap mainnav-in">
+            @if($menu['ai'])
+                <a href="{{ route('assistant') }}" class="ai-btn ai-drawer">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.6L19.5 9l-5.7 1.6L12 16l-1.8-5.4L4.5 9l5.7-1.4z"/></svg>
+                    <span>Ask OmniVEN AI</span>
+                </a>
+            @endif
+            <ul class="mg-bar">
+                @foreach($menu['groups'] as $key => $g)
+                    <li>
+                        <details class="mg" data-menu>
+                            <summary @class(['mg-sum', 'is-here' => $g['active']])>{{ $g['label'] }}<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                            <div class="mg-panel">
+                                <div class="wrap mg-in">
+                                    <div class="mg-head">
+                                        <h2>{{ $g['label'] }}</h2>
+                                        <p>{{ $g['blurb'] }}</p>
+                                        @if($menu['ai'])
+                                            <a class="mg-ask" href="{{ route('assistant', ['focus' => $g['focus']]) }}">Ask OmniVEN AI about {{ mb_strtolower($g['label']) }} →</a>
+                                        @endif
+                                    </div>
+                                    <ul class="mg-links">
+                                        @foreach($g['items'] as $i)
+                                            <li><a href="{{ $i['u'] }}" @if($i['route'] !== 'dashboard' && request()->routeIs($i['route'])) aria-current="page" @endif><b>{{ $i['t'] }}</b><span>{{ $i['s'] }}</span></a></li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </details>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    </nav>
 </header>
+<div class="nav-scrim" id="nav-scrim" hidden></div>
 @endauth
 
 @if(session('status') || session('error'))

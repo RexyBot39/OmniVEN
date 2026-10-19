@@ -1,11 +1,11 @@
-@extends('layouts.app', ['title' => $conv ? $conv->title : 'Assistant'])
+@extends('layouts.app', ['title' => $conv ? $conv->title : 'Ask OmniVEN AI'])
 
 @section('content')
 <main class="wrap sales assistant">
     <div class="act-head">
         <div>
             <div class="eyebrow"><span>Assistant</span><span>Reads OmniVEN’s data, never changes it</span></div>
-            <h1 class="form-h">Ask OmniVEN @include('partials.star', ['key' => 'page:30', 'label' => 'the Assistant'])</h1>
+            <h1 class="form-h">Ask OmniVEN AI @include('partials.star', ['key' => 'page:30', 'label' => 'Ask OmniVEN AI'])</h1>
             <p class="sub">Ask about any brand, section, number or task. It looks things up across OmniVEN and suggests what to do next.</p>
         </div>
         @if($configured)<a class="btn" href="{{ route('assistant') }}">+ New conversation</a>@endif
@@ -13,7 +13,7 @@
 
     @if(! $configured)
         <div class="empty sales-setup">
-            <p><b>The assistant isn’t switched on yet.</b></p>
+            <p><b>Ask OmniVEN AI isn’t switched on yet.</b></p>
             @if($isAdmin)
                 <ol>
                     <li>At platform.openai.com → <b>API keys</b>, create a secret key in the project you want billed.</li>

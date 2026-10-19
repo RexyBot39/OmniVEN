@@ -791,4 +791,36 @@ document.querySelector('[data-scroll-here]')?.scrollIntoView({ block: 'center' }
   });
   const last = document.querySelector('.as-thread .as-msg:last-child');
   if (last && !location.hash) last.scrollIntoView({ block: 'start' });
+  // ---- Top menu: one panel open at a time; click outside or Esc closes; hamburger drawer on small screens ----
+  const appbar = document.getElementById('appbar');
+  if (appbar) {
+    const menus = [...document.querySelectorAll('details[data-menu]')];
+    const toggle = document.getElementById('nav-toggle');
+    const scrim = document.getElementById('nav-scrim');
+    const small = window.matchMedia('(max-width: 960px)');
+    const closeAll = (except) => menus.forEach((d) => { if (d !== except) d.open = false; });
+    const drawer = (open, keep) => {
+      appbar.classList.toggle('nav-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      scrim.hidden = !open;
+      if (!open) closeAll(keep);
+    };
+    menus.forEach((d) => d.addEventListener('toggle', () => {
+      if (!d.open) return;
+      // In the drawer, sections work as an accordion; the account menu closes the drawer.
+      if (d.classList.contains('me-menu') && appbar.classList.contains('nav-open')) drawer(false, d);
+      else closeAll(d);
+    }));
+    toggle.addEventListener('click', () => drawer(!appbar.classList.contains('nav-open')));
+    scrim.addEventListener('click', () => drawer(false));
+    document.addEventListener('click', (e) => { if (!e.target.closest('#appbar')) { closeAll(); if (!small.matches) drawer(false); } });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const open = menus.find((d) => d.open);
+      if (open) { open.open = false; open.querySelector('summary').focus(); } else if (appbar.classList.contains('nav-open')) { drawer(false); toggle.focus(); }
+    });
+    // Following a link (including a same-page tab link) closes everything.
+    appbar.addEventListener('click', (e) => { if (e.target.closest('.mainnav a, .mm-panel a')) drawer(false); });
+    small.addEventListener('change', () => drawer(false));
+  }
 })();
