@@ -50,6 +50,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/content-gaps/task', [\App\Http\Controllers\ContentGapController::class, 'task'])->middleware('throttle:60,1')->name('content-gaps.task');
     Route::post('/content-gaps/dismiss', [\App\Http\Controllers\ContentGapController::class, 'dismiss'])->middleware('throttle:60,1')->name('content-gaps.dismiss');
     Route::delete('/content-gaps/{gap}', [\App\Http\Controllers\ContentGapController::class, 'restore'])->name('content-gaps.restore');
+    Route::middleware('can:use-assistant')->group(function () {
+        Route::get('/assistant', [\App\Http\Controllers\AssistantController::class, 'index'])->name('assistant');
+        Route::post('/assistant', [\App\Http\Controllers\AssistantController::class, 'ask'])->middleware('throttle:12,1')->name('assistant.ask');
+        Route::get('/assistant/c/{conversation}', [\App\Http\Controllers\AssistantController::class, 'show'])->name('assistant.show');
+        Route::delete('/assistant/c/{conversation}', [\App\Http\Controllers\AssistantController::class, 'destroy'])->name('assistant.destroy');
+        Route::get('/assistant/m/{message}', [\App\Http\Controllers\AssistantController::class, 'poll'])->middleware('throttle:240,1')->name('assistant.poll');
+    });
     Route::get('/coverage', [\App\Http\Controllers\CoverageController::class, 'index'])->name('coverage');
     Route::post('/coverage/skip', [\App\Http\Controllers\CoverageController::class, 'skip'])->middleware(['can:admin', 'throttle:60,1'])->name('coverage.skip');
     Route::get('/campaigns', [\App\Http\Controllers\CampaignController::class, 'index'])->name('campaigns.index');

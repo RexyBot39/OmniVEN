@@ -7,6 +7,7 @@
         <div>
             <div class="eyebrow"><span>Search</span><span>From {{ \App\Support\BrandIcon::html('google', 'xs') }}Google Search Console</span>@if($s)<span>{{ \Carbon\Carbon::parse($s['from'])->format('M j') }} – {{ \Carbon\Carbon::parse($s['to'])->format('M j') }} vs the 28 days before</span>@endif</div>
             <h1 class="form-h">Search @include('partials.star', ['key' => 'page:20', 'label' => 'Search'])</h1>
+            @can('use-assistant')@if(\App\Support\Assistant\Assistant::configured())<p class="sub"><a href="{{ route('assistant', ['focus' => 'search']) }}">Ask OmniVEN about this →</a></p>@endif @endcan
             <p class="sub"><a href="{{ route('content-gaps', array_filter(['brand' => $brand?->slug])) }}">Content gaps →</a> searches that need a page, a better page or a better title. <a href="{{ route('site-check') }}">Site check →</a> structured data and product feeds.</p>
         </div>
         @if($brands->count() > 1)

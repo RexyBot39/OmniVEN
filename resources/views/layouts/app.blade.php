@@ -30,6 +30,7 @@
         </button>
         <nav class="who">
             @can('see-revenue')<a href="{{ route('sales') }}" class="btn ghost">Sales</a>@endcan
+            @if(\App\Support\Assistant\Assistant::configured())<a href="{{ route('assistant') }}" class="btn ghost">Ask</a>@endif
             <a href="{{ route('seo') }}" class="btn ghost">Search</a>
             <a href="{{ route('reviews') }}" class="btn ghost">Reviews</a>
             <a href="{{ route('links.index') }}" class="btn ghost">Links</a>
