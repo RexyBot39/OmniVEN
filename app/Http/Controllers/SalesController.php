@@ -18,9 +18,14 @@ class SalesController extends Controller
 {
     public function index(Request $request): View
     {
-        Revenue::refreshIfStale();
         $brands = Revenue::brands();
-        $range = DateRange::fromRequest($request, 'mtd', 'yoy', Report::today(), Revenue::firstDay());
+        // The picker reaches back as far as GA4 has data, even before it's all loaded.
+        $floor = Revenue::status()['history_floor'];
+        $min = $floor ? CarbonImmutable::parse($floor, config('app.timezone')) : Revenue::firstDay();
+        $range = DateRange::fromRequest($request, 'mtd', 'yoy', Report::today(), $min);
+        // Older dates (often the same dates last year) are loaded now if they aren't in yet.
+        $cmp = $range->comparison();
+        $loading = Revenue::refreshIfStale($cmp ? $cmp[0]->min($range->from) : $range->from);
         $brand = $brands->get((string) $request->query('brand'));
         $metric = array_key_exists((string) $request->query('metric'), Report::METRICS) ? (string) $request->query('metric') : 'revenue';
         [$from, $to] = [$range->from, $range->to];
@@ -32,6 +37,7 @@ class SalesController extends Controller
         return view('sales.index', [
             'configured' => Revenue::configured(),
             'status' => Revenue::status(),
+            'loading' => $loading,
             'brands' => $brands,
             'brand' => $brand,
             'range' => $range,
