@@ -38,7 +38,8 @@ class MonthlyReportController extends Controller
         // Timestamps are stored in the app timezone (Eastern), so compare in it too.
         $between = [$month->startOfDay(), $end->endOfDay()];
 
-        // Revenue, channels, brands and goals.
+        // Revenue, channels, brands and goals (against the same month last year, loaded now if it isn't in).
+        Revenue::refreshIfStale($month->subYear());
         $revenue = Report::figures($month, $end->startOfDay());
         $brands = Revenue::brands();
         $goals = DB::table('revenue_goals')->where('month', $a)->pluck('goal_cents', 'brand_id');

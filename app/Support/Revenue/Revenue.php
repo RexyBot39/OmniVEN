@@ -117,7 +117,11 @@ class Revenue
     }
 
     /** One refresh: the last four days, plus the next month of history if it isn't all in yet. */
-    public static function refresh(bool $fullHistory = false): bool
+    /**
+     * $until: keep filling in history (past the usual few months) until this date is in, so a page
+     * asking for older dates, such as the same dates last year, gets them on this refresh.
+     */
+    public static function refresh(bool $fullHistory = false, ?CarbonImmutable $until = null): bool
     {
         try {
             $today = CarbonImmutable::now(config('app.timezone'))->startOfDay();
@@ -126,7 +130,8 @@ class Revenue
             $floor = self::floor($today);
             $reached = Cache::get(self::BACKFILLED);
             $reached = is_string($reached) ? CarbonImmutable::parse($reached, config('app.timezone')) : $today->subDays(3);
-            for ($i = 0; $reached->gt($floor) && ($fullHistory || $i < config('revenue.backfill_months_per_refresh')); $i++) {
+            @set_time_limit(0);
+            for ($i = 0; $reached->gt($floor) && ($fullHistory || $i < config('revenue.backfill_months_per_refresh') || ($until && $reached->gt($until))); $i++) {
                 $start = $reached->subDays(31)->max($floor);
                 self::sync($start, $reached->subDay());
                 Cache::forever(self::BACKFILLED, $start->format('Y-m-d'));
@@ -181,25 +186,51 @@ class Revenue
     }
 
     /** Called on page views: if the numbers are stale, refresh them after the page has been sent. */
-    public static function refreshIfStale(): void
+    /**
+     * Called on page views: if the numbers are stale, or the page needs dates older than the history
+     * loaded so far ($needed), refresh after the page has been sent. Returns true when $needed isn't
+     * in yet but is being loaded now, so the page can say "loading" instead of "no data".
+     */
+    public static function refreshIfStale(?CarbonImmutable $needed = null): bool
     {
         if (! self::configured()) {
-            return;
+            return false;
         }
+        $missing = $needed !== null && self::needsHistory($needed);
         $last = Cache::get(self::LAST_SYNC);
-        if (is_numeric($last) && now()->timestamp - (int) $last < config('revenue.refresh_minutes') * 60) {
-            return;
+        if (! $missing && is_numeric($last) && now()->timestamp - (int) $last < config('revenue.refresh_minutes') * 60) {
+            return false;
         }
-        if (! Cache::add(self::LOCK, 1, 300)) {
-            return;
+        if (! Cache::add(self::LOCK, 1, 600)) {
+            // Already refreshing (perhaps loading these very dates).
+            return $missing;
         }
-        dispatch(function () {
+        dispatch(function () use ($missing, $needed) {
             try {
-                self::refresh();
+                self::refresh(false, $missing ? $needed : null);
             } finally {
                 Cache::forget(self::LOCK);
             }
         })->afterResponse();
+
+        return $missing;
+    }
+
+    /** Whether a date is older than the history loaded so far but within what GA4 has. */
+    public static function needsHistory(CarbonImmutable $day): bool
+    {
+        $reached = Cache::get(self::BACKFILLED);
+        if (! is_string($reached)) {
+            // Nothing older than the last few days is in yet.
+            return $day->lt(CarbonImmutable::now(config('app.timezone'))->startOfDay()->subDays(3));
+        }
+        if ($day->format('Y-m-d') >= $reached) {
+            return false;
+        }
+        // Older than what's in: worth loading unless history already reaches GA4's first month.
+        $floor = Cache::get(self::FLOOR);
+
+        return ! is_string($floor) || $reached > $floor;
     }
 
     /** @return array{last: ?CarbonImmutable, error: ?string, history_from: ?string, history_floor: ?string} */

@@ -122,6 +122,42 @@ class HistoryRangesTest extends TestCase
         $this->assertSame('2025-09-11', Revenue::floor($this->d('2026-10-16'))->format('Y-m-d'));
     }
 
+    public function test_asking_for_last_year_loads_it_when_history_is_not_that_far_back_yet(): void
+    {
+        $asked = [];
+        Http::preventStrayRequests();
+        Http::fake(function (Request $r) use (&$asked) {
+            if ($r->url() === 'https://oauth2.googleapis.com/token') {
+                return Http::response(['access_token' => 'ya29.t', 'expires_in' => 3600]);
+            }
+            $asked[] = $r['dateRanges'][0]['startDate'];
+            $last = $r['dateRanges'][0]['startDate'] <= '2025-09-10' && $r['dateRanges'][0]['endDate'] >= '2025-09-10';
+
+            return Http::response(['rows' => $last ? [['dimensionValues' => [['value' => '20250910'], ['value' => 'Organic Search'], ['value' => 'google']], 'metricValues' => [['value' => '100'], ['value' => '4'], ['value' => '400.00']]]] : [], 'rowCount' => $last ? 1 : 0]);
+        });
+        // GA4 has data from 2023, but only the last couple of months are in so far; the numbers are fresh.
+        Cache::forever('revenue:history-floor', '2023-01-01');
+        Cache::forever('revenue:backfilled-to', '2026-08-01');
+        Cache::forever('revenue:last-sync', now()->timestamp);
+
+        $html = $this->actingAs($this->admin)->get('/sales?range=last_month&compare=yoy')->assertOk()->getContent();
+        $this->assertStringContainsString('Loading these dates from GA4.', $html);
+        $this->assertStringContainsString('Loading… then', $html);
+        // The page loaded the missing months after it was sent, back past September 2025.
+        $this->assertLessThanOrEqual('2025-09-01', \Illuminate\Support\Facades\Cache::get('revenue:backfilled-to'));
+        $this->assertSame(40000, (int) DB::table('revenue_days')->where('day', '2025-09-10')->sum('revenue_cents'));
+
+        $html = $this->actingAs($this->admin)->get('/sales?range=last_month&compare=yoy')->assertOk()->getContent();
+        $this->assertStringNotContainsString('Loading these dates', $html);
+        $this->assertStringContainsString('$400 then', $html);
+
+        // Dates GA4 never had are explained, not loaded forever.
+        Cache::forever('revenue:backfilled-to', '2023-01-01');
+        $html = $this->actingAs($this->admin)->get('/sales?range=custom&from=2023-02-01&to=2023-02-28&compare=yoy')->assertOk()->getContent();
+        $this->assertStringContainsString('GA4 has no numbers before Jan 1, 2023', $html);
+        $this->assertStringNotContainsString('Loading these dates', $html);
+    }
+
     public function test_sales_page_shows_any_range_against_the_previous_period(): void
     {
         $brand = Brand::where('slug', '39dg')->first();

@@ -48,17 +48,25 @@
             </nav>
         </div>
         @include('partials.range-picker', ['range' => $range, 'route' => 'sales', 'keep' => ['brand' => $brand?->slug, 'metric' => $metric !== 'revenue' ? $metric : null]])
-        @if($status['history_from'] && $status['history_floor'] && $status['history_from'] > $status['history_floor'])
-            <p class="sub history-note">Still loading older history from GA4: in so far back to {{ \Carbon\Carbon::parse($status['history_from'])->format('M Y') }}, going back to {{ \Carbon\Carbon::parse($status['history_floor'])->format('M Y') }}. It adds a few months each refresh.</p>
+        @php
+            $cmpRange = $range->comparison();
+            $beforeGa4 = $status['history_floor'] && $cmpRange && $cmpRange[0]->format('Y-m-d') < $status['history_floor'];
+        @endphp
+        @if($loading)
+            <div class="callout" role="status"><div><b>Loading these dates from GA4.</b> {{ $cmpRange ? 'The comparison dates weren’t in OmniVEN yet' : 'These dates weren’t in OmniVEN yet' }}, so they’re being fetched now. Refresh in a minute or two.</div></div>
+        @elseif($beforeGa4)
+            <p class="sub history-note">GA4 has no numbers before {{ \Carbon\Carbon::parse($status['history_floor'])->format('M j, Y') }}, so part of the comparison is empty.</p>
+        @elseif($status['history_from'] && $status['history_floor'] && $status['history_from'] > $status['history_floor'])
+            <p class="sub history-note">Older history is still loading from GA4: in so far back to {{ \Carbon\Carbon::parse($status['history_from'])->format('M Y') }}, going back to {{ \Carbon\Carbon::parse($status['history_floor'])->format('M Y') }}.</p>
         @endif
 
         @php $prev = $figures['prev']; @endphp
         <section class="tiles sales-tiles" aria-label="{{ $range->label() }} at a glance">
-            <div class="tile"><span class="tl">Revenue</span><span class="tv">{{ Report::money($figures['cents']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['cents'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? Report::money($prev['cents']) : 'No data' }} then</span>@endif @include('partials.pace', ['p' => $pace])</div>
-            <div class="tile"><span class="tl">Orders</span><span class="tv">{{ number_format($figures['orders']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['orders'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? number_format($prev['orders']) : 'No data' }} then</span>@endif</div>
-            <div class="tile"><span class="tl">Sessions</span><span class="tv">{{ number_format($figures['sessions']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['sessions'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? number_format($prev['sessions']) : 'No data' }} then</span>@endif</div>
-            <div class="tile"><span class="tl">Conversion rate</span><span class="tv">{{ Report::pct($figures['conv'], 2) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['conv'], 'pts' => true, 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? Report::pct($prev['conv'], 2) : 'No data' }} then</span>@endif</div>
-            <div class="tile"><span class="tl">Average order</span><span class="tv">{{ Report::money($figures['aov_cents'] !== null ? (int) round($figures['aov_cents']) : null, true) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['aov'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? Report::money($prev['aov_cents'] !== null ? (int) round($prev['aov_cents']) : null, true) : 'No data' }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Revenue</span><span class="tv">{{ Report::money($figures['cents']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['cents'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? Report::money($prev['cents']) : ($loading ? 'Loading…' : 'No data') }} then</span>@endif @include('partials.pace', ['p' => $pace])</div>
+            <div class="tile"><span class="tl">Orders</span><span class="tv">{{ number_format($figures['orders']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['orders'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? number_format($prev['orders']) : ($loading ? 'Loading…' : 'No data') }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Sessions</span><span class="tv">{{ number_format($figures['sessions']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['sessions'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? number_format($prev['sessions']) : ($loading ? 'Loading…' : 'No data') }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Conversion rate</span><span class="tv">{{ Report::pct($figures['conv'], 2) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['conv'], 'pts' => true, 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? Report::pct($prev['conv'], 2) : ($loading ? 'Loading…' : 'No data') }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Average order</span><span class="tv">{{ Report::money($figures['aov_cents'] !== null ? (int) round($figures['aov_cents']) : null, true) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['aov'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? Report::money($prev['aov_cents'] !== null ? (int) round($prev['aov_cents']) : null, true) : ($loading ? 'Loading…' : 'No data') }} then</span>@endif</div>
         </section>
 
         <section>

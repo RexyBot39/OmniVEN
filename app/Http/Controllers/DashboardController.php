@@ -75,7 +75,8 @@ class DashboardController extends Controller
         // Sales strip: admins and revenue viewers, once GA4 is connected.
         $revenue = $revenueStatus = null;
         if (\App\Support\Revenue\Revenue::configured() && \App\Support\Revenue\Revenue::canSee($me)) {
-            \App\Support\Revenue\Revenue::refreshIfStale();
+            // The strip compares with last year, so make sure last year's month is loaded.
+            \App\Support\Revenue\Revenue::refreshIfStale(\App\Support\Revenue\Report::today()->startOfMonth()->subYear());
             $revenue = \App\Support\Revenue\Report::strip();
             $revenueStatus = \App\Support\Revenue\Revenue::status();
         }
