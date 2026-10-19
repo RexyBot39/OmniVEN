@@ -124,4 +124,16 @@ class SearchConsoleTest extends TestCase
         config(['search_console.sites' => []]);
         $this->actingAs($admin)->get('/seo')->assertSee('Connect Google Search Console')->assertSee('SEARCH_CONSOLE_SITES');
     }
+
+    public function test_a_mixed_up_property_name_is_fixed_or_explained(): void
+    {
+        putenv('SEARCH_CONSOLE_SITES=39dg=sc-domain:https://www.39dollarglasses.com/,ocusafe=https://www.ocusafe.com/');
+        $sites = (require config_path('search_console.php'))['sites'];
+        putenv('SEARCH_CONSOLE_SITES');
+        $this->assertSame(['39dg' => 'sc-domain:39dollarglasses.com', 'ocusafe' => 'https://www.ocusafe.com/'], $sites);
+
+        $this->fake(400);
+        $this->assertFalse(SearchConsole::refresh());
+        $this->assertStringContainsString('didn’t accept the property name sc-domain:39dollarglasses.com (HTTP 400)', (string) SearchConsole::status()['error']);
+    }
 }

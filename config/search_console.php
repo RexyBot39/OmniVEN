@@ -6,7 +6,10 @@ return [
     'sites' => collect(explode(',', (string) env('SEARCH_CONSOLE_SITES', '')))
         ->map(fn ($pair) => array_map('trim', explode('=', $pair, 2)))
         ->filter(fn ($p) => count($p) === 2 && $p[0] !== '' && $p[1] !== '')
-        ->mapWithKeys(fn ($p) => [strtolower($p[0]) => $p[1]])
+        // "sc-domain:" takes a bare domain; forgive a full address pasted after it.
+        ->mapWithKeys(fn ($p) => [strtolower($p[0]) => preg_match('#^sc-domain:\s*https?://#i', $p[1])
+            ? 'sc-domain:'.preg_replace('/^www\./i', '', (string) parse_url(preg_replace('#^sc-domain:\s*#i', '', $p[1]), PHP_URL_HOST))
+            : $p[1]])
         ->all(),
 
     // Searches containing any of these count as branded (people already looking for us).
