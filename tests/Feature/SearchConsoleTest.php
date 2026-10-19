@@ -136,4 +136,25 @@ class SearchConsoleTest extends TestCase
         $this->assertFalse(SearchConsole::refresh());
         $this->assertStringContainsString('didn’t accept the property name sc-domain:39dollarglasses.com (HTTP 400)', (string) SearchConsole::status()['error']);
     }
+
+    public function test_a_switched_off_api_is_named_and_a_refusal_names_the_email(): void
+    {
+        Http::preventStrayRequests();
+        $disabled = true;
+        Http::fake(function (Request $r) use (&$disabled) {
+            if ($r->url() === 'https://oauth2.googleapis.com/token') {
+                return Http::response(['access_token' => 'ya29.sc', 'expires_in' => 3600]);
+            }
+
+            return Http::response(['error' => $disabled
+                ? ['status' => 'PERMISSION_DENIED', 'message' => 'Google Search Console API has not been used in project 123 before or it is disabled.', 'details' => [['reason' => 'SERVICE_DISABLED']]]
+                : ['status' => 'PERMISSION_DENIED', 'message' => "User does not have sufficient permission for site 'sc-domain:39dollarglasses.com'."]], 403);
+        });
+        $this->assertFalse(SearchConsole::refresh());
+        $this->assertStringContainsString('Google Search Console API is turned off', (string) SearchConsole::status()['error']);
+
+        $disabled = false;
+        $this->assertFalse(SearchConsole::refresh());
+        $this->assertStringContainsString('refused sa@proj.iam.gserviceaccount.com for sc-domain:39dollarglasses.com', (string) SearchConsole::status()['error']);
+    }
 }

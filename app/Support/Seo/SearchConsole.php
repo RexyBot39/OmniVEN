@@ -210,12 +210,18 @@ class SearchConsole
                 'dimensions' => $dims, 'rowLimit' => $limit, 'dataState' => 'final',
             ]);
         if (! $res->successful()) {
-            throw new RuntimeException(match ($res->status()) {
-                403 => "Search Console refused the service account for {$site} (HTTP 403). In Search Console → Settings → Users and permissions, add the service account’s email as a Restricted user.",
-                404 => "Search Console has no property {$site} (HTTP 404). Check SEARCH_CONSOLE_SITES; domain properties start with sc-domain:.",
-                429 => 'Search Console quota reached for now (HTTP 429). It will try again later.',
-                400 => "Search Console didn’t accept the property name {$site} (HTTP 400). Use sc-domain:example.com for a domain property, or the full address with its final slash (https://www.example.com/) for a URL-prefix property, exactly as Search Console’s property picker shows it.",
-                default => "Search Console answered HTTP {$res->status()} for {$site}.",
+            $why = collect($res->json('error.details') ?? [])->pluck('reason')->filter()->implode(' ').' '.$res->json('error.message');
+            $email = Ga4::credentials()['client_email'] ?? 'the service account';
+            $status = $res->status();
+            throw new RuntimeException(match (true) {
+                // The API itself is switched off in the service account's Google Cloud project.
+                $status === 403 && (str_contains($why, 'SERVICE_DISABLED') || str_contains($why, 'has not been used in project') || str_contains($why, 'is disabled')) =>
+                    'The Google Search Console API is turned off for the service account’s Google Cloud project (HTTP 403). In Google Cloud → APIs & Services → Library, open “Google Search Console API” and click Enable, then wait a few minutes.',
+                $status === 403 => "Search Console refused {$email} for {$site} (HTTP 403). In Search Console, pick exactly this property ({$site}) → Settings → Users and permissions, and add that email as a Restricted user. A user added to a different property of the same site (with or without https/www) doesn’t count.",
+                $status === 404 => "Search Console has no property {$site} (HTTP 404). Check SEARCH_CONSOLE_SITES; domain properties start with sc-domain:.",
+                $status === 429 => 'Search Console quota reached for now (HTTP 429). It will try again later.',
+                $status === 400 => "Search Console didn’t accept the property name {$site} (HTTP 400). Use sc-domain:example.com for a domain property, or the full address with its final slash (https://www.example.com/) for a URL-prefix property, exactly as Search Console’s property picker shows it.",
+                default => "Search Console answered HTTP {$status} for {$site}.",
             });
         }
 
