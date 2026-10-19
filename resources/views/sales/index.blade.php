@@ -12,7 +12,7 @@
         <div>
             <div class="eyebrow"><span>Sales</span><span>From Google Analytics 4</span>@if($status['last'])<span>Updated {{ $status['last']->format('M j, g:i A') }}</span>@endif</div>
             <h1 class="form-h">Revenue by channel @include('partials.star', ['key' => 'page:14', 'label' => 'Sales'])</h1>
-            @can('use-assistant')@if(\App\Support\Assistant\Assistant::configured())<p class="sub"><a href="{{ route('assistant', ['focus' => 'sales']) }}">Ask OmniVEN about this →</a></p>@endif @endcan
+            @can('use-assistant')@if(\App\Support\Assistant\Assistant::configured())<p class="sub"><a href="{{ route('assistant', ['focus' => 'sales']) }}">Ask OmniVEN AI about this →</a></p>@endif @endcan
         </div>
         @include('partials.sales-nav')
     </div>
