@@ -13,7 +13,7 @@ class Menu
 {
     /** [label, blurb, assistant focus, [page ids]]; pages a person can't open are left out, and so are empty groups. */
     public const GROUPS = [
-        'work' => ['Work', 'Your day, the team’s tasks and the weekly runbook', 'tasks', [2, 1, 10, 8, 3, 4, 21]],
+        'work' => ['Work', 'Your day, the team’s tasks and the weekly runbook', 'tasks', [2, 1, 10, 31, 8, 3, 4, 21]],
         'revenue' => ['Revenue', 'Sales by channel and brand, and the numbers behind them', 'sales', [14, 22, 17, 19]],
         'growth' => ['Growth', 'Campaigns, publishers and the links that track them', 'campaigns', [28, 15, 26, 27]],
         'search' => ['Search & AI', 'Google, AI assistants and the content they need', 'search', [20, 23, 16, 24]],
@@ -55,7 +55,7 @@ class Menu
 
     private static function item(User $user, int $id): ?array
     {
-        if (! Launchpad::placeExists($user, 'page', $id)) {
+        if (! Launchpad::placeExists($user, 'page', $id) || ($id === 31 && ! Assistant::configured())) {
             return null;
         }
         [$t, $s, $route, $hash] = Launchpad::PAGES[$id];

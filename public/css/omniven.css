@@ -1664,3 +1664,44 @@ details[data-menu] > summary::-webkit-details-marker{display:none}
 .trend-legend .tl-part i{border-top:2px dotted var(--teal)}
 .h2row .seg{flex-wrap:wrap;max-width:100%}
 @media (max-width:640px){.h2row .seg{margin-left:0}}
+
+/* Ask OmniVEN AI tabs and TaskBuddy AI */
+.as-head-r{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+.as-tabs .seg-b{text-decoration:none}
+.taskbuddy .card{padding:14px 16px}
+.tb-start,.tb-questions,.tb-changes{display:grid;gap:12px}
+.tb-f{display:grid;gap:4px;font-size:14px;min-width:0}
+.tb-f textarea,.tb-f input[type=text],.tb-f select,.tb-task input,.tb-task textarea,.tb-task select,.tb-q input[type=text]{font:inherit;font-size:14px;width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--ink);min-width:0}
+.tb-f textarea{resize:vertical;min-height:120px}
+.tb-file input{font-size:14px}
+.tb-row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.tb-row .tb-f{flex:1 1 200px}
+.tb-wait{display:grid;gap:4px}
+.tb-err{border-color:color-mix(in srgb,var(--bad) 45%,var(--line));display:grid;gap:10px}
+.tb-done{display:grid;gap:8px}
+.tb-done p{margin:0}
+.tb-summary p{margin:0;line-height:1.55}
+.tb-questions h2,.tb-review h2{margin:0;font-family:var(--f-display);color:var(--navy);font-size:18px}
+.tb-q{border:0;margin:0;padding:10px 0;border-top:1px solid var(--line);display:grid;gap:8px;min-width:0}
+.tb-q legend{padding:0;margin-bottom:6px;display:block}
+.tb-q legend .sub{display:block;font-weight:400;margin-top:2px}
+.tb-choices{display:flex;flex-wrap:wrap;gap:6px}
+.tb-choice{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13.5px;cursor:pointer;background:var(--surface)}
+.tb-choice:has(input:checked){border-color:var(--teal);background:var(--accent-soft)}
+.tb-review{display:grid;gap:10px}
+.tb-group{margin:10px 0 0;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-family:var(--f-body)}
+.tb-task{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start}
+.tb-task.off{opacity:.55}
+.tb-keep input{width:18px;height:18px;margin-top:9px}
+.tb-task-body{display:grid;gap:8px;min-width:0}
+.tb-title{font-weight:600}
+.tb-task textarea{resize:vertical;font-size:13.5px;line-height:1.45}
+.tb-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:end}
+.tb-fields label{display:grid;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+.tb-fields .tb-hot{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink);padding-bottom:8px}
+.tb-fields .tb-hot input{width:auto}
+.tb-why{margin:0;font-size:12.5px}
+.tb-addbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;position:sticky;bottom:12px;background:color-mix(in srgb,var(--bg) 94%,transparent);padding:10px 0}
+@media (max-width:640px){.as-head-r{justify-content:flex-start}.tb-task{grid-template-columns:1fr}.tb-keep input{margin-top:0}}
+.tb-q legend{float:left;width:100%}
+.tb-q > :not(legend){clear:both}
