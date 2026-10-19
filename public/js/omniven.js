@@ -752,3 +752,43 @@ document.querySelector('[data-scroll-here]')?.scrollIntoView({ block: 'center' }
   form.addEventListener('change', (e) => { if (e.target.name === 'kind') sync(); });
   sync();
 })();
+
+// Assistant: check back on answers still being worked out, send with Ctrl/⌘+Enter, copy an answer.
+(() => {
+  const poll = (el) => {
+    let tries = 0;
+    const tick = () => {
+      tries++;
+      fetch(el.dataset.poll, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((d) => {
+          if (d.status === 'pending') { if (tries < 200) setTimeout(tick, tries < 10 ? 2000 : 4000); return; }
+          const tpl = document.createElement('template');
+          tpl.innerHTML = d.html.trim();
+          el.replaceWith(tpl.content);
+        })
+        .catch(() => { if (tries < 200) setTimeout(tick, 6000); });
+    };
+    setTimeout(tick, 2000);
+  };
+  document.querySelectorAll('.as-msg[data-poll]').forEach(poll);
+  const q = document.getElementById('as-q');
+  if (q) {
+    q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); q.form.requestSubmit(); } });
+    if (!document.querySelector('.as-thread')) q.focus();
+  }
+  document.getElementById('as-form')?.addEventListener('submit', (e) => {
+    const b = e.target.querySelector('button[type=submit]');
+    if (b) { b.disabled = true; b.textContent = 'Sending…'; }
+  });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-copy-answer]');
+    if (!b) return;
+    const el = document.querySelector(b.dataset.copyAnswer);
+    if (!el) return;
+    const done = () => { const t = b.textContent; b.textContent = 'Copied ✓'; setTimeout(() => { b.textContent = t; }, 1600); };
+    navigator.clipboard?.writeText(el.innerText).then(done, () => {});
+  });
+  const last = document.querySelector('.as-thread .as-msg:last-child');
+  if (last && !location.hash) last.scrollIntoView({ block: 'start' });
+})();

@@ -34,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('complete-task', fn (User $user, Task $task) => $user->is_admin || $task->assignee_id === $user->id);
         Gate::define('own-postit', fn (User $user, PostIt $postit) => $postit->user_id === $user->id);
         Gate::define('see-revenue', fn (User $user) => \App\Support\Revenue\Revenue::canSee($user));
+        // The assistant is hidden until an OpenAI key is set (admins still see its setup steps).
+        Gate::define('use-assistant', fn (User $user) => \App\Support\Assistant\Assistant::configured() || $user->is_admin);
         Gate::define('manage-note', fn (User $user, Note $note) => $user->is_admin || $note->user_id === $user->id);
     }
 }

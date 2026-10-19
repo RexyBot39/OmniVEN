@@ -56,6 +56,7 @@ class Launchpad
         27 => ['Affiliate assets', 'Banners, codes and copy for publishers', 'assets.index', null, null],
         28 => ['Campaigns', 'Dates, links and tasks for each push', 'campaigns.index', null, null],
         29 => ['Coverage', 'Which brands are missing which accounts', 'coverage', null, null],
+        30 => ['Assistant', 'Ask OmniVEN about any brand, number or task', 'assistant', null, 'use-assistant'],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */
