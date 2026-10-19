@@ -5,7 +5,9 @@ namespace App\Support\Seo;
 use App\Models\Brand;
 use App\Support\Revenue\Ga4;
 use Carbon\CarbonImmutable;
+use App\Support\DateRange;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -14,6 +16,8 @@ use Throwable;
 /**
  * Search Console per brand: the last 28 days against the 28 before, branded vs non-branded searches,
  * and the searches and pages gaining or losing the most clicks. Read-only; only the summary is cached.
+ * Daily totals go into search_days, back as far as Search Console keeps them (16 months), so any
+ * date range can be charted and compared; detail for other ranges is fetched when asked for.
  */
 class SearchConsole
 {
@@ -42,6 +46,7 @@ class SearchConsole
     {
         foreach (array_keys(config('search_console.sites')) as $slug) {
             Cache::forget("seo:$slug");
+            Cache::forget("seo:$slug:history");
         }
         foreach (['seo:last', 'seo:error', 'seo:refreshing'] as $k) {
             Cache::forget($k);
@@ -72,8 +77,12 @@ class SearchConsole
     public static function refresh(): bool
     {
         try {
+            $brands = self::brands();
             foreach (config('search_console.sites') as $slug => $site) {
                 Cache::forever("seo:$slug", self::build($slug, $site));
+                if ($brand = $brands->get($slug)) {
+                    self::storeDays($brand->id, $slug, $site);
+                }
             }
             Cache::forever('seo:last', now()->timestamp);
             Cache::forget('seo:error');
@@ -100,32 +109,124 @@ class SearchConsole
     private static function build(string $slug, string $site): array
     {
         [$a1, $a2, $b1, $b2] = self::windows();
-        $days = self::query($site, $b1, $a2, ['date'], 1000);
-        $now = self::totals(array_filter($days, fn ($r) => $r['keys'][0] >= $a1->format('Y-m-d')));
-        $before = self::totals(array_filter($days, fn ($r) => $r['keys'][0] < $a1->format('Y-m-d')));
+        $detail = self::detail($slug, $site, $a1, $a2, $b1, $b2, $qa);
 
+        return $detail + [
+            'gap_rows' => self::gapRows($site, $a1, $a2, $qa, config("search_console.brand_terms.$slug", [])),
+        ];
+    }
+
+    /**
+     * Totals, branded clicks, movers and top searches and pages for one range against another (or
+     * against nothing: then there are no movers). $qa gets this range's search rows for reuse.
+     */
+    private static function detail(string $slug, string $site, CarbonImmutable $a1, CarbonImmutable $a2, ?CarbonImmutable $b1, ?CarbonImmutable $b2, ?array &$qa = null): array
+    {
         $qa = self::query($site, $a1, $a2, ['query'], 2000);
-        $qb = self::query($site, $b1, $b2, ['query'], 2000);
         $pa = self::query($site, $a1, $a2, ['page'], 1000);
-        $pb = self::query($site, $b1, $b2, ['page'], 1000);
+        $qb = $b1 ? self::query($site, $b1, $b2, ['query'], 2000) : [];
+        $pb = $b1 ? self::query($site, $b1, $b2, ['page'], 1000) : [];
+        // One daily query covering both ranges; each range's totals are its days.
+        $days = self::query($site, $b1 ? $b1->min($a1) : $a1, $b1 ? $b2->max($a2) : $a2, ['date'], 25000);
+        $totals = fn ($from, $to) => self::totals(array_filter($days, fn ($r) => $r['keys'][0] >= $from->format('Y-m-d') && $r['keys'][0] <= $to->format('Y-m-d')));
 
         $terms = config("search_console.brand_terms.$slug", []);
         $branded = fn (array $rows) => array_sum(array_map(fn ($r) => self::isBranded($r['keys'][0], $terms) ? $r['clicks'] : 0, $rows));
+        $top = fn (array $rows, ?callable $keep = null) => array_map(fn ($r) => ['key' => $r['keys'][0], 'clicks' => (int) $r['clicks'], 'impressions' => (int) $r['impressions'], 'position' => round((float) $r['position'], 1)],
+            array_slice(array_values(array_filter($rows, fn ($r) => ! $keep || $keep($r['keys'][0]))), 0, 10));
 
         return [
             'site' => $site,
             'from' => $a1->format('Y-m-d'),
             'to' => $a2->format('Y-m-d'),
-            'now' => $now,
-            'before' => $before,
-            'daily' => array_values(array_map(fn ($r) => ['day' => $r['keys'][0], 'clicks' => (int) $r['clicks']], array_filter($days, fn ($r) => $r['keys'][0] >= $a1->format('Y-m-d')))),
-            'branded' => ['now' => (int) $branded($qa), 'before' => (int) $branded($qb), 'has_terms' => $terms !== []],
-            'queries' => self::movers($qa, $qb, fn ($k) => ! self::isBranded($k, $terms)),
-            'pages' => self::movers($pa, $pb),
-            'gap_rows' => self::gapRows($site, $a1, $a2, $qa, $terms),
-            'top_queries' => array_map(fn ($r) => ['key' => $r['keys'][0], 'clicks' => (int) $r['clicks'], 'impressions' => (int) $r['impressions'], 'position' => round((float) $r['position'], 1)],
-                array_slice(array_values(array_filter($qa, fn ($r) => ! self::isBranded($r['keys'][0], $terms))), 0, 10)),
+            'now' => $totals($a1, $a2),
+            'before' => $b1 ? $totals($b1, $b2) : null,
+            'branded' => ['now' => (int) $branded($qa), 'before' => $b1 ? (int) $branded($qb) : null, 'has_terms' => $terms !== []],
+            'queries' => $b1 ? self::movers($qa, $qb, fn ($k) => ! self::isBranded($k, $terms)) : null,
+            'pages' => $b1 ? self::movers($pa, $pb) : null,
+            'top_queries' => $top($qa, fn ($k) => ! self::isBranded($k, $terms)),
+            'top_pages' => $top($pa),
         ];
+    }
+
+    /**
+     * Detail for a picked range, fetched from Search Console when first asked for and kept for a few
+     * hours. The default (last 28 days against the 28 before) comes from the regular refresh instead.
+     */
+    public static function forRange(string $slug, DateRange $range): ?array
+    {
+        $site = config("search_console.sites.$slug");
+        if (! $site) {
+            return null;
+        }
+        [$a1, $a2] = [$range->from, $range->to];
+        $cmp = $range->comparison();
+        $key = "seo:range:$slug:".$a1->format('Ymd').'-'.$a2->format('Ymd').':'.($cmp ? $cmp[0]->format('Ymd').'-'.$cmp[1]->format('Ymd') : 'none');
+        if (is_array($hit = Cache::get($key))) {
+            return $hit;
+        }
+        try {
+            $d = self::detail($slug, $site, $a1, $a2, $cmp[0] ?? null, $cmp[1] ?? null);
+            Cache::put($key, $d, now()->addHours(6));
+
+            return $d;
+        } catch (Throwable $e) {
+            return ['error' => $e instanceof RuntimeException ? $e->getMessage() : 'Reading Search Console failed ('.class_basename($e).').'];
+        }
+    }
+
+    /**
+     * Daily totals into search_days: all 16 months Search Console keeps the first time, then the
+     * last couple of weeks on each refresh (recent days are revised).
+     */
+    private static function storeDays(int $brandId, string $slug, string $site): void
+    {
+        $end = CarbonImmutable::now(config('app.timezone'))->startOfDay()->subDays(config('search_console.lag_days'));
+        $loaded = Cache::get("seo:$slug:history") === $site;
+        $from = $loaded ? $end->subDays(13) : $end->subMonths(config('search_console.history_months'))->addDay();
+        $rows = self::query($site, $from, $end, ['date'], 25000);
+        $now = now();
+        DB::transaction(function () use ($brandId, $from, $end, $rows, $now) {
+            DB::table('search_days')->where('brand_id', $brandId)->whereBetween('day', [$from->format('Y-m-d'), $end->format('Y-m-d')])->delete();
+            foreach (array_chunk($rows, 500) as $chunk) {
+                DB::table('search_days')->insert(array_map(fn ($r) => [
+                    'brand_id' => $brandId, 'day' => $r['keys'][0], 'clicks' => (int) $r['clicks'], 'impressions' => (int) $r['impressions'],
+                    'position_x_impressions' => $r['position'] * $r['impressions'], 'created_at' => $now, 'updated_at' => $now,
+                ], $chunk));
+            }
+        });
+        Cache::forever("seo:$slug:history", $site);
+    }
+
+    /** Stored daily totals for a brand and range: day => [clicks, impressions, pos×impr]. */
+    public static function days(int $brandId, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $out = [];
+        foreach (DB::table('search_days')->where('brand_id', $brandId)->whereBetween('day', [$from->format('Y-m-d'), $to->format('Y-m-d')])->get() as $r) {
+            $out[substr((string) $r->day, 0, 10)] = ['c' => (int) $r->clicks, 'i' => (int) $r->impressions, 'p' => (float) $r->position_x_impressions];
+        }
+
+        return $out;
+    }
+
+    /** Totals from stored days: clicks, impressions, CTR, average position; null with no days. */
+    public static function sumDays(array $days): ?array
+    {
+        if ($days === []) {
+            return null;
+        }
+        $c = array_sum(array_column($days, 'c'));
+        $i = array_sum(array_column($days, 'i'));
+        $p = array_sum(array_column($days, 'p'));
+
+        return ['clicks' => $c, 'impressions' => $i, 'ctr' => $i > 0 ? $c / $i : null, 'position' => $i > 0 ? round($p / $i, 1) : null];
+    }
+
+    public static function firstDay(int $brandId): ?CarbonImmutable
+    {
+        $d = DB::table('search_days')->where('brand_id', $brandId)->min('day');
+
+        return $d ? CarbonImmutable::parse(substr((string) $d, 0, 10), config('app.timezone')) : null;
     }
 
     /**

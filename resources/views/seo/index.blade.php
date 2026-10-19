@@ -5,14 +5,14 @@
 <main class="wrap sales">
     <div class="act-head">
         <div>
-            <div class="eyebrow"><span>Search</span><span>From {{ \App\Support\BrandIcon::html('google', 'xs') }}Google Search Console</span>@if($s)<span>{{ \Carbon\Carbon::parse($s['from'])->format('M j') }} – {{ \Carbon\Carbon::parse($s['to'])->format('M j') }} vs the 28 days before</span>@endif</div>
+            <div class="eyebrow"><span>Search</span><span>From {{ \App\Support\BrandIcon::html('google', 'xs') }}Google Search Console</span>@if($status['last'])<span>Updated {{ $status['last']->format('M j, g:i A') }}</span>@endif</div>
             <h1 class="form-h">Search @include('partials.star', ['key' => 'page:20', 'label' => 'Search'])</h1>
             @can('use-assistant')@if(\App\Support\Assistant\Assistant::configured())<p class="sub"><a href="{{ route('assistant', ['focus' => 'search']) }}">Ask OmniVEN AI about this →</a></p>@endif @endcan
             <p class="sub"><a href="{{ route('content-gaps', array_filter(['brand' => $brand?->slug])) }}">Content gaps →</a> searches that need a page, a better page or a better title. <a href="{{ route('site-check') }}">Site check →</a> structured data and product feeds.</p>
         </div>
         @if($brands->count() > 1)
             <nav class="sales-brands" aria-label="Brand">
-                @foreach($brands as $b)<a href="{{ route('seo', ['brand' => $b->slug]) }}" @if($brand?->is($b)) aria-current="true" @endif><span class="dot" style="background:var(--c{{ $b->colorSlot() }})"></span>{{ $b->name }}</a>@endforeach
+                @foreach($brands as $b)<a href="{{ route('seo', $range->query(['brand' => $b->slug, 'metric' => $metric !== 'clicks' ? $metric : null])) }}" @if($brand?->is($b)) aria-current="true" @endif><span class="dot" style="background:var(--c{{ $b->colorSlot() }})"></span>{{ $b->name }}</a>@endforeach
             </nav>
         @endif
     </div>
@@ -30,45 +30,60 @@
                 <p class="sub">Ask an admin to connect it.</p>
             @endcan
         </div>
-    @elseif(! $s)
+    @elseif(! $hasSummary)
         <div class="empty">{{ $status['error'] ? 'Can’t read Search Console yet.' : 'Loading from Search Console… refresh in a minute.' }}@can('admin') {{ $status['error'] }}@endcan</div>
     @else
         @if($status['error'])
             <div class="callout warn-callout" role="status"><div><b>The last update from Search Console failed.</b> Showing numbers from {{ $status['last']?->format('M j, g:i A') }}.@can('admin') {{ $status['error'] }}@endcan</div></div>
         @endif
+        @include('partials.range-picker', ['range' => $range, 'route' => 'seo', 'keep' => ['brand' => $brand?->slug, 'metric' => $metric !== 'clicks' ? $metric : null]])
 
         @php
-            $pct = fn ($a, $b) => $b > 0 ? ($a - $b) / $b * 100 : null;
-            $n = $s['now']; $p = $s['before'];
-            $brandedShare = $n['clicks'] > 0 ? $s['branded']['now'] / $n['clicks'] : null;
-            $maxDay = max(1, collect($s['daily'])->max('clicks') ?? 1);
+            // Stored daily totals when there are any; the summary's own totals until history is in.
+            $n = $totals ?? $s['now'] ?? null;
+            $p = $totals ? $prevTotals : ($s['before'] ?? null);
+            $brandedShare = $s && $n && $n['clicks'] > 0 ? $s['branded']['now'] / $n['clicks'] : null;
+            $q = fn (array $extra = []) => $range->query(array_merge(['brand' => $brand?->slug, 'metric' => $metric !== 'clicks' ? $metric : null], $extra));
         @endphp
-        <section class="tiles sales-tiles" aria-label="Last 28 days">
-            <div class="tile"><span class="tl">Clicks</span><span class="tv">{{ number_format($n['clicks']) }}</span>@include('partials.delta-28', ['v' => $pct($n['clicks'], $p['clicks'])])</div>
-            <div class="tile"><span class="tl">Impressions</span><span class="tv">{{ number_format($n['impressions']) }}</span>@include('partials.delta-28', ['v' => $pct($n['impressions'], $p['impressions'])])</div>
-            <div class="tile"><span class="tl">Click-through rate</span><span class="tv">{{ Report::pct($n['ctr'], 1) }}</span><span class="sub">Before: {{ Report::pct($p['ctr'], 1) }}</span></div>
+        @if($n)
+        <section class="tiles sales-tiles" aria-label="{{ $range->label() }}">
+            <div class="tile"><span class="tl">Clicks</span><span class="tv">{{ number_format($n['clicks']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => \App\Support\DateRange::change($n['clicks'], $p['clicks'] ?? null), 'vs' => $vsLabel])<span class="tile-was">{{ $p ? number_format($p['clicks']) : 'No data' }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Impressions</span><span class="tv">{{ number_format($n['impressions']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => \App\Support\DateRange::change($n['impressions'], $p['impressions'] ?? null), 'vs' => $vsLabel])<span class="tile-was">{{ $p ? number_format($p['impressions']) : 'No data' }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Click-through rate</span><span class="tv">{{ Report::pct($n['ctr'], 1) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $n['ctr'] !== null && ($p['ctr'] ?? null) !== null ? ($n['ctr'] - $p['ctr']) * 100 : null, 'pts' => true, 'vs' => $vsLabel])<span class="tile-was">{{ $p ? Report::pct($p['ctr'], 1) : 'No data' }} then</span>@endif</div>
             <div class="tile"><span class="tl">Average position</span><span class="tv">{{ $n['position'] ?? '—' }}</span>
-                @if($n['position'] !== null && $p['position'] !== null)
+                @if($vsLabel && $n['position'] !== null && ($p['position'] ?? null) !== null)
                     @php $better = $p['position'] - $n['position']; @endphp
-                    <span class="delta {{ $better > 0.1 ? 'up' : ($better < -0.1 ? 'down' : 'flat') }}">{{ $better > 0.1 ? '▲ up' : ($better < -0.1 ? '▼ down' : '■ steady') }} {{ number_format(abs($better), 1) }}<span class="delta-w"> places</span></span>
+                    <span class="delta {{ $better > 0.1 ? 'up' : ($better < -0.1 ? 'down' : 'flat') }}">{{ $better > 0.1 ? '▲ up' : ($better < -0.1 ? '▼ down' : '■ steady') }} {{ number_format(abs($better), 1) }}<span class="delta-w"> places vs {{ $vsLabel }}</span></span>
+                    <span class="tile-was">{{ $p['position'] }} then · 1 is the top</span>
                 @endif
             </div>
-            @if($s['branded']['has_terms'])
-                <div class="tile"><span class="tl">Branded searches</span><span class="tv">{{ number_format($s['branded']['now']) }}</span>@include('partials.delta-28', ['v' => $pct($s['branded']['now'], $s['branded']['before'])])<span class="sub">{{ Report::pct($brandedShare, 0) }} of clicks · people looking for us by name</span></div>
+            @if($s && $s['branded']['has_terms'])
+                <div class="tile"><span class="tl">Branded searches</span><span class="tv">{{ number_format($s['branded']['now']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => \App\Support\DateRange::change($s['branded']['now'], $s['branded']['before']), 'vs' => $vsLabel])@endif<span class="sub">{{ Report::pct($brandedShare, 0) }} of clicks · people looking for us by name</span></div>
+            @endif
+        </section>
+        @endif
+
+        <section>
+            <div class="h2row"><h2>Over time</h2>
+                <nav class="seg" aria-label="Measure">
+                    @foreach(\App\Http\Controllers\SeoController::METRICS as $k => [$label])
+                        <a class="seg-b" href="{{ route('seo', $q(['metric' => $k === 'clicks' ? null : $k])) }}" aria-pressed="{{ $metric === $k ? 'true' : 'false' }}">{{ $label }}</a>
+                    @endforeach
+                </nav>
+            </div>
+            @if($totals)
+                @include('partials.trend', ['points' => $trend, 'fmt' => \App\Http\Controllers\SeoController::METRICS[$metric][1], 'name' => \App\Http\Controllers\SeoController::METRICS[$metric][0].', '.\App\Support\DateRange::span($range->from, $range->to), 'cmp' => $range->compareLabel(), 'grain' => $range->grain(), 'lower' => $metric === 'position'])
+                @if($metric === 'position')<p class="sub">Lower is better: position 1 is the top result.</p>@endif
+            @else
+                <div class="empty">Daily history is loading from Search Console (up to 16 months). Refresh in a minute.</div>
             @endif
         </section>
 
-        <section>
-            <div class="h2row"><h2>Clicks per day</h2><span class="sub">Last 28 days</span></div>
-            <div class="card seo-days">
-                <svg viewBox="0 0 {{ count($s['daily']) * 14 }} 60" preserveAspectRatio="none" role="img" aria-label="Clicks per day, {{ count($s['daily']) }} days, from {{ number_format(collect($s['daily'])->min('clicks')) }} to {{ number_format($maxDay) }}">
-                    @foreach($s['daily'] as $i => $d)
-                        <rect x="{{ $i * 14 + 3 }}" y="{{ 60 - max(1, round($d['clicks'] / $maxDay * 58, 1)) }}" width="8" height="{{ max(1, round($d['clicks'] / $maxDay * 58, 1)) }}" rx="2"><title>{{ \Carbon\Carbon::parse($d['day'])->format('D M j') }}: {{ number_format($d['clicks']) }} clicks</title></rect>
-                    @endforeach
-                </svg>
-            </div>
-        </section>
-
+        @if($rangeError)
+            <div class="callout warn-callout" role="status"><div><b>Couldn’t load searches and pages for these dates.</b>@can('admin') {{ $rangeError }}@endcan</div></div>
+        @endif
+        @if($s)
+        @if($s['queries'] !== null)
         <div class="aians-split">
             @foreach(['queries' => 'Searches', 'pages' => 'Pages'] as $kind => $label)
                 <section>
@@ -87,7 +102,7 @@
                                             <td class="n">{{ number_format($r['now']) }}</td>
                                             <td class="n"><span class="delta down">▼ {{ number_format(abs($r['change'])) }}</span></td>
                                             <td class="n">{{ $r['position'] ?? '—' }}@if($r['position'] && $r['position_before'])<div class="sub">was {{ $r['position_before'] }}</div>@endif</td>
-                                            <td><a class="mini" href="{{ route('work.create', ['type' => 'task', 'title' => \Illuminate\Support\Str::limit(($kind === 'pages' ? 'Fix falling page ' : 'Win back “').$shown.($kind === 'pages' ? '' : '”').' (−'.number_format(abs($r['change'])).' clicks)', 190), 'details' => ($kind === 'pages' ? $r['key'] : 'Search: '.$r['key'])."\nClicks: ".$r['before'].' → '.$r['now'].' over 28 days; position '.($r['position_before'] ?? '—').' → '.($r['position'] ?? '—').".\nCheck the page still answers the search, update it, and request indexing in Search Console."]) }}">Make a task</a></td>
+                                            <td><a class="mini" href="{{ route('work.create', ['type' => 'task', 'title' => \Illuminate\Support\Str::limit(($kind === 'pages' ? 'Fix falling page ' : 'Win back “').$shown.($kind === 'pages' ? '' : '”').' (−'.number_format(abs($r['change'])).' clicks)', 190), 'details' => ($kind === 'pages' ? $r['key'] : 'Search: '.$r['key'])."\nClicks: ".$r['before'].' → '.$r['now'].' ('.$range->label().' vs '.$vsLabel.'); position '.($r['position_before'] ?? '—').' → '.($r['position'] ?? '—').".\nCheck the page still answers the search, update it, and request indexing in Search Console."]) }}">Make a task</a></td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -102,9 +117,10 @@
                 </section>
             @endforeach
         </div>
+        @endif
 
         <section>
-            <div class="h2row"><h2>Top searches</h2><span class="sub">Not counting searches for our name</span></div>
+            <div class="h2row"><h2>Top searches</h2><span class="sub">{{ \App\Support\DateRange::span(\Carbon\CarbonImmutable::parse($s['from']), \Carbon\CarbonImmutable::parse($s['to'])) }} · not counting searches for our name</span></div>
             <div class="tablewrap">
                 <table class="sales-ch">
                     <thead><tr><th>Search</th><th class="n">Clicks</th><th class="n">Impressions</th><th class="n">Position</th></tr></thead>
@@ -115,8 +131,9 @@
                     </tbody>
                 </table>
             </div>
-            <p class="sub sales-note">Search Console runs about three days behind. Positions are averages: 1 is the top result.</p>
+            <p class="sub sales-note">Search Console runs about three days behind and keeps 16 months. Positions are averages: 1 is the top result.</p>
         </section>
+        @endif
     @endif
 </main>
 @endsection

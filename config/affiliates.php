@@ -18,6 +18,7 @@ return [
     ],
     'timeout' => 25,
     'refresh_minutes' => 60,
-    // How many months of history to fill in, one month per refresh.
-    'history_months' => 13,
+    // How many months of history to fill in (a few months per refresh); stops early when a network has no more.
+    'history_months' => (int) env('AFFILIATE_HISTORY_MONTHS', 60),
+    'history_months_per_refresh' => 3,
 ];

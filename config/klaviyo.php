@@ -13,6 +13,8 @@ return [
     // Campaigns sent to fewer people than this are tests and are left out.
     'min_recipients' => 500,
     'refresh_minutes' => 120,
+    // Daily history for date ranges: Klaviyo keeps five years; one year is loaded per refresh.
+    'history_years' => (int) env('KLAVIYO_HISTORY_YEARS', 5),
     'timeout' => 30,
     // Warn when a 30-day rate passes these.
     'warn' => ['unsubscribe_rate' => 0.005, 'spam_rate' => 0.0008, 'delivery_rate' => 0.98],

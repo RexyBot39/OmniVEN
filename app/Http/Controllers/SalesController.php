@@ -7,6 +7,7 @@ use App\Support\Revenue\Revenue;
 use App\Models\RevenueGoal;
 use App\Models\SalesNote;
 use App\Support\Activity;
+use App\Support\DateRange;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,29 +20,46 @@ class SalesController extends Controller
     {
         Revenue::refreshIfStale();
         $brands = Revenue::brands();
-        $period = in_array($request->query('period'), array_keys(Report::PERIODS), true) ? $request->query('period') : 'mtd';
+        $range = DateRange::fromRequest($request, 'mtd', 'yoy', Report::today(), Revenue::firstDay());
         $brand = $brands->get((string) $request->query('brand'));
-        [$from, $to] = Report::range($period);
-        $figures = Report::figures($from, $to, $brand?->id);
+        $metric = array_key_exists((string) $request->query('metric'), Report::METRICS) ? (string) $request->query('metric') : 'revenue';
+        [$from, $to] = [$range->from, $range->to];
+        $vs = $range->comparison() ?? false;
+        $figures = Report::figures($from, $to, $brand?->id, $vs);
+        // Goals and pace only make sense for this month so far.
+        $isMtd = $range->preset === 'mtd';
 
         return view('sales.index', [
             'configured' => Revenue::configured(),
             'status' => Revenue::status(),
             'brands' => $brands,
             'brand' => $brand,
-            'period' => $period,
+            'range' => $range,
+            'vsLabel' => self::vsLabel($range),
             'from' => $from,
             'to' => $to,
+            'metric' => $metric,
+            'trend' => Report::trend($range, $metric, $brand?->id),
             'figures' => $figures,
-            'channels' => Report::channels($from, $to, $brand?->id),
-            'byBrand' => $brand ? collect() : $brands->map(fn ($b) => ['brand' => $b] + Report::figures($from, $to, $b->id))->values(),
-            // Goals and pace only make sense for this month so far.
-            'pace' => $period === 'mtd' ? Report::pace($figures['cents'] ?? 0, $brand?->id) : null,
-            'brandPace' => $period === 'mtd' ? $brands->mapWithKeys(fn ($b) => [$b->id => Report::pace(Report::figures($from, $to, $b->id)['cents'], $b->id)]) : collect(),
+            'channels' => Report::channels($from, $to, $brand?->id, $vs),
+            'byBrand' => $brand ? collect() : $brands->map(fn ($b) => ['brand' => $b] + Report::figures($from, $to, $b->id, $vs))->values(),
+            'pace' => $isMtd ? Report::pace($figures['cents'] ?? 0, $brand?->id) : null,
+            'brandPace' => $isMtd ? $brands->mapWithKeys(fn ($b) => [$b->id => Report::pace(Report::figures($from, $to, $b->id)['cents'], $b->id)]) : collect(),
+            'isMtd' => $isMtd,
             'goals' => \App\Models\RevenueGoal::where('month', Report::today()->startOfMonth()->format('Y-m-d'))->pluck('goal_cents', 'brand_id'),
             'week' => Report::today()->startOfWeek(\Carbon\CarbonImmutable::MONDAY),
             'notes' => \App\Models\SalesNote::with('user')->orderByDesc('week')->limit(8)->get(),
         ]);
+    }
+
+    /** Short words for the comparison, after "vs": "last year" or "previous period". */
+    public static function vsLabel(DateRange $range): ?string
+    {
+        return match ($range->compare) {
+            'yoy' => 'last year',
+            'previous' => 'previous period',
+            default => null,
+        };
     }
 
     /** Admins: this month's revenue goal for each brand (blank clears it). */

@@ -29,7 +29,7 @@ Artisan::command('omniven:check-links', function () {
 })->purpose('Check every tool, account, brand and routine link');
 
 // Pull daily sales totals from GA4. Without --history it refreshes the last few days and fills in
-// one more month of history; with --history it fills in all of it (about 13 months) in one go.
+// a few more months of history; with --history it fills in all of it (back to the first month GA4 has) in one go.
 Artisan::command('omniven:revenue-sync {--history : Fill in the full history now}', function () {
     if (! \App\Support\Revenue\Revenue::configured()) {
         $this->warn('GA4 isn’t set up: add GA4_CREDENTIALS and GA4_PROPERTIES.');
@@ -43,7 +43,22 @@ Artisan::command('omniven:revenue-sync {--history : Fill in the full history now
     return $ok ? 0 : 1;
 })->purpose('Refresh sales totals from Google Analytics 4');
 
-// Pull affiliate totals from CJ and Awin. --history fills in the last 13 months now.
+// Pull email totals from Klaviyo: the 30-day report and daily history. --history loads all five years now.
+Artisan::command('omniven:email-sync {--history : Fill in the full history now}', function () {
+    if (! \App\Support\Email\Klaviyo::configured()) {
+        $this->warn('Klaviyo isn’t set up: add KLAVIYO_PRIVATE_KEY.');
+
+        return 1;
+    }
+    $ok = \App\Support\Email\Klaviyo::refresh();
+    $ok = \App\Support\Email\EmailHistory::refresh((bool) $this->option('history')) && $ok;
+    $h = \App\Support\Email\EmailHistory::status();
+    $ok ? $this->info('Email updated'.($h['history_from'] ? ', history from '.$h['history_from'] : '').'.') : $this->error((string) (\App\Support\Email\Klaviyo::status()['error'] ?? $h['error']));
+
+    return $ok ? 0 : 1;
+})->purpose('Refresh email and SMS numbers from Klaviyo');
+
+// Pull affiliate totals from CJ and Awin. --history fills in the whole history window now.
 Artisan::command('omniven:affiliate-sync {--history : Fill in the full history now}', function () {
     if (! \App\Support\Affiliate\Affiliates::configured()) {
         $this->warn('Neither CJ nor Awin is set up: add CJ_API_TOKEN + CJ_ADVERTISER_ID and/or AWIN_API_TOKEN.');

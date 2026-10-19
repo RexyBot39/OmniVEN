@@ -1609,3 +1609,58 @@ details[data-menu] > summary::-webkit-details-marker{display:none}
   .mm-panel{width:min(290px,calc(100vw - 32px))}
 }
 @media (max-width:420px){.nav-toggle span{display:none}.logo img{height:28px}}
+
+/* Date range picker (Sales, Search, Email, Affiliates) */
+.range-picker{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:4px 0 14px}
+.rp-f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+.rp-f select,.rp-f input{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0}
+.rp-f input:disabled{opacity:.6}
+.rp-dates{display:flex;gap:8px}
+.range-picker .btn{align-self:flex-end}
+.rp-sum{flex-basis:100%;margin:2px 0 0}
+.tile-was{font-size:12px;color:var(--muted)}
+.history-note{margin:-6px 0 12px}
+.em-30{margin-top:28px}
+.em-total td{border-top:2px solid var(--line);font-weight:600}
+@media (max-width:640px){
+  .range-picker{padding:10px 12px}
+  .rp-f{flex:1 1 140px}
+  .rp-dates{flex:1 1 100%}
+  .rp-dates .rp-f{flex:1}
+}
+
+/* Trend chart: this range solid, the comparison dashed */
+.trend{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px 10px}
+.trend-legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--muted);margin-bottom:8px}
+.trend-legend span{display:inline-flex;align-items:center;gap:6px}
+.trend-legend i{display:inline-block;width:18px;height:0;border-top:2px solid var(--teal)}
+.trend-legend .tl-cmp i{border-top:2px dashed var(--muted)}
+.trend-plot{display:grid;grid-template-columns:auto 1fr;grid-template-rows:200px auto;column-gap:8px}
+.trend-y{position:relative;font-size:11.5px;color:var(--muted);min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+.trend-y span{position:absolute;right:0;transform:translateY(-50%);white-space:nowrap}
+.trend-area{position:relative;min-width:0;outline-offset:3px;touch-action:pan-y}
+.trend-area svg{width:100%;height:100%;display:block;overflow:visible}
+.trend-area .grid{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
+.trend-area .base{stroke:var(--muted);stroke-width:1;vector-effect:non-scaling-stroke;opacity:.6}
+.trend-area .now{fill:none;stroke:var(--teal);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.trend-area .cmp{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4;vector-effect:non-scaling-stroke;opacity:.85}
+.trend-cross{position:absolute;top:0;bottom:0;width:0;border-left:1px solid var(--muted);pointer-events:none;opacity:.6}
+.trend-dot{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 2px var(--surface);pointer-events:none}
+.trend-tip{position:absolute;top:4px;transform:translateX(10px);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:12.5px;box-shadow:0 10px 24px -14px rgb(4 20 40 / .45);pointer-events:none;white-space:nowrap;z-index:2;display:grid;gap:2px}
+.trend-tip.flip{transform:translateX(calc(-100% - 10px))}
+.trend-tip .tt-h{font-weight:600;color:var(--ink)}
+.trend-tip div:not(.tt-h){display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
+.trend-tip b{color:var(--ink);font-variant-numeric:tabular-nums}
+.trend-tip .tt-now span::before,.trend-tip .tt-cmp span::before{content:"";display:inline-block;width:12px;vertical-align:middle;margin-right:5px;border-top:2px solid var(--teal)}
+.trend-tip .tt-cmp span::before{border-top:2px dashed var(--muted)}
+.trend-x{grid-column:2;position:relative;height:20px;font-size:11.5px;color:var(--muted)}
+.trend-x span{position:absolute;top:4px;transform:translateX(-50%);white-space:nowrap}
+.trend-x span:first-child{transform:none}
+.trend-table{margin-top:8px}
+.trend-table summary{cursor:pointer;font-size:13px;color:var(--accent);width:max-content}
+.trend-table table{font-size:13px}
+@media (max-width:640px){.trend-plot{grid-template-rows:160px auto}.trend-y{min-width:36px}}
+.trend-area .now.part{stroke-dasharray:2 4;opacity:.8}
+.trend-legend .tl-part i{border-top:2px dotted var(--teal)}
+.h2row .seg{flex-wrap:wrap;max-width:100%}
+@media (max-width:640px){.h2row .seg{margin-left:0}}

@@ -28,6 +28,8 @@ use App\Support\Seo\SiteCheck;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Support\DateRange;
+use App\Support\Email\EmailHistory;
 use Throwable;
 
 /**
@@ -67,11 +69,16 @@ class Tools
             ['links', 'Campaign (UTM) links made in the last N days, grouped by campaign and source.', ['days' => ['type' => 'integer', 'description' => 'Default 90.']]],
         ];
         if (Revenue::canSee($this->user)) {
-            $period = ['type' => 'string', 'description' => 'mtd, last30, last90, ytd, or a month as YYYY-MM. Default mtd.'];
-            $defs[] = ['revenue', 'GA4 revenue for a period: revenue, orders, conversion rate, average order vs the same dates last year, by brand and by channel, plus pace to this month’s goal.', ['period' => $period, 'brand' => $brand]];
-            $defs[] = ['revenue_trend', 'Monthly GA4 revenue, orders and sessions for the last 13 months, per brand, with the same month last year where known.', ['brand' => $brand]];
+            $period = ['type' => 'string', 'description' => 'mtd, last7, last30, last90, qtd, ytd, last_month, last_quarter, last_year, last12m, all, or a month as YYYY-MM. Ignored when from and to are given. Default mtd.'];
+            $dates = [
+                'from' => ['type' => 'string', 'description' => 'Start date YYYY-MM-DD (with to) for any custom range.'],
+                'to' => ['type' => 'string', 'description' => 'End date YYYY-MM-DD.'],
+                'compare' => ['type' => 'string', 'enum' => ['yoy', 'previous', 'none'], 'description' => 'Compare with the same dates last year (default) or the previous period of the same length.'],
+            ];
+            $defs[] = ['revenue', 'GA4 revenue for any date range: revenue, orders, sessions, conversion rate, average order against a comparison range, by brand and by channel, plus pace to this month’s goal.', ['period' => $period] + $dates + ['brand' => $brand]];
+            $defs[] = ['revenue_trend', 'Monthly GA4 revenue, orders and sessions for all stored history (back to the first month GA4 has), per brand.', ['brand' => $brand]];
             $defs[] = ['affiliates', 'CJ and Awin affiliate sales, orders, commission and top publishers for a month.', ['month' => ['type' => 'string', 'description' => 'YYYY-MM, default this month.']]];
-            $defs[] = ['email', 'Klaviyo email and SMS for the last 30 days: campaigns, flows, buyers, open, click, unsubscribe and spam rates, list size.', []];
+            $defs[] = ['email', 'Klaviyo email and SMS: each campaign and flow for the last 30 days, plus totals for any date range from daily history (up to 5 years) for campaigns and flows: emails received, open, click and unsubscribe rates, orders and revenue credited, new subscribers, against a comparison range.', $dates];
         }
 
         return array_map(fn ($d) => ['type' => 'function', 'name' => $d[0], 'description' => $d[1],
@@ -321,41 +328,59 @@ class Tools
             ->map(fn ($rows) => $rows->mapWithKeys(fn ($r) => [$r->source => (int) $r->n]))->all()];
     }
 
+    /** A date range from a lookup's arguments: from/to, or a period name or YYYY-MM month. */
+    private function range(array $a, ?CarbonImmutable $min, string $compare = 'yoy'): DateRange
+    {
+        $p = (string) ($a['period'] ?? 'mtd');
+        $q = ['compare' => in_array($a['compare'] ?? null, ['yoy', 'previous', 'none'], true) ? $a['compare'] : $compare];
+        if (! empty($a['from']) || ! empty($a['to'])) {
+            $q += ['range' => 'custom', 'from' => (string) ($a['from'] ?? ''), 'to' => (string) ($a['to'] ?? '')];
+        } elseif (preg_match('/^(\d{4})-(\d{2})$/', $p, $m)) {
+            $start = CarbonImmutable::create((int) $m[1], (int) $m[2], 1, 0, 0, 0, config('app.timezone'));
+            $q += ['range' => 'custom', 'from' => $start->format('Y-m-d'), 'to' => $start->endOfMonth()->format('Y-m-d')];
+        } else {
+            $q += ['range' => $p];
+        }
+
+        return DateRange::fromRequest(\Illuminate\Http\Request::create('/', 'GET', $q), 'mtd', $compare, Report::today(), $min);
+    }
+
     private function toolRevenue(array $a): array
     {
         if (! Revenue::configured()) {
             return ['error' => 'GA4 isn’t connected yet.'];
         }
-        $p = (string) ($a['period'] ?? 'mtd');
-        if (preg_match('/^(\d{4})-(\d{2})$/', $p, $m)) {
-            $from = CarbonImmutable::create((int) $m[1], (int) $m[2], 1, 0, 0, 0, config('app.timezone'));
-            $to = $from->endOfMonth()->startOfDay()->min(Report::today());
-        } else {
-            [$from, $to] = Report::range(array_key_exists($p, Report::PERIODS) ? $p : 'mtd');
-        }
+        $range = $this->range($a, Revenue::firstDay());
+        [$from, $to] = [$range->from, $range->to];
+        $vs = $range->comparison() ?? false;
         $b = $this->brand($a['brand'] ?? null);
         $fig = fn ($f) => ['revenue' => Report::money($f['cents']), 'orders' => $f['orders'], 'sessions' => $f['sessions'], 'conversion' => Report::pct($f['conv'], 2),
             'avg_order' => Report::money($f['aov_cents'] !== null ? (int) round($f['aov_cents']) : null),
-            'vs_last_year' => array_map(fn ($v) => $v === null ? 'no data' : sprintf('%+.1f', $v), $f['vs'])];
+            'comparison' => $f['prev'] ? ['revenue' => Report::money($f['prev']['cents']), 'orders' => $f['prev']['orders'], 'sessions' => $f['prev']['sessions'], 'conversion' => Report::pct($f['prev']['conv'], 2)] : 'no data',
+            'change' => array_map(fn ($v) => $v === null ? 'no data' : sprintf('%+.1f', $v), $f['vs'])];
 
-        return ['from' => $from->format('Y-m-d'), 'to' => $to->format('Y-m-d'), 'note' => 'vs_last_year: percent change, conversion in points. GA4 runs a little below the store’s own totals.',
-            'total' => $fig(Report::figures($from, $to, $b?->id)),
-            'by_brand' => $b ? null : Revenue::brands()->mapWithKeys(fn ($br) => [$br->name => $fig(Report::figures($from, $to, $br->id))])->all(),
-            'by_channel' => collect(Report::channels($from, $to, $b?->id)['rows'])->map(fn ($c) => ['channel' => $c['label'], 'revenue' => Report::money($c['cents']),
-                'share' => Report::pct($c['share'], 0), 'orders' => $c['orders'], 'vs_last_year' => $c['vs'] === null ? 'no data' : sprintf('%+.1f%%', $c['vs'])])->all(),
+        return ['from' => $from->format('Y-m-d'), 'to' => $to->format('Y-m-d'), 'compared_with' => $range->compareLabel() ?? 'nothing',
+            'history_starts' => $range->min->format('Y-m-d'),
+            'note' => 'change: percent change against the comparison range, conversion in points. GA4 runs a little below the store’s own totals.',
+            'total' => $fig(Report::figures($from, $to, $b?->id, $vs)),
+            'by_brand' => $b ? null : Revenue::brands()->mapWithKeys(fn ($br) => [$br->name => $fig(Report::figures($from, $to, $br->id, $vs))])->all(),
+            'by_channel' => collect(Report::channels($from, $to, $b?->id, $vs)['rows'])->map(fn ($c) => ['channel' => $c['label'], 'revenue' => Report::money($c['cents']),
+                'share' => Report::pct($c['share'], 0), 'orders' => $c['orders'], 'change' => $c['vs'] === null ? 'no data' : sprintf('%+.1f%%', $c['vs'])])->all(),
             'pace_this_month' => Report::pace(Report::figures(Report::today()->startOfMonth(), Report::today(), $b?->id)['cents'], $b?->id)];
     }
 
     private function toolRevenueTrend(array $a): array
     {
         $b = $this->brand($a['brand'] ?? null);
-        $from = $this->today()->startOfMonth()->subMonths(24);
-        $rows = DB::table('revenue_days')->where('day', '>=', $from->format('Y-m-d'))->when($b, fn ($q) => $q->where('brand_id', $b->id))->get(['day', 'brand_id', 'sessions', 'orders', 'revenue_cents']);
+        // Summed by month in the database, so years of history stay small.
+        $month = DB::connection()->getDriverName() === 'sqlite' ? "substr(day, 1, 7)" : "to_char(day, 'YYYY-MM')";
+        $rows = DB::table('revenue_days')->when($b, fn ($q) => $q->where('brand_id', $b->id))
+            ->selectRaw("brand_id, {$month} as m, sum(sessions) as s, sum(orders) as o, sum(revenue_cents) as c")->groupByRaw("brand_id, {$month}")->get();
         $names = Brand::pluck('name', 'id');
-        $months = $rows->groupBy(fn ($r) => $names[$r->brand_id] ?? 'Unknown')->map(fn ($rs) => $rs->groupBy(fn ($r) => substr((string) $r->day, 0, 7))->sortKeys()
-            ->map(fn ($m) => ['revenue' => Report::money((int) $m->sum('revenue_cents')), 'orders' => (int) $m->sum('orders'), 'sessions' => (int) $m->sum('sessions')]));
+        $months = $rows->groupBy(fn ($r) => $names[$r->brand_id] ?? 'Unknown')->map(fn ($rs) => $rs->sortBy('m')
+            ->mapWithKeys(fn ($r) => [$r->m => ['revenue' => Report::money((int) $r->c), 'orders' => (int) $r->o, 'sessions' => (int) $r->s]]));
 
-        return ['note' => 'Up to 24 months so the same month last year is included. The current month is partial.', 'by_brand' => $months->map->all()->all()];
+        return ['note' => 'Every stored month, back to the first month GA4 has. The current month is partial.', 'by_brand' => $months->map->all()->all()];
     }
 
     private function toolAffiliates(array $a): array
@@ -382,7 +407,22 @@ class Tools
             'click_rate' => $s['delivered'] ? round($s['clicks'] / $s['delivered'] * 100, 2).'%' : null, 'unsub_rate' => $s['delivered'] ? round($s['unsubs'] / $s['delivered'] * 100, 2).'%' : null,
             'buyers' => $s['orders'], 'revenue' => $s['value_cents'] !== null ? Report::money($s['value_cents']) : 'not tracked'];
 
-        return ['window' => 'last 30 days', 'order_values_tracked' => $r['values_ok'], 'list_size' => $r['profiles'],
+        $range = $this->range($a + ['period' => 'last30'], EmailHistory::firstDay(), 'previous');
+        $cmp = $range->comparison();
+        $sum = function (?array $t) {
+            if (! $t) {
+                return 'no data';
+            }
+            $row = fn ($k) => ['received' => $t[$k]['received'], 'open_rate' => Report::pct($t[$k]['open_rate'], 1), 'click_rate' => Report::pct($t[$k]['click_rate'], 2),
+                'unsub_rate' => Report::pct($t[$k]['unsub_rate'], 2), 'orders' => $t[$k]['orders'], 'revenue' => Report::money($t[$k]['revenue_cents'])];
+
+            return ['campaigns' => $row('campaign'), 'flows' => $row('flow'), 'total' => $row('email'), 'new_subscribers' => $t['subscribed'], 'all_order_events' => $t['all_orders']];
+        };
+
+        return ['range' => ['from' => $range->from->format('Y-m-d'), 'to' => $range->to->format('Y-m-d'), 'compared_with' => $range->compareLabel() ?? 'nothing',
+            'history_starts' => $range->min->format('Y-m-d'), 'now' => $sum(EmailHistory::totals(EmailHistory::days($range->from, $range->to))),
+            'then' => $cmp ? $sum(EmailHistory::totals(EmailHistory::days($cmp[0], $cmp[1]))) : null],
+            'window' => 'campaigns and flows lists: last 30 days', 'order_values_tracked' => $r['values_ok'], 'list_size' => $r['profiles'],
             'campaigns' => collect($r['campaigns'])->take(25)->map(fn ($c) => ['name' => $c['name'], 'sent' => $c['sent'], 'channel' => $c['channel']] + $rate($c))->all(),
             'flows' => collect($r['flows'])->map(fn ($f) => ['name' => $f['name']] + $rate($f))->all(), 'flow_totals' => $rate($r['flow_totals'])];
     }

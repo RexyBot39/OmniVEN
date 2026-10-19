@@ -2,7 +2,8 @@
 
 @use('App\Support\Revenue\Report')
 @php
-    $q = fn (array $extra = []) => array_filter(array_merge(['brand' => $brand?->slug, 'period' => $period], $extra), fn ($v) => $v !== null && $v !== '');
+    $q = fn (array $extra = []) => $range->query(array_merge(['brand' => $brand?->slug, 'metric' => $metric !== 'revenue' ? $metric : null], $extra));
+    $vsCol = $vsLabel ? 'vs '.$vsLabel : null;
     $maxShare = max(0.0001, collect($channels['rows'])->max('share') ?? 1);
 @endphp
 
@@ -38,43 +39,54 @@
             </div>
         @endif
 
-        <form class="sales-filters" method="GET" action="{{ route('sales') }}" aria-label="Choose brand and period">
-            <nav class="seg" aria-label="Period">
-                @foreach(Report::PERIODS as $key => $label)
-                    <a class="seg-b" href="{{ route('sales', $q(['period' => $key])) }}" aria-pressed="{{ $period === $key ? 'true' : 'false' }}">{{ $label }}</a>
-                @endforeach
-            </nav>
+        <div class="sales-filters">
             <nav class="sales-brands" aria-label="Brand">
                 <a href="{{ route('sales', $q(['brand' => null])) }}" @if(! $brand) aria-current="true" @endif>All brands</a>
                 @foreach($brands as $b)
                     <a href="{{ route('sales', $q(['brand' => $b->slug])) }}" @if($brand?->is($b)) aria-current="true" @endif><span class="dot" style="background:var(--c{{ $b->colorSlot() }})"></span>{{ $b->name }}</a>
                 @endforeach
             </nav>
-            <span class="sub">{{ $from->format('M j') }} – {{ $to->format('M j, Y') }}, compared with the same dates last year</span>
-        </form>
+        </div>
+        @include('partials.range-picker', ['range' => $range, 'route' => 'sales', 'keep' => ['brand' => $brand?->slug, 'metric' => $metric !== 'revenue' ? $metric : null]])
+        @if($status['history_from'] && $status['history_floor'] && $status['history_from'] > $status['history_floor'])
+            <p class="sub history-note">Still loading older history from GA4: in so far back to {{ \Carbon\Carbon::parse($status['history_from'])->format('M Y') }}, going back to {{ \Carbon\Carbon::parse($status['history_floor'])->format('M Y') }}. It adds a few months each refresh.</p>
+        @endif
 
-        <section class="tiles sales-tiles" aria-label="{{ Report::PERIODS[$period] }} at a glance">
-            <div class="tile"><span class="tl">Revenue</span><span class="tv">{{ Report::money($figures['cents']) }}</span>@include('partials.delta', ['v' => $figures['vs']['cents']])@include('partials.pace', ['p' => $pace])</div>
-            <div class="tile"><span class="tl">Orders</span><span class="tv">{{ number_format($figures['orders']) }}</span>@include('partials.delta', ['v' => $figures['vs']['orders']])</div>
-            <div class="tile"><span class="tl">Conversion rate</span><span class="tv">{{ Report::pct($figures['conv'], 2) }}</span>@include('partials.delta', ['v' => $figures['vs']['conv'], 'pts' => true])</div>
-            <div class="tile"><span class="tl">Average order</span><span class="tv">{{ Report::money($figures['aov_cents'] !== null ? (int) round($figures['aov_cents']) : null, true) }}</span>@include('partials.delta', ['v' => $figures['vs']['aov']])</div>
+        @php $prev = $figures['prev']; @endphp
+        <section class="tiles sales-tiles" aria-label="{{ $range->label() }} at a glance">
+            <div class="tile"><span class="tl">Revenue</span><span class="tv">{{ Report::money($figures['cents']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['cents'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? Report::money($prev['cents']) : 'No data' }} then</span>@endif @include('partials.pace', ['p' => $pace])</div>
+            <div class="tile"><span class="tl">Orders</span><span class="tv">{{ number_format($figures['orders']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['orders'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? number_format($prev['orders']) : 'No data' }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Sessions</span><span class="tv">{{ number_format($figures['sessions']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['sessions'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? number_format($prev['sessions']) : 'No data' }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Conversion rate</span><span class="tv">{{ Report::pct($figures['conv'], 2) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['conv'], 'pts' => true, 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? Report::pct($prev['conv'], 2) : 'No data' }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Average order</span><span class="tv">{{ Report::money($figures['aov_cents'] !== null ? (int) round($figures['aov_cents']) : null, true) }}</span>@if($vsLabel)@include('partials.delta', ['v' => $figures['vs']['aov'], 'vs' => $vsLabel])<span class="tile-was">{{ $prev ? Report::money($prev['aov_cents'] !== null ? (int) round($prev['aov_cents']) : null, true) : 'No data' }} then</span>@endif</div>
         </section>
 
         <section>
-            <div class="h2row"><h2>By channel</h2><span class="sub">Weekly bars: each channel’s last 8 weeks (Monday to Sunday), scaled to its own best week; the faded bar is this week so far.</span></div>
+            <div class="h2row"><h2>Over time</h2>
+                <nav class="seg" aria-label="Measure">
+                    @foreach(Report::METRICS as $k => [$label])
+                        <a class="seg-b" href="{{ route('sales', $q(['metric' => $k === 'revenue' ? null : $k])) }}" aria-pressed="{{ $metric === $k ? 'true' : 'false' }}">{{ $label }}</a>
+                    @endforeach
+                </nav>
+            </div>
+            @include('partials.trend', ['points' => $trend, 'fmt' => Report::METRICS[$metric][1], 'name' => Report::METRICS[$metric][0].', '.\App\Support\DateRange::span($range->from, $range->to), 'cmp' => $range->compareLabel(), 'grain' => $range->grain()])
+        </section>
+
+        <section>
+            <div class="h2row"><h2>By channel</h2><span class="sub">Weekly bars: each channel’s 8 weeks to {{ $channels['week_start']->addWeeks(7)->format('M j') }} (Monday to Sunday), scaled to its own best week; the faded bar is the last week.</span></div>
             @if(empty($channels['rows']))
                 <div class="empty">No sales recorded for this period yet.</div>
             @else
                 <div class="tablewrap">
                     <table class="sales-ch">
-                        <thead><tr><th>Channel</th><th class="n">Revenue</th><th>Share</th><th class="n">vs last year</th><th class="n">Orders</th><th class="n">Conv.</th><th>Last 8 weeks</th></tr></thead>
+                        <thead><tr><th>Channel</th><th class="n">Revenue</th><th>Share</th>@if($vsCol)<th class="n">{{ $vsCol }}</th>@endif<th class="n">Orders</th><th class="n">Conv.</th><th>Last 8 weeks</th></tr></thead>
                         <tbody>
                             @foreach($channels['rows'] as $r)
                                 <tr>
                                     <td><b>{{ $r['label'] }}</b></td>
                                     <td class="n">{{ Report::money($r['cents']) }}</td>
                                     <td><span class="share"><i style="width:{{ round($r['share'] / $maxShare * 100, 1) }}%"></i></span><span class="share-t">{{ Report::pct($r['share'], $r['share'] > 0 && $r['share'] < 0.01 ? 1 : 0) }}</span></td>
-                                    <td class="n">@include('partials.delta', ['v' => $r['vs']])</td>
+                                    @if($vsCol)<td class="n">@include('partials.delta', ['v' => $r['vs'], 'vs' => $vsLabel])</td>@endif
                                     <td class="n">{{ number_format($r['orders']) }}</td>
                                     <td class="n">{{ Report::pct($r['conv'], 2) }}</td>
                                     <td>
@@ -99,14 +111,14 @@
                 <div class="h2row"><h2>By brand</h2></div>
                 <div class="tablewrap">
                     <table class="sales-ch">
-                        <thead><tr><th>Brand</th><th class="n">Revenue</th><th class="n">vs last year</th>@if($period === 'mtd')<th>This month’s goal</th>@endif<th class="n">Orders</th><th class="n">Conv.</th><th class="n">Average order</th></tr></thead>
+                        <thead><tr><th>Brand</th><th class="n">Revenue</th>@if($vsCol)<th class="n">{{ $vsCol }}</th>@endif @if($isMtd)<th>This month’s goal</th>@endif<th class="n">Orders</th><th class="n">Conv.</th><th class="n">Average order</th></tr></thead>
                         <tbody>
                             @foreach($byBrand as $b)
                                 <tr>
                                     <td><a href="{{ route('sales', $q(['brand' => $b['brand']->slug])) }}"><span class="dot" style="background:var(--c{{ $b['brand']->colorSlot() }})"></span>{{ $b['brand']->name }}</a></td>
                                     <td class="n">{{ Report::money($b['cents']) }}</td>
-                                    <td class="n">@include('partials.delta', ['v' => $b['vs']['cents']])</td>
-                                    @if($period === 'mtd')<td>@if($brandPace[$b['brand']->id] ?? null)@include('partials.pace', ['p' => $brandPace[$b['brand']->id]])@else<span class="sub">No goal</span>@endif</td>@endif
+                                    @if($vsCol)<td class="n">@include('partials.delta', ['v' => $b['vs']['cents'], 'vs' => $vsLabel])</td>@endif
+                                    @if($isMtd)<td>@if($brandPace[$b['brand']->id] ?? null)@include('partials.pace', ['p' => $brandPace[$b['brand']->id]])@else<span class="sub">No goal</span>@endif</td>@endif
                                     <td class="n">{{ number_format($b['orders']) }}</td>
                                     <td class="n">{{ Report::pct($b['conv'], 2) }}</td>
                                     <td class="n">{{ Report::money($b['aov_cents'] !== null ? (int) round($b['aov_cents']) : null, true) }}</td>

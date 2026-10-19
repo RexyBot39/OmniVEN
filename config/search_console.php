@@ -22,6 +22,8 @@ return [
     // Search Console data runs about three days behind.
     'lag_days' => 3,
     'window_days' => 28,
+    // How far back daily totals are loaded: Search Console keeps 16 months.
+    'history_months' => 16,
     'refresh_minutes' => 360,
 
     // Content gaps: which non-branded searches need work. Impressions are over the last 28 days.

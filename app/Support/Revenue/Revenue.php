@@ -13,7 +13,8 @@ use Throwable;
 
 /**
  * Keeps revenue_days in step with GA4: the last few days on every refresh (GA4 keeps adjusting
- * them for a day or two), plus one more month of history per refresh until a year and a bit is in.
+ * them for a day or two), plus a few more months of history per refresh, back to the first month
+ * any brand's property has data (or the REVENUE_HISTORY_DAYS limit, if set).
  */
 class Revenue
 {
@@ -21,6 +22,7 @@ class Revenue
     private const ERROR = 'revenue:error';
     private const LOCK = 'revenue:refreshing';
     private const BACKFILLED = 'revenue:backfilled-to';
+    private const FLOOR = 'revenue:history-floor';
 
     public static function configured(): bool
     {
@@ -121,17 +123,14 @@ class Revenue
             $today = CarbonImmutable::now(config('app.timezone'))->startOfDay();
             self::sync($today->subDays(3), $today);
 
-            $floor = $today->subDays(config('revenue.backfill_days'));
+            $floor = self::floor($today);
             $reached = Cache::get(self::BACKFILLED);
             $reached = is_string($reached) ? CarbonImmutable::parse($reached, config('app.timezone')) : $today->subDays(3);
-            while ($reached->gt($floor)) {
+            for ($i = 0; $reached->gt($floor) && ($fullHistory || $i < config('revenue.backfill_months_per_refresh')); $i++) {
                 $start = $reached->subDays(31)->max($floor);
                 self::sync($start, $reached->subDay());
                 Cache::forever(self::BACKFILLED, $start->format('Y-m-d'));
                 $reached = $start;
-                if (! $fullHistory) {
-                    break;
-                }
             }
 
             Cache::forever(self::LAST_SYNC, now()->timestamp);
@@ -145,6 +144,40 @@ class Revenue
 
             return false;
         }
+    }
+
+    /**
+     * How far back to load: the first month any property has sessions (asked of GA4 once, then
+     * remembered), or REVENUE_HISTORY_DAYS back if that's set and later.
+     */
+    public static function floor(CarbonImmutable $today): CarbonImmutable
+    {
+        $tz = config('app.timezone');
+        $first = Cache::get(self::FLOOR);
+        if (! is_string($first)) {
+            $months = [];
+            foreach (config('revenue.ga4.properties') as $propertyId) {
+                foreach (Ga4::report($propertyId, config('revenue.ga4.earliest'), $today->format('Y-m-d'), ['yearMonth'], ['sessions']) as $r) {
+                    if ((int) ($r['m'][0] ?? 0) > 0 && preg_match('/^\d{6}$/', $r['d'][0] ?? '')) {
+                        $months[] = $r['d'][0];
+                    }
+                }
+            }
+            $first = $months ? substr(min($months), 0, 4).'-'.substr(min($months), 4, 2).'-01' : $today->subDays(400)->format('Y-m-d');
+            Cache::forever(self::FLOOR, $first);
+        }
+        $floor = CarbonImmutable::parse($first, $tz);
+        $limit = config('revenue.backfill_days');
+
+        return $limit ? $floor->max($today->subDays((int) $limit)) : $floor;
+    }
+
+    /** The first day with numbers stored, for "All history" and the date picker. */
+    public static function firstDay(): ?CarbonImmutable
+    {
+        $d = DB::table('revenue_days')->min('day');
+
+        return $d ? CarbonImmutable::parse(substr((string) $d, 0, 10), config('app.timezone')) : null;
     }
 
     /** Called on page views: if the numbers are stale, refresh them after the page has been sent. */
@@ -169,7 +202,7 @@ class Revenue
         })->afterResponse();
     }
 
-    /** @return array{last: ?CarbonImmutable, error: ?string, history_from: ?string} */
+    /** @return array{last: ?CarbonImmutable, error: ?string, history_from: ?string, history_floor: ?string} */
     public static function status(): array
     {
         $last = Cache::get(self::LAST_SYNC);
@@ -178,12 +211,13 @@ class Revenue
             'last' => is_numeric($last) ? CarbonImmutable::createFromTimestamp((int) $last, config('app.timezone')) : null,
             'error' => Cache::get(self::ERROR),
             'history_from' => Cache::get(self::BACKFILLED),
+            'history_floor' => Cache::get(self::FLOOR),
         ];
     }
 
     public static function forget(): void
     {
-        foreach ([self::LAST_SYNC, self::ERROR, self::LOCK, self::BACKFILLED, 'revenue:ga4:token'] as $k) {
+        foreach ([self::LAST_SYNC, self::ERROR, self::LOCK, self::BACKFILLED, self::FLOOR, 'revenue:ga4:token'] as $k) {
             Cache::forget($k);
         }
     }
