@@ -61,7 +61,8 @@ class Ga4
                 Cache::forget(self::TOKEN_CACHE);
             }
             if (! $res->successful()) {
-                throw new RuntimeException(self::explain($res->status(), $propertyId, (string) ($res->json('error.status') ?? '')));
+                $reasons = collect($res->json('error.details') ?? [])->pluck('reason')->filter()->implode(' ');
+                throw new RuntimeException(self::explain($res->status(), $propertyId, trim($reasons.' '.($res->json('error.status') ?? '')), (string) ($res->json('error.message') ?? '')));
             }
             foreach ($res->json('rows') ?? [] as $r) {
                 $rows[] = [
@@ -114,10 +115,15 @@ class Ga4
         return $token;
     }
 
-    private static function explain(int $status, string $propertyId, string $reason): string
+    private static function explain(int $status, string $propertyId, string $reason, string $message = ''): string
     {
+        $email = self::credentials()['client_email'] ?? 'the service account';
+
         return match (true) {
-            $status === 403 => "GA4 property {$propertyId} refused the service account (HTTP 403). In GA4 → Admin → Property access management, add the service account's email as a Viewer.",
+            // The API itself is switched off in the service account's Google Cloud project.
+            $status === 403 && (str_contains($reason, 'SERVICE_DISABLED') || str_contains($message, 'has not been used in project') || str_contains($message, 'is disabled')) =>
+                'The Google Analytics Data API is turned off for the service account’s Google Cloud project (HTTP 403). In Google Cloud → APIs & Services → Library, open “Google Analytics Data API” and click Enable, then wait a few minutes.',
+            $status === 403 => "GA4 property {$propertyId} refused {$email} (HTTP 403). Either that email isn’t a Viewer on this exact property (GA4 → Admin → Property access management), or {$propertyId} isn’t a property ID: property IDs are 9 digits, shown in GA4 → Admin → Property details (an 8-digit number is usually the account ID).",
             $status === 404, $reason === 'NOT_FOUND' => "GA4 property {$propertyId} wasn’t found (HTTP 404). Check the property ID in GA4_PROPERTIES.",
             $status === 400 => "GA4 rejected the report for property {$propertyId} (HTTP 400".($reason !== '' ? ', '.$reason : '').').',
             $status === 429 => 'GA4 quota reached for now (HTTP 429). It will try again later.',

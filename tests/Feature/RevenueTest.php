@@ -172,9 +172,21 @@ class RevenueTest extends TestCase
         $this->assertFalse(Revenue::refresh());
         $html = $this->actingAs($this->admin)->get('/sales')->getContent();
         $this->assertStringContainsString('The last update from GA4 failed.', $html);
-        $this->assertStringContainsString('email as a Viewer', $html);
+        $this->assertStringContainsString('isn’t a Viewer on this exact property', $html);
+        $this->assertStringContainsString('property IDs are 9 digits', $html);
         $this->assertStringContainsString('(HTTP 403)', $html);
         $this->assertStringNotContainsString('BEGIN PRIVATE KEY', $html);
+    }
+
+    public function test_a_switched_off_data_api_is_named_as_the_cause(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(fn (Request $r) => $r->url() === 'https://oauth2.googleapis.com/token'
+            ? Http::response(['access_token' => 'ya29.test', 'expires_in' => 3600])
+            : Http::response(['error' => ['status' => 'PERMISSION_DENIED', 'message' => 'Google Analytics Data API has not been used in project 123 before or it is disabled.',
+                'details' => [['@type' => 'type.googleapis.com/google.rpc.ErrorInfo', 'reason' => 'SERVICE_DISABLED']]]], 403));
+        $this->assertFalse(Revenue::refresh());
+        $this->assertStringContainsString('Google Analytics Data API is turned off', $this->actingAs($this->admin)->get('/sales')->getContent());
     }
 
     public function test_not_connected_shows_setup_steps_and_no_strip(): void
