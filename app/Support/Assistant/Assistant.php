@@ -107,6 +107,12 @@ class Assistant
         if ($tools) {
             $body['tools'] = $tools;
         }
+        return self::post($body);
+    }
+
+    /** One call to OpenAI's Responses API, with errors explained in plain words. The key never leaves the server. */
+    public static function post(array $body): array
+    {
         $res = Http::withToken((string) config('assistant.key'))->acceptJson()->asJson()
             ->connectTimeout(15)->timeout(config('assistant.timeout'))
             ->post(rtrim((string) config('assistant.url'), '/').'/responses', $body);
@@ -125,7 +131,7 @@ class Assistant
         return (array) $res->json();
     }
 
-    private static function text(array $res): string
+    public static function text(array $res): string
     {
         $parts = [];
         foreach ($res['output'] ?? [] as $o) {

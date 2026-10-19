@@ -55,6 +55,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/assistant', [\App\Http\Controllers\AssistantController::class, 'ask'])->middleware('throttle:12,1')->name('assistant.ask');
         Route::get('/assistant/c/{conversation}', [\App\Http\Controllers\AssistantController::class, 'show'])->name('assistant.show');
         Route::delete('/assistant/c/{conversation}', [\App\Http\Controllers\AssistantController::class, 'destroy'])->name('assistant.destroy');
+        Route::get('/assistant/taskbuddy', [\App\Http\Controllers\TaskBuddyController::class, 'index'])->name('taskbuddy');
+        Route::post('/assistant/taskbuddy', [\App\Http\Controllers\TaskBuddyController::class, 'start'])->middleware('throttle:10,1')->name('taskbuddy.start');
+        Route::get('/assistant/taskbuddy/{run}', [\App\Http\Controllers\TaskBuddyController::class, 'show'])->name('taskbuddy.show');
+        Route::get('/assistant/taskbuddy/{run}/status', [\App\Http\Controllers\TaskBuddyController::class, 'status'])->middleware('throttle:240,1')->name('taskbuddy.status');
+        Route::post('/assistant/taskbuddy/{run}/answer', [\App\Http\Controllers\TaskBuddyController::class, 'answer'])->middleware('throttle:20,1')->name('taskbuddy.answer');
+        Route::post('/assistant/taskbuddy/{run}/add', [\App\Http\Controllers\TaskBuddyController::class, 'add'])->middleware('throttle:20,1')->name('taskbuddy.add');
+        Route::delete('/assistant/taskbuddy/{run}', [\App\Http\Controllers\TaskBuddyController::class, 'destroy'])->name('taskbuddy.destroy');
         Route::get('/assistant/m/{message}', [\App\Http\Controllers\AssistantController::class, 'poll'])->middleware('throttle:240,1')->name('assistant.poll');
     });
     Route::get('/coverage', [\App\Http\Controllers\CoverageController::class, 'index'])->name('coverage');

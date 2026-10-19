@@ -15,6 +15,8 @@ return [
     // Earlier turns of the same conversation sent along for context.
     'history_turns' => 8,
     // Questions per person per day.
+    // TaskBuddy AI task lists per person per day.
+    'taskbuddy_daily_limit' => (int) env('OMNIVEN_TASKBUDDY_DAILY_LIMIT', 20),
     'daily_limit' => (int) env('OMNIVEN_ASSISTANT_DAILY_LIMIT', 40),
     // US dollars per million tokens, for the admin cost estimate only.
     'price' => ['input' => (float) env('OPENAI_PRICE_INPUT', 2.00), 'output' => (float) env('OPENAI_PRICE_OUTPUT', 10.00)],

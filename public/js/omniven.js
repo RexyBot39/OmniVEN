@@ -888,4 +888,29 @@ document.querySelector('[data-scroll-here]')?.scrollIntoView({ block: 'center' }
       else if (e.key === 'Escape') hide();
     });
   });
+  // ---- TaskBuddy AI: wait for the list, then reload; keep the Add button's count in step ----
+  const tbWait = document.querySelector('[data-tb-poll]');
+  if (tbWait) {
+    let tries = 0;
+    const check = () => {
+      tries++;
+      fetch(tbWait.dataset.tbPoll, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d && d.status !== 'pending') location.reload(); else if (tries < 150) setTimeout(check, tries < 10 ? 2500 : 5000); })
+        .catch(() => { if (tries < 150) setTimeout(check, 5000); });
+    };
+    setTimeout(check, 2500);
+  }
+  document.querySelectorAll('form[data-tb-review]').forEach((f) => {
+    const btn = f.querySelector('[data-tb-count]');
+    const sync = () => {
+      const n = f.querySelectorAll('[data-tb-keep]:checked').length;
+      btn.textContent = n ? 'Add ' + n + (n === 1 ? ' task' : ' tasks') : 'Tick a task to add';
+      btn.disabled = n === 0;
+      f.querySelectorAll('[data-tb-keep]').forEach((c) => c.closest('.tb-task').classList.toggle('off', !c.checked));
+    };
+    f.addEventListener('change', (e) => { if (e.target.matches('[data-tb-keep]')) sync(); });
+    f.addEventListener('submit', () => { btn.disabled = true; btn.textContent = 'Adding…'; });
+    sync();
+  });
 })();

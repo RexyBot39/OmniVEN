@@ -8,7 +8,10 @@
             <h1 class="form-h">Ask OmniVEN AI @include('partials.star', ['key' => 'page:30', 'label' => 'Ask OmniVEN AI'])</h1>
             <p class="sub">Ask about any brand, section, number or task. It looks things up across OmniVEN and suggests what to do next.</p>
         </div>
-        @if($configured)<a class="btn" href="{{ route('assistant') }}">+ New conversation</a>@endif
+        <div class="as-head-r">
+            @include('assistant.tabs')
+            @if($configured)<a class="btn" href="{{ route('assistant') }}">+ New conversation</a>@endif
+        </div>
     </div>
 
     @if(! $configured)
