@@ -100,9 +100,9 @@ class AffiliateScoreboardTest extends TestCase
         \Illuminate\Support\Facades\Cache::forever('affiliates:awin:last', now()->timestamp);
 
         $html = $this->actingAs($this->admin)->get('/affiliates')->assertOk()->getContent();
-        $this->assertStringContainsString('October 2026 so far', $html);
+        $this->assertStringContainsString('showing <b>October 2026</b> against <b>September 2026</b>', $html);
         $this->assertMatchesRegularExpression('#Affiliate sales</span><span class="tv">\$441</span>#', $html); // 230 CJ + 210.50 Awin
-        $this->assertStringContainsString('September: $300', $html);
+        $this->assertStringContainsString('$300 then', $html);
         $this->assertMatchesRegularExpression('#Pending commission</span><span class="tv">\$22</span>#', $html);
         $this->assertStringContainsString('Glasses Deals &lt;b&gt;Blog&lt;/b&gt;', $html, 'publisher names are escaped');
         $this->assertStringContainsString('Specs Review Site', $html);

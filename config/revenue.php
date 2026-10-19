@@ -14,6 +14,8 @@ return [
             ->mapWithKeys(fn ($p) => [strtolower($p[0]) => $p[1]])
             ->all(),
         'timeout' => 20,
+        // The earliest date the GA4 Data API accepts; history is loaded back to the first month with data.
+        'earliest' => '2015-08-14',
     ],
 
     // Besides admins, these people can see revenue (comma-separated emails).
@@ -24,8 +26,10 @@ return [
 
     // How stale the numbers may get before a page view refreshes them in the background.
     'refresh_minutes' => 30,
-    // How far back to fill in history (for last-year comparisons), a month at a time.
-    'backfill_days' => 400,
+    // History: everything GA4 has, back to each property's first month, unless REVENUE_HISTORY_DAYS
+    // sets a limit. Filled in a few months per refresh (or all at once with omniven:revenue-sync --history).
+    'backfill_days' => env('REVENUE_HISTORY_DAYS') ? (int) env('REVENUE_HISTORY_DAYS') : null,
+    'backfill_months_per_refresh' => 6,
 
     // Visits from these sources count as "AI assistants" whatever GA4's channel group says.
     'ai_sources' => ['chatgpt.com', 'chat.openai.com', 'openai.com', 'perplexity', 'gemini.google.com', 'bard.google.com', 'copilot.microsoft.com', 'claude.ai', 'you.com', 'meta.ai', 'deepseek', 'grok.com'],

@@ -48,6 +48,7 @@ class Klaviyo
         foreach ([self::REPORT, self::LAST, self::ERROR, 'klaviyo:refreshing'] as $k) {
             Cache::forget($k);
         }
+        EmailHistory::forget();
     }
 
     public static function refreshIfStale(): void
@@ -65,6 +66,7 @@ class Klaviyo
         dispatch(function () {
             try {
                 self::refresh();
+                EmailHistory::refresh();
             } finally {
                 Cache::forget('klaviyo:refreshing');
             }
@@ -134,7 +136,7 @@ class Klaviyo
         }
     }
 
-    private static function http(): PendingRequest
+    public static function http(): PendingRequest
     {
         return Http::withHeaders([
             'Authorization' => 'Klaviyo-API-Key '.config('klaviyo.key'),
@@ -143,7 +145,7 @@ class Klaviyo
         ])->asJson()->timeout(config('klaviyo.timeout'));
     }
 
-    private static function check(Response $res): Response
+    public static function check(Response $res): Response
     {
         if ($res->successful()) {
             return $res;

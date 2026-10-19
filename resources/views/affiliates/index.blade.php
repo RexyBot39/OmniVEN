@@ -18,7 +18,7 @@
                 <ol>
                     <li><b>CJ:</b> at developers.cj.com, create a Personal Access Token. In Railway set <code>CJ_API_TOKEN</code> to it and <code>CJ_ADVERTISER_ID</code> to our CID (top right in CJ Account Manager).</li>
                     <li><b>Awin:</b> in Awin, open your user menu → API credentials and copy the token. In Railway set <code>AWIN_API_TOKEN</code>. Our advertiser ID 95501 is already filled in; set <code>AWIN_REGION</code> if the program isn’t US.</li>
-                    <li>Optional: run <code>php artisan omniven:affiliate-sync --history</code> once to load the last 13 months now.</li>
+                    <li>Optional: run <code>php artisan omniven:affiliate-sync --history</code> once to load all the history now (otherwise it fills in a few months each hour).</li>
                 </ol>
             @else
                 <p class="sub">Ask an admin to connect them.</p>
@@ -31,28 +31,34 @@
             @endif
         @endforeach
 
-        <nav class="weeknav" aria-label="Choose month">
-            <a class="btn" href="{{ route('affiliates', ['month' => $month->subMonth()->format('Y-m')]) }}">← {{ $month->subMonth()->format('F') }}</a>
-            <strong>{{ $month->format('F Y') }}{{ $isCurrent ? ' so far' : '' }}</strong>
-            @unless($isCurrent)
-                <a class="btn" href="{{ route('affiliates', ['month' => $month->addMonth()->format('Y-m')]) }}">{{ $month->addMonth()->format('F') }} →</a>
-                <a class="mini" href="{{ route('affiliates') }}">Back to this month</a>
-            @endunless
-        </nav>
+        @include('partials.range-picker', ['range' => $range, 'route' => 'affiliates', 'presets' => \App\Http\Controllers\AffiliatesController::PRESETS])
+        @php
+            $span = $m1->eq($m2) ? $m1->format('F Y') : $m1->format('M Y').' – '.$m2->format('M Y');
+            $cmpSpan = $cmpMonths ? ($cmpMonths[0]->eq($cmpMonths[1]) ? $cmpMonths[0]->format('F Y') : $cmpMonths[0]->format('M Y').' – '.$cmpMonths[1]->format('M Y')) : null;
+            $p = $prevTotal;
+        @endphp
+        <p class="sub">Affiliate totals are kept by month: showing <b>{{ $span }}</b>@if($cmpSpan) against <b>{{ $cmpSpan }}</b>@endif.</p>
 
-        <section class="tiles sales-tiles" aria-label="{{ $month->format('F') }} at a glance">
-            <div class="tile"><span class="tl">Affiliate sales</span><span class="tv">{{ Report::money($total['sales']) }}</span><span class="sub">{{ $month->subMonth()->format('F') }}: {{ Report::money($prevTotal['sales']) }}</span></div>
-            <div class="tile"><span class="tl">Orders</span><span class="tv">{{ number_format($total['orders']) }}</span><span class="sub">{{ $month->subMonth()->format('F') }}: {{ number_format($prevTotal['orders']) }}</span></div>
-            <div class="tile"><span class="tl">Commission</span><span class="tv">{{ Report::money($total['comm']) }}</span><span class="sub">Cost of sale {{ Report::pct($total['sales'] > 0 ? $total['comm'] / $total['sales'] : null, 1) }}</span></div>
+        <section class="tiles sales-tiles" aria-label="{{ $span }} at a glance">
+            <div class="tile"><span class="tl">Affiliate sales</span><span class="tv">{{ Report::money($total['sales']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => \App\Support\DateRange::change($total['sales'], $p['sales'] ?? null), 'vs' => $vsLabel])<span class="tile-was">{{ $p ? Report::money($p['sales']) : 'No data' }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Orders</span><span class="tv">{{ number_format($total['orders']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => \App\Support\DateRange::change($total['orders'], $p['orders'] ?? null), 'vs' => $vsLabel])<span class="tile-was">{{ $p ? number_format($p['orders']) : 'No data' }} then</span>@endif</div>
+            <div class="tile"><span class="tl">Commission</span><span class="tv">{{ Report::money($total['comm']) }}</span>@if($vsLabel)@include('partials.delta', ['v' => \App\Support\DateRange::change($total['comm'], $p['comm'] ?? null), 'vs' => $vsLabel, 'lower' => true])@endif<span class="sub">Cost of sale {{ Report::pct($total['sales'] > 0 ? $total['comm'] / $total['sales'] : null, 1) }}{{ $p && $p['sales'] > 0 ? ' (was '.Report::pct($p['comm'] / $p['sales'], 1).')' : '' }}</span></div>
             <div class="tile"><span class="tl">Pending commission</span><span class="tv">{{ Report::money($total['pending']) }}</span><span class="sub">Not yet approved or paid</span></div>
-            <div class="tile"><span class="tl">Publishers with sales</span><span class="tv">{{ $active($month) }}</span><span class="sub">{{ $month->subMonth()->format('F') }}: {{ $active($month->subMonth()) }}</span></div>
+            <div class="tile"><span class="tl">Publishers with sales</span><span class="tv">{{ $activeNow }}</span>@if($vsLabel)<span class="tile-was">{{ $activePrev ?? '—' }} then</span>@endif</div>
         </section>
+
+        @if(count($chart) > 1)
+            <section>
+                <div class="h2row"><h2>Sales by month</h2></div>
+                @include('partials.trend', ['points' => $chart, 'fmt' => 'money', 'name' => 'Affiliate sales', 'cmp' => $vsLabel ? ucfirst($vsLabel) : null, 'grain' => 'month'])
+            </section>
+        @endif
 
         <section>
             <div class="h2row"><h2>By network</h2></div>
             <div class="tablewrap">
                 <table class="sales-ch">
-                    <thead><tr><th>Network</th><th class="n">Sales</th><th class="n">Orders</th><th class="n">Commission</th><th class="n">Cost of sale</th><th class="n">Pending</th><th class="n">Last month’s sales</th></tr></thead>
+                    <thead><tr><th>Network</th><th class="n">Sales</th><th class="n">Orders</th><th class="n">Commission</th><th class="n">Cost of sale</th><th class="n">Pending</th>@if($vsLabel)<th class="n">Sales then</th><th class="n">Change</th>@endif</tr></thead>
                     <tbody>
                         @foreach($networks as $key => $n)
                             <tr>
@@ -62,7 +68,7 @@
                                 <td class="n">{{ Report::money($n['now']?->comm !== null ? (int) $n['now']->comm : null) }}</td>
                                 <td class="n">{{ Report::pct($n['now'] && $n['now']->sales > 0 ? $n['now']->comm / $n['now']->sales : null, 1) }}</td>
                                 <td class="n">{{ Report::money($n['now']?->pending !== null ? (int) $n['now']->pending : null) }}</td>
-                                <td class="n">{{ Report::money($n['prev']?->sales !== null ? (int) $n['prev']->sales : null) }}</td>
+                                @if($vsLabel)<td class="n">{{ Report::money($n['prev']?->sales !== null ? (int) $n['prev']->sales : null) }}</td><td class="n">@include('partials.delta', ['v' => \App\Support\DateRange::change($n['now']->sales ?? null, $n['prev']->sales ?? null), 'vs' => $vsLabel])</td>@endif
                             </tr>
                         @endforeach
                     </tbody>
@@ -71,9 +77,9 @@
         </section>
 
         <section>
-            <div class="h2row"><h2>Top publishers</h2><span class="sub">{{ $month->format('F') }}, by sales</span></div>
+            <div class="h2row"><h2>Top publishers</h2><span class="sub">{{ $span }}, by sales</span></div>
             @if($publishers->isEmpty())
-                <div class="empty">No affiliate sales recorded for {{ $month->format('F') }} yet.</div>
+                <div class="empty">No affiliate sales recorded for {{ $span }} yet.</div>
             @else
                 <div class="tablewrap">
                     <table class="sales-ch">
@@ -97,15 +103,16 @@
         </section>
 
         <section>
-            <div class="h2row"><h2>Last 12 months</h2><span class="sub">Affiliate sales, both networks</span></div>
+            <div class="h2row"><h2>By month</h2><span class="sub">Affiliate sales, both networks{{ $trend->count() > 1 && ! $trend->first()['in_range'] ? ' · the 12 months to '.$m2->format('M Y') : '' }}</span></div>
             <div class="tablewrap">
                 <table class="sales-ch aff-trend">
-                    <thead><tr><th>Month</th><th>Sales</th><th class="n">Orders</th><th class="n">Commission</th><th class="n">Cost of sale</th></tr></thead>
+                    <thead><tr><th>Month</th><th>Sales</th>@if($vsLabel)<th class="n">vs {{ $vsLabel }}</th>@endif<th class="n">Orders</th><th class="n">Commission</th><th class="n">Cost of sale</th></tr></thead>
                     <tbody>
                         @foreach($trend->reverse() as $t)
                             <tr>
-                                <td><a href="{{ route('affiliates', ['month' => $t['month']->format('Y-m')]) }}">{{ $t['month']->format('M Y') }}</a></td>
+                                <td><a href="{{ route('affiliates', ['range' => 'custom', 'from' => $t['month']->format('Y-m-d'), 'to' => $t['month']->endOfMonth()->format('Y-m-d'), 'compare' => $range->compare]) }}">{{ $t['month']->format('M Y') }}</a></td>
                                 <td><span class="share wide"><i style="width:{{ round($t['sales'] / max(1, $trend->max('sales')) * 100, 1) }}%"></i></span><span class="share-t">{{ Report::money($t['sales']) }}</span></td>
+                                @if($vsLabel)<td class="n">@include('partials.delta', ['v' => \App\Support\DateRange::change($t['sales'], $t['then_sales']), 'vs' => $vsLabel])</td>@endif
                                 <td class="n">{{ number_format($t['orders']) }}</td>
                                 <td class="n">{{ Report::money($t['comm']) }}</td>
                                 <td class="n">{{ Report::pct($t['sales'] > 0 ? $t['comm'] / $t['sales'] : null, 1) }}</td>

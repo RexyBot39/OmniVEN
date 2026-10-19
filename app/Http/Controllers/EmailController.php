@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\DateRange;
+use App\Support\Email\EmailHistory;
 use App\Support\Email\Klaviyo;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /** Email & SMS health: the last 30 days of Klaviyo campaigns and flows, list growth, and what needs fixing. */
 class EmailController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         Klaviyo::refreshIfStale();
         $r = Klaviyo::report();
@@ -54,7 +57,19 @@ class EmailController extends Controller
             }
         }
 
+        // Any date range, from the daily history.
+        $range = DateRange::fromRequest($request, 'last30', 'previous', null, EmailHistory::firstDay());
+        $metric = array_key_exists((string) $request->query('metric'), EmailHistory::CHART) ? (string) $request->query('metric') : 'received';
+        $cmp = $range->comparison();
+
         return view('email.index', [
+            'range' => $range,
+            'vsLabel' => SalesController::vsLabel($range),
+            'metric' => $metric,
+            'hist' => EmailHistory::totals(EmailHistory::days($range->from, $range->to)),
+            'histPrev' => $cmp ? EmailHistory::totals(EmailHistory::days($cmp[0], $cmp[1])) : null,
+            'histTrend' => EmailHistory::trend($range, $metric),
+            'histStatus' => EmailHistory::status(),
             'configured' => Klaviyo::configured(),
             'status' => Klaviyo::status(),
             'r' => $r,

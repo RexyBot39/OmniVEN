@@ -5,7 +5,7 @@
 <main class="wrap sales">
     <div class="act-head">
         <div>
-            <div class="eyebrow"><span>Sales</span><span>From {{ \App\Support\BrandIcon::html('klaviyo', 'xs') }}Klaviyo</span><span>Last 30 days</span>@if($status['last'])<span>Updated {{ $status['last']->format('M j, g:i A') }}</span>@endif</div>
+            <div class="eyebrow"><span>Sales</span><span>From {{ \App\Support\BrandIcon::html('klaviyo', 'xs') }}Klaviyo</span>@if($status['last'])<span>Updated {{ $status['last']->format('M j, g:i A') }}</span>@endif</div>
             <h1 class="form-h">Email &amp; SMS @include('partials.star', ['key' => 'page:19', 'label' => 'Email & SMS'])</h1>
         </div>
         @include('partials.sales-nav')
@@ -38,6 +38,9 @@
             </section>
         @endif
 
+        @include('email.history')
+
+        <div class="h2row em-30"><h2>Last 30 days in detail</h2><span class="sub">Each campaign and flow, from Klaviyo’s reports</span></div>
         <section class="tiles sales-tiles" aria-label="Last 30 days">
             <div class="tile"><span class="tl">Buyers from email &amp; SMS</span><span class="tv">{{ number_format($campaignTotals['orders'] + $r['flow_totals']['orders']) }}</span><span class="sub">{{ number_format($campaignTotals['orders']) }} campaigns · {{ number_format($r['flow_totals']['orders']) }} flows</span></div>
             <div class="tile"><span class="tl">Revenue from email &amp; SMS</span><span class="tv">{{ $r['values_ok'] ? Report::money((int) (collect($r['campaigns'])->sum('value_cents') + ($r['flow_totals']['value_cents'] ?? 0))) : '—' }}</span><span class="sub">{{ $r['values_ok'] ? 'Credited by Klaviyo' : 'Orders carry no value yet' }}</span></div>

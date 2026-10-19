@@ -6,8 +6,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Sums revenue_days for the dashboard strip and the Sales page. Every comparison is with the same
- * calendar dates a year earlier; when there's no data for those dates the change is null (a gap).
+ * Sums revenue_days for the dashboard strip and the Sales page. Comparisons default to the same
+ * calendar dates a year earlier; pass another range (or false for none). When there's no data for
+ * the comparison dates the change is null (a gap), never a made-up zero.
  */
 class Report
 {
@@ -51,11 +52,21 @@ class Report
         return ['rows' => (int) $r->n, 'sessions' => (int) $r->sessions, 'orders' => (int) $r->orders, 'cents' => (int) $r->cents];
     }
 
-    /** A set of figures with last year's alongside: revenue, orders, conversion rate, average order. */
-    public static function figures(CarbonImmutable $from, CarbonImmutable $to, ?int $brandId = null): array
+    /** The comparison dates: given, none (false), or by default the same dates last year. */
+    private static function against(CarbonImmutable $from, CarbonImmutable $to, array|false|null $vs): ?array
+    {
+        return $vs === false ? null : ($vs ?? [$from->subYear(), $to->subYear()]);
+    }
+
+    /**
+     * A set of figures with the comparison's alongside: revenue, orders, sessions, conversion rate,
+     * average order. 'prev' holds the comparison's own figures.
+     */
+    public static function figures(CarbonImmutable $from, CarbonImmutable $to, ?int $brandId = null, array|false|null $vs = null): array
     {
         $now = self::totals($from, $to, $brandId);
-        $ly = self::totals($from->subYear(), $to->subYear(), $brandId);
+        $cmp = self::against($from, $to, $vs);
+        $ly = $cmp ? self::totals($cmp[0], $cmp[1], $brandId) : ['rows' => 0, 'sessions' => 0, 'orders' => 0, 'cents' => 0];
         $hasLy = $ly['rows'] > 0;
 
         $conv = fn ($t) => $t['sessions'] > 0 ? $t['orders'] / $t['sessions'] : null;
@@ -68,9 +79,11 @@ class Report
             'sessions' => $now['sessions'],
             'conv' => $conv($now),
             'aov_cents' => $aov($now),
+            'prev' => $hasLy ? ['cents' => $ly['cents'], 'orders' => $ly['orders'], 'sessions' => $ly['sessions'], 'conv' => $conv($ly), 'aov_cents' => $aov($ly)] : null,
             'vs' => [
                 'cents' => $hasLy ? self::change($now['cents'], $ly['cents']) : null,
                 'orders' => $hasLy ? self::change($now['orders'], $ly['orders']) : null,
+                'sessions' => $hasLy ? self::change($now['sessions'], $ly['sessions']) : null,
                 // Conversion rate: the change in percentage points.
                 'conv' => $hasLy && $conv($now) !== null && $conv($ly) !== null ? ($conv($now) - $conv($ly)) * 100 : null,
                 'aov' => $hasLy && $aov($now) !== null && $aov($ly) !== null ? self::change($aov($now), $aov($ly)) : null,
@@ -96,7 +109,7 @@ class Report
      * Revenue by channel for a range: each channel's figures, share, change on last year, and
      * revenue for each of the last eight weeks (Monday to Sunday, the current week so far last).
      */
-    public static function channels(CarbonImmutable $from, CarbonImmutable $to, ?int $brandId = null): array
+    public static function channels(CarbonImmutable $from, CarbonImmutable $to, ?int $brandId = null, array|false|null $vs = null): array
     {
         $sum = function (CarbonImmutable $a, CarbonImmutable $b) use ($brandId) {
             $q = DB::table('revenue_days')->whereBetween('day', [$a->format('Y-m-d'), $b->format('Y-m-d')]);
@@ -108,12 +121,14 @@ class Report
                 ->get()->keyBy('channel');
         };
         $now = $sum($from, $to);
-        $ly = $sum($from->subYear(), $to->subYear());
+        $cmp = self::against($from, $to, $vs);
+        $ly = $cmp ? $sum($cmp[0], $cmp[1]) : collect();
         $hasLy = $ly->sum('n') > 0;
         $total = max(1, (int) $now->sum('cents'));
 
-        $weekStart = self::today()->startOfWeek(CarbonImmutable::MONDAY)->subWeeks(7);
-        $wq = DB::table('revenue_days')->where('day', '>=', $weekStart->format('Y-m-d'));
+        // The eight weeks ending with the range's last week.
+        $weekStart = $to->min(self::today())->startOfWeek(CarbonImmutable::MONDAY)->subWeeks(7);
+        $wq = DB::table('revenue_days')->whereBetween('day', [$weekStart->format('Y-m-d'), $weekStart->addWeeks(8)->subDay()->format('Y-m-d')]);
         if ($brandId) {
             $wq->where('brand_id', $brandId);
         }
@@ -143,6 +158,7 @@ class Report
                 'sessions' => $sessions,
                 'share' => $cents / $total,
                 'conv' => $sessions > 0 ? $orders / $sessions : null,
+                'prev_cents' => $hasLy ? (int) ($l->cents ?? 0) : null,
                 'vs' => $hasLy && $l && (int) $l->cents > 0 ? self::change($cents, (int) $l->cents) : null,
                 'weeks' => array_map(fn ($i) => $weekly[$key][$i] ?? 0, range(0, 7)),
             ];
@@ -150,6 +166,58 @@ class Report
         usort($rows, fn ($a, $b) => $b['cents'] <=> $a['cents']);
 
         return ['rows' => $rows, 'has_ly' => $hasLy, 'week_start' => $weekStart];
+    }
+
+    public const METRICS = [
+        'revenue' => ['Revenue', 'money'],
+        'orders' => ['Orders', 'int'],
+        'sessions' => ['Sessions', 'int'],
+        'conv' => ['Conversion rate', 'pct'],
+        'aov' => ['Average order', 'money'],
+    ];
+
+    /** Daily sums for a range: day => [sessions, orders, cents]. */
+    public static function daily(CarbonImmutable $from, CarbonImmutable $to, ?int $brandId = null, ?string $channel = null): array
+    {
+        $q = DB::table('revenue_days')->whereBetween('day', [$from->format('Y-m-d'), $to->format('Y-m-d')]);
+        if ($brandId) {
+            $q->where('brand_id', $brandId);
+        }
+        if ($channel) {
+            $q->where('channel', $channel);
+        }
+        $out = [];
+        foreach ($q->groupBy('day')->selectRaw('day, sum(sessions) as s, sum(orders) as o, sum(revenue_cents) as c')->get() as $r) {
+            $out[substr((string) $r->day, 0, 10)] = ['s' => (int) $r->s, 'o' => (int) $r->o, 'c' => (int) $r->c];
+        }
+
+        return $out;
+    }
+
+    /** Chart points for one measure across a picked range, with its comparison lined up. */
+    public static function trend(\App\Support\DateRange $range, string $metric, ?int $brandId = null, ?string $channel = null): array
+    {
+        $now = self::daily($range->from, $range->to, $brandId, $channel);
+        $cmp = $range->comparison();
+        $then = $cmp ? self::daily($cmp[0], $cmp[1], $brandId, $channel) : null;
+        $pick = fn (?array $rows, string $k) => $rows === null ? null : array_map(fn ($r) => $r[$k], $rows);
+        $ratio = function (string $num, string $den) use ($range, $now, $then, $pick) {
+            $n = $range->series($pick($now, $num), $pick($then, $num));
+            $d = $range->series($pick($now, $den), $pick($then, $den));
+
+            return array_map(fn ($p, $q) => array_merge($p, [
+                'v' => $q['v'] > 0 ? $p['v'] / $q['v'] : null,
+                'c' => $p['c'] !== null && $q['c'] > 0 ? $p['c'] / $q['c'] : null,
+            ]), $n, $d);
+        };
+
+        return match ($metric) {
+            'orders' => $range->series($pick($now, 'o'), $pick($then, 'o')),
+            'sessions' => $range->series($pick($now, 's'), $pick($then, 's')),
+            'conv' => $ratio('o', 's'),
+            'aov' => $ratio('c', 'o'),
+            default => $range->series($pick($now, 'c'), $pick($then, 'c')),
+        };
     }
 
     /**

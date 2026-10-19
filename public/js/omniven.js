@@ -823,4 +823,69 @@ document.querySelector('[data-scroll-here]')?.scrollIntoView({ block: 'center' }
     appbar.addEventListener('click', (e) => { if (e.target.closest('.mainnav a, .mm-panel a')) drawer(false); });
     small.addEventListener('change', () => drawer(false));
   }
+  // ---- Date range picker: a preset or comparison applies at once; editing a date switches to custom dates ----
+  document.querySelectorAll('form[data-range-picker]').forEach((f) => {
+    const preset = f.querySelector('[data-rp-preset]');
+    const dates = f.querySelectorAll('[data-rp-date]');
+    const sync = () => dates.forEach((d) => { d.disabled = preset.value !== 'custom'; });
+    preset.addEventListener('change', () => {
+      sync();
+      if (preset.value === 'custom') dates[0].focus(); else f.requestSubmit();
+    });
+    dates.forEach((d) => {
+      d.disabled = false;
+      d.addEventListener('change', () => { preset.value = 'custom'; });
+    });
+    // Preset links leave the dates out of the address; custom keeps them.
+    f.addEventListener('submit', sync);
+    f.querySelector('[data-rp-compare]').addEventListener('change', () => { sync(); f.requestSubmit(); });
+  });
+
+  // ---- Trend charts: crosshair and tooltip on hover, arrow keys to step through points ----
+  document.querySelectorAll('figure[data-trend]').forEach((fig) => {
+    let d;
+    try { d = JSON.parse(fig.dataset.trend); } catch { return; }
+    const pts = d.pts || [];
+    if (!pts.length) return;
+    const area = fig.querySelector('.trend-area');
+    const cross = fig.querySelector('.trend-cross');
+    const dot = fig.querySelector('.trend-dot');
+    const tip = fig.querySelector('.trend-tip');
+    let at = -1;
+    const show = (i) => {
+      at = Math.max(0, Math.min(pts.length - 1, i));
+      const p = pts[at];
+      const x = pts.length > 1 ? at / (pts.length - 1) : 0.5;
+      cross.style.left = dot.style.left = (x * 100) + '%';
+      cross.hidden = false;
+      dot.hidden = p.y === null;
+      if (p.y !== null) dot.style.top = ((1 - p.y) * 100) + '%';
+      tip.replaceChildren();
+      const add = (cls, label, value) => {
+        const row = document.createElement('div'); row.className = cls;
+        const k = document.createElement('span'); k.textContent = label;
+        const v = document.createElement('b'); v.textContent = value;
+        row.append(k, v); tip.append(row);
+      };
+      const head = document.createElement('div'); head.className = 'tt-h'; head.textContent = p.l; tip.append(head);
+      add('tt-now', d.name.split(',')[0], p.v);
+      if (d.cmp && p.c !== null) add('tt-cmp', 'Then', p.c);
+      tip.hidden = false;
+      tip.classList.toggle('flip', x > 0.6);
+      tip.style.left = (x * 100) + '%';
+    };
+    const hide = () => { cross.hidden = dot.hidden = tip.hidden = true; at = -1; };
+    area.addEventListener('pointermove', (e) => {
+      const r = area.getBoundingClientRect();
+      show(Math.round(((e.clientX - r.left) / r.width) * (pts.length - 1)));
+    });
+    area.addEventListener('pointerleave', hide);
+    area.addEventListener('blur', hide);
+    area.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); show((at < 0 ? (e.key === 'ArrowRight' ? -1 : pts.length) : at) + (e.key === 'ArrowRight' ? 1 : -1)); }
+      else if (e.key === 'Home') { e.preventDefault(); show(0); }
+      else if (e.key === 'End') { e.preventDefault(); show(pts.length - 1); }
+      else if (e.key === 'Escape') hide();
+    });
+  });
 })();

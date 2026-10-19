@@ -149,13 +149,24 @@ class Affiliates
                 self::syncMonth($n, $this_->subMonth());
                 $reached = Cache::get("affiliates:$n:history");
                 $reached = is_string($reached) ? CarbonImmutable::parse($reached, config('app.timezone')) : $this_->subMonth();
-                while ($reached->gt($oldest)) {
-                    $reached = $reached->subMonth();
-                    self::syncMonth($n, $reached);
-                    Cache::forever("affiliates:$n:history", $reached->format('Y-m-d'));
-                    if (! $fullHistory) {
+                for ($i = 0; $reached->gt($oldest) && ($fullHistory || $i < config('affiliates.history_months_per_refresh')); $i++) {
+                    $month = $reached->subMonth();
+                    try {
+                        self::syncMonth($n, $month);
+                    } catch (RuntimeException $e) {
+                        // An old month that keeps failing is past what the network will report: history ends there.
+                        $fails = (int) Cache::get("affiliates:$n:history-fails") + 1;
+                        Cache::forever("affiliates:$n:history-fails", $fails);
+                        if ($fails >= 3) {
+                            Cache::forever("affiliates:$n:history", $oldest->format('Y-m-d'));
+                            Cache::forget("affiliates:$n:history-fails");
+                        }
+                        Log::info('Affiliate history stopped', ['network' => $n, 'month' => $month->format('Y-m'), 'error' => $e->getMessage()]);
                         break;
                     }
+                    Cache::forget("affiliates:$n:history-fails");
+                    $reached = $month;
+                    Cache::forever("affiliates:$n:history", $reached->format('Y-m-d'));
                 }
                 Cache::forever("affiliates:$n:last", now()->timestamp);
                 Cache::forget("affiliates:$n:error");
@@ -203,7 +214,7 @@ class Affiliates
     public static function forget(): void
     {
         foreach (array_keys(self::NETWORKS) as $n) {
-            foreach (['last', 'error', 'history'] as $k) {
+            foreach (['last', 'error', 'history', 'history-fails'] as $k) {
                 Cache::forget("affiliates:$n:$k");
             }
         }
