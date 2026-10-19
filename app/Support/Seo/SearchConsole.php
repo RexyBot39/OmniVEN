@@ -214,6 +214,7 @@ class SearchConsole
                 403 => "Search Console refused the service account for {$site} (HTTP 403). In Search Console → Settings → Users and permissions, add the service account’s email as a Restricted user.",
                 404 => "Search Console has no property {$site} (HTTP 404). Check SEARCH_CONSOLE_SITES; domain properties start with sc-domain:.",
                 429 => 'Search Console quota reached for now (HTTP 429). It will try again later.',
+                400 => "Search Console didn’t accept the property name {$site} (HTTP 400). Use sc-domain:example.com for a domain property, or the full address with its final slash (https://www.example.com/) for a URL-prefix property, exactly as Search Console’s property picker shows it.",
                 default => "Search Console answered HTTP {$res->status()} for {$site}.",
             });
         }
