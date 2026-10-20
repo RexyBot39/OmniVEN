@@ -46,6 +46,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/my-day/toggle', [\App\Http\Controllers\MyDayController::class, 'toggle'])->name('my-day.toggle');
     Route::post('/my-day/send', [\App\Http\Controllers\MyDayController::class, 'send'])->middleware('throttle:5,10')->name('my-day.send');
     Route::get('/seo', [\App\Http\Controllers\SeoController::class, 'index'])->name('seo');
+    // Metabase (metrics.39dg.net): browse, view questions and dashboards, write and save queries. Admins and revenue viewers.
+    Route::middleware('can:see-metabase')->prefix('metabase')->name('metabase')->controller(\App\Http\Controllers\MetabaseController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('/question/{card}', 'question')->whereNumber('card')->name('.question');
+        Route::get('/dashboard/{dashboard}', 'dashboard')->whereNumber('dashboard')->name('.dashboard');
+        Route::get('/query', 'query')->name('.query');
+        Route::post('/query', 'run')->middleware('throttle:30,1')->name('.run');
+        Route::post('/query/save', 'save')->middleware('throttle:10,1')->name('.save');
+    });
+
     // SEO suite on DataForSEO: overview, keyword research, rank tracking, competitors, backlinks, site audit, AI visibility.
     Route::middleware('can:use-seo')->prefix('seo-suite')->name('seo-suite')->controller(\App\Http\Controllers\SeoSuiteController::class)->group(function () {
         Route::get('/', 'overview');
