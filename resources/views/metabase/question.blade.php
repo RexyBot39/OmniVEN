@@ -17,7 +17,7 @@
                     @if($key !== 'auto')<a class="seg-b" href="{{ route('metabase.question', ['card' => $card['id'], 'as' => $key]) }}" aria-pressed="{{ $result->display($as) === $key ? 'true' : 'false' }}">{{ $label }}</a>@endif
                 @endforeach
             </nav>
-            @if($card['sql'] !== null)<a class="btn" href="{{ route('metabase.query', ['from' => $card['id']]) }}">Edit as a new query</a>@endif
+            @if($card['sql'] !== null && \App\Support\Metabase\MetabaseGuard::canWriteSql(auth()->user()))<a class="btn" href="{{ route('metabase.query', ['from' => $card['id']]) }}">Edit as a new query</a>@endif
         </div>
         <section>
             @include('metabase._result', ['res' => $result, 'as' => $as, 'name' => $card['name']])

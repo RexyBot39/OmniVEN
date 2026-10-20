@@ -5,13 +5,13 @@
 --}}
 @if(! $res->ok())
     <div class="callout warn-callout mb-err" role="status"><div><b>The query didn’t run.</b> {{ $res->error }}</div></div>
-@elseif($res->count === 0)
+@elseif($res->count === 0 && ! $res->capped)
     <div class="empty">No rows.</div>
 @else
     @php
         $shape = $res->display($as ?? 'auto');
         $m = $res->measure();
-        $limit = (int) config('metabase.show_rows');
+        $limit = (int) config('metabase.max_rows');
         $shown = array_slice($res->rows, 0, $limit);
     @endphp
     @if($shape === 'scalar')
@@ -44,7 +44,9 @@
             </tbody>
         </table>
     </div>
-    @if($res->count > count($shown))<p class="sub">Showing the first {{ number_format(count($shown)) }} of {{ number_format($res->count) }} rows. Open it in Metabase for the rest or to download.</p>@endif
     @if($shape !== 'table')</details>@endif
+    @endif
+    @if($res->capped || $res->maskedColumns())
+        <p class="sub mb-guard">@if($res->capped)OmniVEN shows at most {{ number_format(config('metabase.max_rows')) }} rows; group or filter the query to see the rest, or open it in Metabase. @endif @if($res->maskedColumns())Personal details are masked: {{ implode(', ', $res->maskedColumns()) }}.@endif</p>
     @endif
 @endif

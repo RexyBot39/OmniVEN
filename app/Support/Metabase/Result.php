@@ -14,8 +14,11 @@ class Result
 {
     public const DISPLAYS = ['auto' => 'Best fit', 'table' => 'Table', 'line' => 'Line', 'bar' => 'Bars', 'scalar' => 'Number'];
 
-    /** @param array<int, array{name: string, kind: string}> $cols */
-    public function __construct(public array $cols = [], public array $rows = [], public int $count = 0, public ?string $error = null)
+    /**
+     * @param array<int, array{name: string, kind: string, masked: bool}> $cols
+     * $capped: there were more rows than OmniVEN keeps (max_rows); the rest were dropped before anything saw them.
+     */
+    public function __construct(public array $cols = [], public array $rows = [], public int $count = 0, public ?string $error = null, public bool $capped = false)
     {
     }
 
@@ -35,9 +38,44 @@ class Result
         if (! is_array($data) || ! isset($data['cols'], $data['rows'])) {
             throw new RuntimeException('Metabase sent back a result OmniVEN can’t read.');
         }
-        $cols = array_map(fn ($c) => ['name' => (string) ($c['display_name'] ?? $c['name'] ?? ''), 'kind' => Metabase::kind((string) ($c['base_type'] ?? $c['effective_type'] ?? ''))], $data['cols']);
+        $cols = array_map(function ($c) {
+            $kind = Metabase::kind((string) ($c['base_type'] ?? $c['effective_type'] ?? ''));
+            $name = (string) ($c['display_name'] ?? $c['name'] ?? '');
 
-        return new self($cols, array_values($data['rows']), (int) ($body['row_count'] ?? count($data['rows'])));
+            return ['name' => $name, 'kind' => $kind,
+                'masked' => MetabaseGuard::sensitive((string) ($c['name'] ?? $name), $c['semantic_type'] ?? null, $kind) || MetabaseGuard::sensitive($name, null, $kind)];
+        }, $data['cols']);
+        // Only max_rows rows are kept, and personal details are masked before anything else sees them.
+        $max = (int) config('metabase.max_rows');
+        $rows = array_slice(array_values($data['rows']), 0, $max);
+        // A renamed column (email AS x) is caught by what's in it: text that mostly looks like emails or phone numbers.
+        foreach ($cols as $i => $c) {
+            if (! $c['masked'] && $c['kind'] === 'text' && MetabaseGuard::looksPersonal(array_column(array_slice($rows, 0, 50), $i))) {
+                $cols[$i]['masked'] = true;
+            }
+        }
+        $hide = array_keys(array_filter($cols, fn ($c) => $c['masked']));
+        if ($hide) {
+            $rows = array_map(function ($r) use ($hide) {
+                foreach ($hide as $i) {
+                    $r[$i] = MetabaseGuard::mask($r[$i] ?? null);
+                }
+
+                return $r;
+            }, $rows);
+            foreach ($hide as $i) {
+                $cols[$i]['kind'] = 'text';
+            }
+        }
+        $total = (int) ($body['row_count'] ?? count($data['rows']));
+
+        return new self($cols, $rows, count($rows), capped: $total > $max || count($data['rows']) > $max || isset($data['rows_truncated']));
+    }
+
+    /** Names of the columns shown masked. */
+    public function maskedColumns(): array
+    {
+        return array_values(array_map(fn ($c) => $c['name'], array_filter($this->cols, fn ($c) => $c['masked'] ?? false)));
     }
 
     public function ok(): bool

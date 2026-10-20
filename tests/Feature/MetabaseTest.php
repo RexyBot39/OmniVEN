@@ -158,7 +158,7 @@ class MetabaseTest extends TestCase
         $this->actingAs($admin)->post('/metabase/query/save', ['mode' => 'sql', 'db' => 2, 'sql' => 'select brand from orders', 'name' => 'Orders by brand', 'collection_id' => 3, 'display' => 'bar'])
             ->assertRedirect(route('metabase.question', 55));
         Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/api/card') && $r->method() === 'POST' && $r['collection_id'] === 3 && $r['display'] === 'bar' && $r['dataset_query']['native']['query'] === 'select brand from orders');
-        $this->assertDatabaseHas('activity_logs', ['action' => 'metabase.query', 'description' => 'Ran a SQL query in Metabase']);
+        $this->assertDatabaseHas('activity_logs', ['action' => 'metabase.query', 'description' => 'Ran a SQL query in Metabase (1 row)']);
         $this->assertDatabaseMissing('activity_logs', ['description' => "select brand, count(*) as orders from orders where note = 'delete me' group by 1"]);
     }
 

@@ -87,7 +87,7 @@ class Metabase
     /** One database's tables and their fields, for the simple query builder. */
     public static function tables(int $databaseId): array
     {
-        return self::cached("tables:$databaseId", function () use ($databaseId) {
+        return self::cached("tables2:$databaseId", function () use ($databaseId) {
             $r = self::get("/api/database/$databaseId/metadata");
             $tables = [];
             foreach ($r['tables'] ?? [] as $t) {
@@ -98,7 +98,8 @@ class Metabase
                     'id' => (int) $t['id'],
                     'name' => trim(($t['schema'] ?? '') !== '' && ($t['schema'] ?? '') !== 'public' ? $t['schema'].'.' : '').($t['display_name'] ?? $t['name']),
                     'fields' => array_values(array_map(fn ($f) => [
-                        'id' => (int) $f['id'], 'name' => (string) ($f['display_name'] ?? $f['name']), 'kind' => self::kind((string) ($f['base_type'] ?? '')),
+                        'id' => (int) $f['id'], 'name' => (string) ($f['display_name'] ?? $f['name']), 'kind' => $kind = self::kind((string) ($f['base_type'] ?? '')),
+                        'sensitive' => MetabaseGuard::sensitive((string) ($f['name'] ?? ''), $f['semantic_type'] ?? null, $kind) || MetabaseGuard::sensitive((string) ($f['display_name'] ?? ''), null, $kind),
                     ], array_filter($t['fields'] ?? [], fn ($f) => isset($f['id']) && ($f['visibility_type'] ?? 'normal') !== 'sensitive' && ($f['visibility_type'] ?? 'normal') !== 'retired'))),
                 ];
             }
@@ -131,8 +132,11 @@ class Metabase
         return Result::from(self::post("/api/card/$id/query", ['ignore_cache' => false]));
     }
 
-    /** A dashboard and its cards, each already run (in parallel), in Metabase's layout order. */
-    public static function dashboard(int $id): array
+    /**
+     * A dashboard and its cards, each already run (in parallel), in Metabase's layout order. $before is told how
+     * many cards will run, before any do, so the daily allowance can refuse it.
+     */
+    public static function dashboard(int $id, ?callable $before = null): array
     {
         $d = self::get("/api/dashboard/$id");
         $cards = collect($d['dashcards'] ?? $d['ordered_cards'] ?? [])
@@ -140,6 +144,9 @@ class Metabase
             ->take((int) config('metabase.dashboard_cards'));
 
         $runnable = $cards->filter(fn ($c) => isset($c['card_id'], $c['id']))->values();
+        if ($before) {
+            $before($runnable->count());
+        }
         $responses = $runnable->isEmpty() ? [] : Http::pool(fn (Pool $pool) => $runnable->map(fn ($c) => self::request($pool->as((string) $c['id']))
             ->post(config('metabase.url')."/api/dashboard/$id/dashcard/{$c['id']}/card/{$c['card_id']}/query", ['parameters' => []]))->all());
 
@@ -175,12 +182,18 @@ class Metabase
     {
         self::assertReadOnly($sql);
 
-        return Result::from(self::post('/api/dataset', ['database' => $databaseId, 'type' => 'native', 'native' => ['query' => $sql, 'template-tags' => (object) []]]));
+        return self::runQuery(['database' => $databaseId, 'type' => 'native', 'native' => ['query' => $sql, 'template-tags' => (object) []]]);
     }
 
+    /** New queries ask Metabase for at most max_rows rows, so the rest never leaves Metabase. */
     public static function runQuery(array $datasetQuery): Result
     {
-        return Result::from(self::post('/api/dataset', $datasetQuery));
+        $max = (int) config('metabase.max_rows');
+        if (isset($datasetQuery['query']['limit'])) {
+            $datasetQuery['query']['limit'] = min((int) $datasetQuery['query']['limit'], $max);
+        }
+
+        return Result::from(self::post('/api/dataset', $datasetQuery + ['constraints' => ['max-results' => $max, 'max-results-bare-rows' => $max]]));
     }
 
     /** Save a query as a new Metabase question; returns its id. */

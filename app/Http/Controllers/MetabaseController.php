@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Support\Activity;
 use App\Support\Metabase\Metabase;
+use App\Support\Metabase\LimitReached;
+use App\Support\Metabase\MetabaseGuard;
 use App\Support\Metabase\Result;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,16 +38,25 @@ class MetabaseController extends Controller
     {
         $as = array_key_exists((string) $request->query('as'), Result::DISPLAYS) ? (string) $request->query('as') : null;
 
-        return $this->safely(function () use ($card, $as) {
+        return $this->safely(function () use ($request, $card, $as) {
             $c = Metabase::card($card);
+            MetabaseGuard::allow($request->user());
+            $result = Metabase::runCard($card);
+            MetabaseGuard::record($request->user(), 1, count($result->rows));
 
-            return ['card' => $c, 'result' => Metabase::runCard($card), 'as' => $as ?? $c['display']];
+            return ['card' => $c, 'result' => $result, 'as' => $as ?? $c['display']];
         }, 'metabase.question', ['card' => null, 'result' => null, 'as' => 'auto']);
     }
 
-    public function dashboard(int $dashboard): View
+    public function dashboard(Request $request, int $dashboard): View
     {
-        return $this->safely(fn () => ['dash' => Metabase::dashboard($dashboard)], 'metabase.dashboard', ['dash' => null]);
+        return $this->safely(function () use ($request, $dashboard) {
+            $dash = Metabase::dashboard($dashboard, fn (int $n) => MetabaseGuard::allow($request->user(), $n));
+            $cards = array_filter($dash['cards'], fn ($c) => $c['type'] === 'card');
+            MetabaseGuard::record($request->user(), count($cards), array_sum(array_map(fn ($c) => count($c['result']->rows), $cards)));
+
+            return ['dash' => $dash];
+        }, 'metabase.dashboard', ['dash' => null]);
     }
 
     public function query(Request $request): View
@@ -62,8 +73,10 @@ class MetabaseController extends Controller
             }
         }
 
-        return $this->queryPage($request, ['sql' => $sql, 'db' => $db, 'table' => $request->integer('table') ?: null,
-            'mode' => $request->query('mode') === 'simple' ? 'simple' : 'sql']);
+        $sqlOk = MetabaseGuard::canWriteSql($request->user());
+
+        return $this->queryPage($request, ['sql' => $sqlOk ? $sql : null, 'db' => $db, 'table' => $request->integer('table') ?: null,
+            'mode' => $request->query('mode') === 'simple' || ! $sqlOk ? 'simple' : 'sql']);
     }
 
     /** Run the query (POST so SQL stays out of addresses and logs) and show the answer below it. */
@@ -72,8 +85,10 @@ class MetabaseController extends Controller
         $input = $this->validated($request);
         $result = null;
         try {
+            MetabaseGuard::allow($request->user());
             $result = $input['mode'] === 'sql' ? Metabase::runSql($input['db'], $input['sql']) : Metabase::runQuery($this->datasetQuery($input));
-            Activity::log('metabase.query', 'Ran a '.($input['mode'] === 'sql' ? 'SQL' : 'table').' query in Metabase');
+            MetabaseGuard::record($request->user(), 1, count($result->rows));
+            Activity::log('metabase.query', 'Ran a '.($input['mode'] === 'sql' ? 'SQL' : 'table').' query in Metabase ('.count($result->rows).' '.(count($result->rows) === 1 ? 'row' : 'rows').')');
         } catch (RuntimeException $e) {
             $result = Result::failed($e->getMessage());
         }
@@ -106,6 +121,8 @@ class MetabaseController extends Controller
 
     private function validated(Request $request): array
     {
+        abort_unless(MetabaseGuard::canQuery(), 403, 'New Metabase queries are switched off.');
+        abort_if($request->input('mode') === 'sql' && ! MetabaseGuard::canWriteSql($request->user()), 403, 'Only admins can write SQL here.');
         $v = $request->validate([
             'mode' => ['required', Rule::in(['sql', 'simple'])],
             'db' => ['required', 'integer'],
@@ -131,6 +148,11 @@ class MetabaseController extends Controller
         $table = collect(Metabase::tables($in['db']))->firstWhere('id', $in['table']) ?? throw new RuntimeException('Pick a table.');
         $fields = collect($table['fields'])->keyBy('id');
         $field = fn (?int $id) => $id && $fields->has($id) ? ['field', $id, null] : null;
+        // Listing or grouping by a personal detail would copy it out one value per row.
+        $personal = fn (?int $id) => $id && ($fields[$id]['sensitive'] ?? false);
+        if ($personal($in['group']) || $personal((int) (explode(':', (string) $in['measure'], 2)[1] ?? 0))) {
+            throw new RuntimeException('That column holds personal details (like emails, names or addresses), so it can’t be listed or grouped by here.');
+        }
 
         [$agg, $fid] = array_pad(explode(':', (string) $in['measure'], 2), 2, null);
         $aggregation = match ($agg) {
@@ -166,7 +188,8 @@ class MetabaseController extends Controller
             $base['error'] = $request->user()->can('admin') ? $e->getMessage() : 'Can’t reach Metabase right now. Try again in a minute.';
         }
 
-        return view('metabase.query', $state + $base + ['units' => self::UNITS]);
+        return view('metabase.query', $state + $base + ['units' => self::UNITS, 'sqlOk' => MetabaseGuard::canWriteSql($request->user()),
+            'canQuery' => MetabaseGuard::canQuery(), 'usage' => MetabaseGuard::usage($request->user())]);
     }
 
     /** Render a page; if Metabase fails, the page says so (admins see why). */
@@ -178,7 +201,9 @@ class MetabaseController extends Controller
         try {
             return view($view, $load() + ['error' => null]);
         } catch (RuntimeException $e) {
-            return view($view, $empty + ['error' => request()->user()->can('admin') ? $e->getMessage() : 'Can’t reach Metabase right now. Try again in a minute.']);
+            $plain = $e instanceof LimitReached || request()->user()->can('admin');
+
+            return view($view, $empty + ['error' => $plain ? $e->getMessage() : 'Can’t reach Metabase right now. Try again in a minute.']);
         }
     }
 }

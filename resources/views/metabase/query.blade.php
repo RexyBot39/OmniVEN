@@ -5,15 +5,19 @@
 <main class="wrap sales mb">
     @include('metabase._head', ['title' => 'New query', 'lede' => 'Ask the data a question: write SQL, or pick a table and what to count. Run it to see the answer; save it to share it in Metabase.'])
 
-    @if(\App\Support\Metabase\Metabase::configured() && ! $error)
+    @if(\App\Support\Metabase\Metabase::configured() && ! $error && ! $canQuery)
+        <div class="empty">New queries are switched off. Saved questions and dashboards still work under Browse.</div>
+    @elseif(\App\Support\Metabase\Metabase::configured() && ! $error)
         @php
             $mode = $mode ?? 'sql';
             $tableRow = collect($tables)->firstWhere('id', $table ?? null);
             $fieldsOf = fn ($kind = null) => collect($tableRow['fields'] ?? [])->when($kind, fn ($c) => $c->where('kind', $kind))->values();
+            // Personal details (emails, names, addresses…) can't be listed or grouped by.
+            $listable = fn ($kind = null) => $fieldsOf($kind)->reject(fn ($f) => $f['sensitive'] ?? false)->values();
             $display = $display ?? 'auto';
         @endphp
         <nav class="seo-tabs" aria-label="How to write it">
-            <a href="{{ route('metabase.query', ['db' => $db]) }}" @if($mode === 'sql') aria-current="page" @endif>SQL</a>
+            @if($sqlOk)<a href="{{ route('metabase.query', ['db' => $db]) }}" @if($mode === 'sql') aria-current="page" @endif>SQL</a>@endif
             <a href="{{ route('metabase.query', ['mode' => 'simple', 'db' => $db]) }}" @if($mode === 'simple') aria-current="page" @endif>Pick a table</a>
         </nav>
 
@@ -45,11 +49,11 @@
                                         <option value="{{ $agg }}:{{ $f['id'] }}" @selected(($measure ?? '') === $agg.':'.$f['id'])>{{ $word }} {{ $f['name'] }}</option>
                                     @endforeach
                                 @endforeach
-                                @foreach($fieldsOf('text') as $f)<option value="distinct:{{ $f['id'] }}" @selected(($measure ?? '') === 'distinct:'.$f['id'])>Different {{ $f['name'] }} values</option>@endforeach
+                                @foreach($listable('text') as $f)<option value="distinct:{{ $f['id'] }}" @selected(($measure ?? '') === 'distinct:'.$f['id'])>Different {{ $f['name'] }} values</option>@endforeach
                             </select>
                         </label>
                         <label>Grouped by
-                            <select name="group"><option value="">Nothing (one total)</option>@foreach($fieldsOf() as $f)<option value="{{ $f['id'] }}" @selected(($group ?? null) === $f['id'])>{{ $f['name'] }}</option>@endforeach</select>
+                            <select name="group"><option value="">Nothing (one total)</option>@foreach($listable() as $f)<option value="{{ $f['id'] }}" @selected(($group ?? null) === $f['id'])>{{ $f['name'] }}</option>@endforeach</select>
                         </label>
                         <label>Dates by
                             <select name="unit">@foreach($units as $k => $label)<option value="{{ $k }}" @selected(($unit ?? 'month') === $k)>{{ $label }}</option>@endforeach</select>
@@ -66,6 +70,7 @@
                 <div class="mb-run">
                     <label>Show as <select name="display">@foreach(Result::DISPLAYS as $k => $label)<option value="{{ $k }}" @selected($display === $k)>{{ $label }}</option>@endforeach</select></label>
                     <button class="btn primary" type="submit">Run</button>
+                    <span class="sub mb-usage">Today: {{ number_format($usage['queries']) }} of {{ number_format(config('metabase.daily_queries')) }} queries · {{ number_format($usage['rows']) }} of {{ number_format(config('metabase.daily_rows')) }} rows</span>
                     <details class="mb-save">
                         <summary class="btn">Save to Metabase…</summary>
                         <div class="mb-save-f">

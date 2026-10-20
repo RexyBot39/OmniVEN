@@ -21,6 +21,7 @@
             <li>In Metabase, open <b>Admin settings → Authentication → API keys</b> and create a key. Put it in a group that can see the collections and databases OmniVEN should use (view data and, for new queries, native query access).</li>
             <li>In Railway, set <code>METABASE_API_KEY</code>. If Metabase moves, also set <code>METABASE_URL</code> (now {{ config('metabase.url') }}).</li>
             <li>Make sure Metabase connects to the database with a read-only login. OmniVEN only runs queries that read data, but the database should enforce it too.</li>
+            <li>Lock the key down in Metabase too: give its group <b>no access</b> (or “Blocked”) to tables of customer records, no download permission, and native (SQL) access only to the databases admins need. OmniVEN also caps every query at {{ number_format(config('metabase.max_rows')) }} rows, limits each person to {{ number_format(config('metabase.daily_queries')) }} queries and {{ number_format(config('metabase.daily_rows')) }} rows a day, masks personal details and keeps SQL to admins.</li>
         </ol>
     </div>
 @elseif(! empty($error))
