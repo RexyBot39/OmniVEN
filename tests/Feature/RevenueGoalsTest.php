@@ -53,7 +53,6 @@ class RevenueGoalsTest extends TestCase
         $this->assertStringContainsString('53% of $120,000 goal · on pace', $html);
         $this->assertStringContainsString('60% of $100,000 goal · on pace', $html);
         $this->assertStringContainsString('20% of $20,000 goal · behind pace', $html);
-        $this->assertStringContainsString('% of $120,000 goal', $this->actingAs($this->admin)->get('/')->getContent(), 'dashboard strip shows pace too');
         $this->assertStringNotContainsString('goal ·', $this->actingAs($this->admin)->get('/sales?period=last30')->getContent(), 'pace only for this month');
 
         // Blank clears a goal.

@@ -123,22 +123,18 @@ class RevenueTest extends TestCase
         $this->assertFalse(Revenue::configured());
     }
 
-    public function test_dashboard_strip_shows_yesterday_month_and_brands_to_revenue_viewers_only(): void
+    public function test_sales_stays_off_the_home_page_and_only_revenue_viewers_reach_it(): void
     {
         $this->fakeGa4($this->sampleData());
         Revenue::refresh(true);
 
         $html = $this->actingAs($this->admin)->get('/')->assertOk()->getContent();
-        $strip = substr($html, strpos($html, 'class="rev wrap"'), 3000);
-        $this->assertStringContainsString('$2,261', $strip); // yesterday, both brands
-        $this->assertStringContainsString('9 orders', $strip);
-        $this->assertStringContainsString('$3,061', $strip); // month to date
-        $this->assertStringContainsString('▲ 206.1%', $strip); // vs Oct 1–16 last year ($1,000)
-        $this->assertStringContainsString('Ocusafe <b>$400</b>', $strip);
-        $this->assertStringContainsString('href="'.route('sales').'"', $html);
+        $this->assertStringNotContainsString('class="rev wrap"', $html, 'no sales block at the top of the home page');
+        $this->assertStringNotContainsString('$3,061', $html);
+        $this->assertStringContainsString('href="'.route('sales').'"', $html, 'Sales is still in the menu');
+        $this->assertMatchesRegularExpression('#Revenue</span><span class="tv">\$3,061</span>#', $this->actingAs($this->admin)->get('/sales')->getContent());
 
         $staffHtml = $this->actingAs($this->staff)->get('/')->getContent();
-        $this->assertStringNotContainsString('class="rev wrap"', $staffHtml);
         $this->assertStringNotContainsString('>Sales</a>', $staffHtml);
         $this->actingAs($this->staff)->get('/sales')->assertForbidden();
 
@@ -189,12 +185,11 @@ class RevenueTest extends TestCase
         $this->assertStringContainsString('Google Analytics Data API is turned off', $this->actingAs($this->admin)->get('/sales')->getContent());
     }
 
-    public function test_not_connected_shows_setup_steps_and_no_strip(): void
+    public function test_not_connected_shows_setup_steps(): void
     {
         config(['revenue.ga4.credentials' => null]);
         Http::preventStrayRequests();
         $this->actingAs($this->admin)->get('/sales')->assertOk()->assertSee('Connect Google Analytics 4')->assertSee('GA4_PROPERTIES');
-        $this->assertStringNotContainsString('class="rev wrap"', $this->actingAs($this->admin)->get('/')->getContent());
     }
 
     public function test_page_views_refresh_only_when_stale(): void

@@ -13,7 +13,6 @@
     <span class="hero-date">{{ now()->format('l, F j') }}</span>
 </section>
 
-@if($revenue)@include('partials.revenue-strip')@endif
 <div class="today wrap {{ $pulse ? 'has-p2p' : '' }}">
     @include('partials.hotlist')
     @if($pulse)@include('partials.pulsetopost')@endif
