@@ -1,5 +1,12 @@
 {{-- Date range and comparison for a report page. $range is an App\Support\DateRange; $route the page's route; $keep other filters to carry (e.g. brand); $presets limits the choices. --}}
 @php($presetList = array_intersect_key(\App\Support\DateRange::PRESETS, array_flip($presets ?? array_keys(\App\Support\DateRange::PRESETS))))
+<details class="rp-wrap">
+<summary class="rp-sum">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+    <b>{{ $range->label() }}</b>@if($range->preset !== 'custom')<span class="rp-dates-t">{{ \App\Support\DateRange::span($range->from, $range->to) }}</span>@endif
+    @if($range->compareLabel())<span class="rp-vs">compared with {{ $range->compareLabel() }}</span>@else<span class="rp-vs">no comparison</span>@endif
+    <span class="rp-change">Change</span>
+</summary>
 <form class="range-picker" method="GET" action="{{ route($route) }}" data-range-picker aria-label="Date range and comparison">
     @foreach(($keep ?? []) as $k => $v)
         @if($v !== null && $v !== '')<input type="hidden" name="{{ $k }}" value="{{ $v }}">@endif
@@ -22,10 +29,7 @@
             @endforeach
         </select>
     </label>
-    <button class="btn" type="submit">Apply</button>
-    <p class="rp-sum sub">
-        <b>{{ \App\Support\DateRange::span($range->from, $range->to) }}</b> ({{ number_format($range->days()) }} {{ $range->days() === 1 ? 'day' : 'days' }})
-        @if($range->compareLabel()) · compared with {{ $range->compareLabel() }}@endif
-        · history from {{ $range->min->format('M j, Y') }}
-    </p>
+    <button class="btn primary" type="submit">Apply</button>
+    <p class="rp-foot sub">{{ number_format($range->days()) }} {{ $range->days() === 1 ? 'day' : 'days' }} · history from {{ $range->min->format('M j, Y') }}</p>
 </form>
+</details>

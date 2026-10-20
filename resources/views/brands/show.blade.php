@@ -58,16 +58,19 @@
                                     </div>
                                     <div class="acct-actions">
                                         @include('partials.star', ['item' => $a])
-                                        @include('partials.request-access', ['item' => $a, 'return' => 'hub:'.$brand->slug])
                                         @if($a->openUrl())
                                             <a class="btn {{ $a->hasDirectLink() ? 'primary' : '' }}" href="{{ $a->openUrl() }}" data-lp="{{ $a->launchKey() }}" target="_blank" rel="noopener noreferrer" title="{{ $a->hasDirectLink() ? 'Opens this account' : 'No direct link yet: opens the platform sign-in' }}">Open ↗</a>
                                         @endif
-                                        @if($isAdmin)
-                                            <span class="acct-admin">
-                                            <a class="mini" href="{{ route('accounts.edit', [$a, 'return' => 'hub']) }}">Edit</a>
-                                            <form method="POST" action="{{ route('accounts.verify', [$a, 'return' => 'hub']) }}">@csrf<button class="mini linkbtn" type="submit">Mark verified</button></form>
-                                            </span>
-                                        @endif
+                                        <details class="more-menu" data-menu-lite>
+                                            <summary class="btn ghost icon-btn" aria-label="More for {{ $a->platformLabel() }}" title="More"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></summary>
+                                            <div class="more-pop">
+                                                @include('partials.request-access', ['item' => $a, 'return' => 'hub:'.$brand->slug])
+                                                @if($isAdmin)
+                                                    <a href="{{ route('accounts.edit', [$a, 'return' => 'hub']) }}">Edit</a>
+                                                    <form method="POST" action="{{ route('accounts.verify', [$a, 'return' => 'hub']) }}">@csrf<button type="submit">Mark verified</button></form>
+                                                @endif
+                                            </div>
+                                        </details>
                                     </div>
                                 </article>
                             @endforeach

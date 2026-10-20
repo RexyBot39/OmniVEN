@@ -1705,3 +1705,141 @@ details[data-menu] > summary::-webkit-details-marker{display:none}
 @media (max-width:640px){.as-head-r{justify-content:flex-start}.tb-task{grid-template-columns:1fr}.tb-keep input{margin-top:0}}
 .tb-q legend{float:left;width:100%}
 .tb-q > :not(legend){clear:both}
+
+/* ============================================================================
+   Streamlined look (layer on top of everything above): softer surfaces, fewer
+   borders and fills, quieter labels, and secondary controls tucked behind buttons.
+   ============================================================================ */
+:root{--line-soft:#E7ECF1;--shadow-sm:0 1px 2px rgb(16 24 40 / .05);--shadow-md:0 8px 24px -12px rgb(16 24 40 / .18);--bg:#F6F8FA}
+@media (prefers-color-scheme:dark){:root{--line-soft:#1B2C41;--shadow-sm:0 1px 2px rgb(0 0 0 / .3);--shadow-md:0 10px 28px -12px rgb(0 0 0 / .6);--bg:#08121F}}
+
+/* Surfaces: one hairline, a whisper of shadow, rounder corners */
+.card,.tool,.acct-card,.note,.tile,.tablewrap,.trend,.range-picker,.today .hotlist,.rev-in,.empty{border-color:var(--line-soft)}
+.card,.tool,.acct-card,.note,.tile,.trend,.today .hotlist,.rev-in{box-shadow:var(--shadow-sm);border-radius:14px}
+.tablewrap{border-radius:14px}
+.empty{background:transparent;border-style:solid;color:var(--muted);font-size:14.5px}
+.tile{padding:14px 18px}
+
+/* Labels: small caps eyebrows and section labels are quieter */
+.eyebrow{font-size:11px;letter-spacing:.07em;gap:4px 12px;opacity:.85}
+.cat-h{font-size:11px;letter-spacing:.07em}
+.cat-h::after{background:var(--line-soft)}
+.h2row h2{font-size:18px;font-weight:700}
+.form-h{font-size:26px;margin:6px 0 12px}
+.sub{color:var(--muted)}
+
+/* Pills: no outlined capitals; a small tinted label instead */
+.pill{font-family:var(--f-body);text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:600;border:0;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,currentColor 12%,transparent)}
+.bpill{border:0;font-weight:600;background:transparent;padding:0;display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
+.bpill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--bc)}
+.rpill{border:0;background:transparent;padding:0;font-weight:600}
+
+/* Home: lighter hero, launchpad only when there's something on it */
+.hero{padding-block:20px 10px}
+.hero h1{font-size:clamp(22px,2.6vw,26px)}
+.hero-date{font-size:13.5px;color:var(--muted)}
+.lp-row.lp-empty{display:none}
+.launchpad{padding-block:0 8px}
+.lp-chip{border-color:var(--line-soft);box-shadow:var(--shadow-sm)}
+.today .hotlist{padding:12px 16px}
+.today .hot-item{background:transparent;border-left-width:2px;border-radius:0;padding:4px 10px}
+.today .hotlist .hot-items{gap:4px 14px}
+.hot-items:not(.show-all) > li:nth-child(n+5){display:none}
+.hot-more{margin-top:6px;background:none;border:0;padding:0;cursor:pointer;color:var(--accent);font:inherit;font-size:13px}
+.rev-in{border-left-width:1px;gap:8px 22px}
+
+/* Tabs bar: flatter */
+.bar{background:color-mix(in srgb,var(--bg) 94%,transparent);border-bottom-color:var(--line-soft)}
+.tabs{background:transparent;padding:0;gap:0}
+.tab{border-radius:0;padding:10px 12px;border-bottom:2px solid transparent}
+.tab[aria-selected="true"]{background:transparent;box-shadow:none;border-bottom-color:var(--teal);color:var(--ink)}
+
+/* Task board: plain columns, white cards with a thin brand edge; status shown in words, not fills */
+.bcol{background:transparent;padding:4px 0;gap:6px}
+.bcol.mine{box-shadow:none}
+.bcol.mine .bcol-h h3{color:var(--accent)}
+.bcol-h{position:relative;padding:0 2px 4px;border-bottom:1px solid var(--line-soft)}
+.bcol-plus{margin-left:auto;align-self:center;width:30px;height:30px;border-radius:50%;border:1px solid var(--line-soft);background:var(--surface);color:var(--accent);font-size:19px;line-height:1;cursor:pointer;display:grid;place-items:center;box-shadow:var(--shadow-sm)}
+.bcol-plus:hover,.bcol-plus[aria-expanded="true"]{border-color:var(--teal);background:var(--accent-soft)}
+.bcol-add{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:8px;box-shadow:var(--shadow-sm)}
+.bt{border:1px solid var(--line-soft);border-left:3px solid var(--bc,var(--line-soft));border-radius:10px;box-shadow:var(--shadow-sm);padding:9px 10px}
+.bt.overdue,.bt.is-hot{background:var(--surface);box-shadow:var(--shadow-sm)}
+.bt.is-hot .bt-t::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--coral);margin-left:6px;vertical-align:middle}
+.bt.routine{background:var(--surface);border:1px solid var(--line-soft);border-left:3px solid var(--routine)}
+.bt-d{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bt-m .pill.hot{display:none}
+.bt .mini{opacity:0;transition:opacity .15s}
+.bt:hover .mini,.bt:focus-within .mini{opacity:1}
+@media (hover:none){.bt .mini{opacity:1}}
+.tb-done{border-top:1px solid var(--line-soft);padding-top:14px}
+.btn.sm{padding:4px 10px;font-size:13px}
+
+/* ⋯ menus for secondary actions */
+.more-menu{position:relative;display:inline-block}
+.more-menu > summary{list-style:none}
+.more-menu > summary::-webkit-details-marker{display:none}
+.icon-btn{padding:6px 8px;color:var(--muted)}
+.more-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:220px;background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;box-shadow:var(--shadow-md);padding:6px;display:grid;gap:2px}
+.more-pop > a,.more-pop > button,.more-pop > form > button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:8px;border:0;background:none;color:var(--ink);font:inherit;font-size:14px;text-decoration:none;cursor:pointer}
+.more-pop > a:hover,.more-pop > button:hover,.more-pop > form > button:hover{background:var(--sunk)}
+.more-pop > button[aria-pressed="true"]{color:var(--accent);font-weight:600}
+.more-pop form{margin:0}
+.more-pop .tb-legend{display:flex;flex-wrap:wrap;gap:6px 12px;padding:8px 10px 4px;border-top:1px solid var(--line-soft);margin-top:4px;font-size:12.5px;color:var(--muted)}
+.more-pop .req{padding:4px 6px}
+.more-pop .req-d summary{padding:4px 4px}
+
+/* Brand hub accounts: one tidy row each */
+.acct-card{align-items:center;padding:10px 14px}
+.acct-meta{font-size:12px}
+.acct-meta .warn-t{color:var(--muted)}
+.acct-meta .warn-t::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--warn);margin-right:5px;vertical-align:middle}
+.acct-notes{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
+.acct-actions{display:flex;align-items:center;gap:6px}
+.gap-chip{border-color:var(--line-soft)}
+
+/* Tool directory: name and one line of purpose; brand labels on hover */
+.tool{padding:12px 14px}
+.tool .d{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;font-size:13px}
+.tool .foot{display:none}
+.tool:hover .foot,.tool:focus-within .foot{display:flex}
+.tool .acts{opacity:.55;transition:opacity .15s}
+.tool:hover .acts,.tool:focus-within .acts{opacity:1}
+
+/* Date range: a one-line summary that opens the picker */
+.rp-wrap{margin:2px 0 14px}
+.rp-sum{list-style:none;display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:8px 14px;border:1px solid var(--line-soft);border-radius:999px;background:var(--surface);box-shadow:var(--shadow-sm);cursor:pointer;font-size:14px;max-width:100%}
+.rp-sum::-webkit-details-marker{display:none}
+.rp-sum svg{color:var(--accent)}
+.rp-dates-t,.rp-vs{color:var(--muted)}
+.rp-change{color:var(--accent);font-weight:600}
+.rp-wrap[open] .rp-change{visibility:hidden}
+.rp-wrap .range-picker{margin:8px 0 0}
+.rp-foot{flex-basis:100%;margin:0}
+.range-picker .rp-sum{display:none}
+
+/* Forms and buttons a touch calmer */
+.btn{border-color:var(--line-soft);box-shadow:var(--shadow-sm)}
+.btn.ghost{box-shadow:none}
+.btn.primary{box-shadow:0 1px 2px rgb(4 38 78 / .25)}
+input[type=text],input[type=search],input[type=date],input[type=email],input[type=url],input[type=number],select,textarea{border-color:var(--line-soft)}
+
+/* Phones: a little more room, a little less chrome */
+@media (max-width:640px){
+  .hero{padding-block:14px 6px}
+  .today .hotlist .hot-items{grid-template-columns:1fr}
+  .acct-card{grid-template-columns:auto 1fr;row-gap:8px}
+  .acct-actions{grid-column:1/-1;justify-content:flex-end}
+  .rp-sum{border-radius:12px}
+}
+body:not(.is-filtering) .bcol-list:not(.show-all) > .bt:nth-child(n+7){display:none}
+body.is-filtering .bcol-more{display:none}
+.bcol-more{background:none;border:0;padding:4px 2px;cursor:pointer;color:var(--accent);font:inherit;font-size:13px;text-align:left}
+.acct-card .acct-actions{flex-direction:row;flex-wrap:nowrap;align-items:center}
+.more-pop .req{display:grid;justify-items:start;text-align:left}
+.more-pop .req-d summary{color:var(--ink);font-size:14px;font-weight:400;padding:8px 10px;border-radius:8px}
+.more-pop .req-d summary:hover{background:var(--sunk)}
+a.seg-b{text-decoration:none}
+.tool .t{padding-right:64px}
+.tool .acts{opacity:0}
+.tool:hover .acts,.tool:focus-within .acts{opacity:1}
+@media (hover:none){.tool .acts{opacity:1}}
