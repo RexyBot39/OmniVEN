@@ -36,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('see-revenue', fn (User $user) => \App\Support\Revenue\Revenue::canSee($user));
         // The assistant is hidden until an OpenAI key is set (admins still see its setup steps).
         Gate::define('use-assistant', fn (User $user) => \App\Support\Assistant\Assistant::configured() || $user->is_admin);
+        // Ocusafe opportunities are hidden until Tango is set up (admins still see its setup steps).
+        Gate::define('see-opportunities', fn (User $user) => \App\Support\Opportunities\Tango::configured() || $user->is_admin);
+        // Metabase holds sales data, so it's for admins and revenue viewers; hidden until its API key is set (admins see setup steps).
+        Gate::define('see-metabase', fn (User $user) => $user->is_admin || (\App\Support\Metabase\Metabase::configured() && \App\Support\Revenue\Revenue::canSee($user)));
         // The SEO suite is hidden until DataForSEO is set up (admins still see its setup steps); Backlinks is its own subscription.
         Gate::define('use-seo', fn (User $user) => \App\Support\Seo\DataForSeo::configured() || $user->is_admin);
         Gate::define('use-seo-backlinks', fn (User $user) => \App\Support\Seo\DataForSeo::backlinks() || $user->is_admin);

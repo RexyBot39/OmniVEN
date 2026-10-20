@@ -1007,3 +1007,127 @@ document.querySelector('[data-scroll-here]')?.scrollIntoView({ block: 'center' }
         document.querySelectorAll('.guide section.g-ch').forEach(function (s) { io.observe(s); });
     }
 })();
+
+// Task board: drag a task by its grip (mouse or touch) to change its place in a column; admins can also drop
+// it in another person's column to reassign it. With the grip focused, ↑ ↓ move it (← → between columns, admins).
+(function () {
+    var board = document.querySelector('.board[data-reorder]');
+    if (!board) return;
+    var admin = board.hasAttribute('data-admin'), me = board.dataset.me;
+    var live = document.createElement('p');
+    live.className = 'sr'; live.setAttribute('aria-live', 'polite');
+    board.appendChild(live);
+
+    var lists = function () { return Array.prototype.slice.call(board.querySelectorAll('.bcol-list')); };
+    var person = function (list) { return list.closest('.bcol').dataset.person; };
+    var tasksIn = function (list) { return Array.prototype.slice.call(list.querySelectorAll(':scope > .bt.task')); };
+    var allowed = function (list, card) { return admin || (person(list) === me && card.dataset.assignee === me); };
+    // Tasks sit above the column's routines.
+    var place = function (list, card, before) {
+        list.insertBefore(card, before || list.querySelector(':scope > .bt.routine, :scope > .bcol-empty'));
+    };
+    var tidy = function () {
+        lists().forEach(function (list) {
+            var empty = list.querySelector('.bcol-empty');
+            if (empty) empty.hidden = list.querySelector(':scope > .bt') !== null;
+            var count = list.closest('.bcol').querySelector('.bcol-h .sub');
+            var n = tasksIn(list).length;
+            if (count) count.firstChild.nodeValue = count.firstChild.nodeValue.replace(/^\d+ tasks?/, n + ' task' + (n === 1 ? '' : 's'));
+        });
+    };
+    var save = function (list, card, from) {
+        var body = { assignee_id: Number(person(list)), ids: tasksIn(list).map(function (c) { return Number(c.dataset.task); }) };
+        card.dataset.assignee = person(list);
+        tidy();
+        fetch(board.dataset.reorder, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            body: JSON.stringify(body)
+        }).then(function (res) {
+            if (!res.ok) throw new Error(res.status);
+            // A task that changed hands: the old column's order is saved too.
+            if (from && from !== list) return fetch(board.dataset.reorder, {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                body: JSON.stringify({ assignee_id: Number(person(from)), ids: tasksIn(from).map(function (c) { return Number(c.dataset.task); }) })
+            });
+        }).catch(function () {
+            live.textContent = 'Couldn’t save the new order. Reloading…';
+            setTimeout(function () { location.reload(); }, 900);
+        });
+    };
+    var announce = function (card, list) {
+        var name = list.closest('.bcol').querySelector('h3')?.textContent || '';
+        live.textContent = (card.querySelector('.bt-t')?.textContent || 'Task') + ': ' + (tasksIn(list).indexOf(card) + 1) + ' of ' + tasksIn(list).length + ' in ' + name + '.';
+    };
+
+    var drag = null;
+    board.addEventListener('pointerdown', function (e) {
+        var grip = e.target.closest('[data-grip]');
+        if (!grip || e.button > 0) return;
+        var card = grip.closest('.bt.task');
+        e.preventDefault();
+        var r = card.getBoundingClientRect();
+        var ghost = card.cloneNode(true);
+        ghost.classList.add('bt-ghost');
+        ghost.style.width = r.width + 'px';
+        ghost.style.left = r.left + 'px';
+        ghost.style.top = r.top + 'px';
+        document.body.appendChild(ghost);
+        card.classList.add('bt-placeholder');
+        drag = { card: card, ghost: ghost, dx: e.clientX - r.left, dy: e.clientY - r.top, from: card.parentNode, next: card.nextSibling, id: e.pointerId };
+        grip.setPointerCapture(e.pointerId);
+        document.body.classList.add('is-dragging');
+    });
+    board.addEventListener('pointermove', function (e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        drag.ghost.style.left = (e.clientX - drag.dx) + 'px';
+        drag.ghost.style.top = (e.clientY - drag.dy) + 'px';
+        if (e.clientY < 70) window.scrollBy(0, -12); else if (e.clientY > innerHeight - 50) window.scrollBy(0, 12);
+        var under = document.elementFromPoint(e.clientX, e.clientY);
+        var list = under && (under.closest('.bcol-list') || under.closest('.bcol')?.querySelector('.bcol-list'));
+        if (!list || !allowed(list, drag.card)) return;
+        var before = tasksIn(list).filter(function (c) { return c !== drag.card; }).find(function (c) {
+            var b = c.getBoundingClientRect();
+            return e.clientY < b.top + b.height / 2;
+        });
+        if (before !== drag.card.nextSibling || drag.card.parentNode !== list) place(list, drag.card, before);
+    });
+    var end = function (e, cancel) {
+        if (!drag || (e && e.pointerId !== drag.id)) return;
+        var d = drag;
+        drag = null;
+        d.ghost.remove();
+        d.card.classList.remove('bt-placeholder');
+        document.body.classList.remove('is-dragging');
+        if (cancel) {
+            d.from.insertBefore(d.card, d.next);
+            return;
+        }
+        if (d.card.parentNode !== d.from || d.card.nextSibling !== d.next) {
+            save(d.card.parentNode, d.card, d.from);
+            announce(d.card, d.card.parentNode);
+        }
+    };
+    board.addEventListener('pointerup', function (e) { end(e, false); });
+    board.addEventListener('pointercancel', function (e) { end(e, true); });
+    document.addEventListener('keydown', function (e) { if (drag && e.key === 'Escape') end(null, true); });
+
+    board.addEventListener('keydown', function (e) {
+        var grip = e.target.closest('[data-grip]');
+        if (!grip || drag || ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.key) === -1) return;
+        var card = grip.closest('.bt.task'), list = card.parentNode, from = list, sibs = tasksIn(list), i = sibs.indexOf(card);
+        if (e.key === 'ArrowUp' && i > 0) place(list, card, sibs[i - 1]);
+        else if (e.key === 'ArrowDown' && i < sibs.length - 1) place(list, card, sibs[i + 2] || null);
+        else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && admin) {
+            var all = lists(), j = all.indexOf(list) + (e.key === 'ArrowLeft' ? -1 : 1);
+            if (!all[j]) return;
+            list = all[j];
+            place(list, card, tasksIn(list)[0]);
+        } else return;
+        e.preventDefault();
+        grip.focus();
+        save(list, card, from);
+        announce(card, list);
+    });
+})();

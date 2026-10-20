@@ -46,6 +46,28 @@ Route::middleware('auth')->group(function () {
     Route::post('/my-day/toggle', [\App\Http\Controllers\MyDayController::class, 'toggle'])->name('my-day.toggle');
     Route::post('/my-day/send', [\App\Http\Controllers\MyDayController::class, 'send'])->middleware('throttle:5,10')->name('my-day.send');
     Route::get('/seo', [\App\Http\Controllers\SeoController::class, 'index'])->name('seo');
+    // Ocusafe opportunities: government bids for safety glasses, found daily through Tango.
+    Route::middleware('can:see-opportunities')->prefix('opportunities')->name('opportunities')->controller(\App\Http\Controllers\OpportunitiesController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::patch('/{opportunity}', 'update')->middleware('throttle:60,1')->name('.update');
+        Route::post('/{opportunity}/task', 'task')->middleware('throttle:30,1')->name('.task');
+        Route::middleware('can:admin')->group(function () {
+            Route::post('/terms', 'storeTerm')->name('.terms.store');
+            Route::delete('/terms/{term}', 'destroyTerm')->name('.terms.destroy');
+            Route::post('/refresh', 'refresh')->middleware('throttle:10,1')->name('.refresh');
+        });
+    });
+
+    // Metabase (metrics.39dg.net): browse, view questions and dashboards, write and save queries. Admins and revenue viewers.
+    Route::middleware('can:see-metabase')->prefix('metabase')->name('metabase')->controller(\App\Http\Controllers\MetabaseController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('/question/{card}', 'question')->whereNumber('card')->name('.question');
+        Route::get('/dashboard/{dashboard}', 'dashboard')->whereNumber('dashboard')->name('.dashboard');
+        Route::get('/query', 'query')->name('.query');
+        Route::post('/query', 'run')->middleware('throttle:30,1')->name('.run');
+        Route::post('/query/save', 'save')->middleware('throttle:10,1')->name('.save');
+    });
+
     // SEO suite on DataForSEO: overview, keyword research, rank tracking, competitors, backlinks, site audit, AI visibility.
     Route::middleware('can:use-seo')->prefix('seo-suite')->name('seo-suite')->controller(\App\Http\Controllers\SeoSuiteController::class)->group(function () {
         Route::get('/', 'overview');
@@ -144,6 +166,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/work/new', [\App\Http\Controllers\WorkController::class, 'create'])->name('work.create');
     Route::post('/work', [\App\Http\Controllers\WorkController::class, 'store'])->name('work.store');
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::post('/tasks/reorder', [TaskController::class, 'reorder'])->middleware('throttle:120,1')->name('tasks.reorder');
     Route::post('/tasks/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
     Route::post('/tasks/{task}/outcome', [TaskController::class, 'outcome'])->middleware('throttle:60,1')->name('tasks.outcome');
 

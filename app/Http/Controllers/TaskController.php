@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Support\Activity;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -26,6 +28,43 @@ class TaskController extends Controller
             : "Assigned “{$task->title}” to {$task->assignee->firstName()}.");
     }
 
+    /**
+     * A column's open tasks in the order someone dragged them into. Anyone can arrange their own column;
+     * admins can arrange anyone's, and dropping a task into another person's column reassigns it.
+     */
+    public function reorder(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'assignee_id' => ['required', 'integer', Rule::exists('users', 'id')->where('is_active', true)],
+            'ids' => ['required', 'array', 'max:500'],
+            'ids.*' => ['integer', 'distinct'],
+        ]);
+        $me = $request->user();
+        $assignee = User::findOrFail($data['assignee_id']);
+        abort_unless($me->is_admin || $assignee->is($me), 403);
+
+        $tasks = Task::open()->whereIn('id', $data['ids'])->get()->keyBy('id');
+        $moving = $tasks->filter(fn (Task $t) => $t->assignee_id !== $assignee->id);
+        abort_if($moving->isNotEmpty() && ! $me->is_admin, 403);
+
+        DB::transaction(function () use ($data, $tasks, $assignee, $me) {
+            foreach (array_values($data['ids']) as $i => $id) {
+                if ($t = $tasks->get($id)) {
+                    $t->fill(['board_sort' => $i + 1]);
+                    if ($t->assignee_id !== $assignee->id) {
+                        $t->fill(['assignee_id' => $assignee->id, 'assigned_at' => now(), 'assigned_by' => $me->id]);
+                    }
+                    $t->save();
+                }
+            }
+        });
+        foreach ($moving as $t) {
+            Activity::log('task.updated', "Moved task “{$t->title}” to {$assignee->name}’s column", $t);
+        }
+
+        return response()->json(['ok' => true, 'moved' => $moving->count()]);
+    }
+
     public function edit(Task $task): View
     {
         return view('tasks.form', ['task' => $task, 'people' => $this->people(), 'taskBrands' => Task::brandChoices()]);
@@ -36,7 +75,7 @@ class TaskController extends Controller
         $task->fill($this->validated($request));
         $reassigned = $task->isDirty('assignee_id');
         if ($reassigned) {
-            $task->fill(['assigned_at' => now(), 'assigned_by' => $request->user()->id]);
+            $task->fill(['assigned_at' => now(), 'assigned_by' => $request->user()->id, 'board_sort' => null]);
         }
         $task->save();
         Activity::log('task.updated', "Edited task “{$task->title}”".($reassigned ? " · reassigned to {$task->assignee->name}" : ''), $task);

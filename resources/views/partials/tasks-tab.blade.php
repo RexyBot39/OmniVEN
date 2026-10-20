@@ -26,7 +26,7 @@
         </div>
     </div>
 
-    <div class="board">
+    <div class="board" data-reorder="{{ route('tasks.reorder') }}" data-me="{{ $me->id }}" @can('admin') data-admin @endcan>
         @foreach($board as $col)
             @php($u = $col['user'])
             @php($due = $col['routines']->reject->isDone()->count())

@@ -66,6 +66,8 @@ class Launchpad
         37 => ['Backlinks', 'Sites linking to us, new and lost links', 'seo-suite.backlinks', null, 'use-seo-backlinks'],
         38 => ['Site audit', 'Technical SEO problems across each site', 'seo-suite.audit', null, 'use-seo'],
         39 => ['AI visibility', 'How often AI answers mention us, against competitors', 'seo-suite.ai', null, 'use-seo'],
+        40 => ['Metabase', 'Questions, dashboards and new queries from metrics.39dg.net', 'metabase', null, 'see-metabase'],
+        41 => ['Ocusafe bids & RFPs', 'Government bids for safety glasses, found daily', 'opportunities', null, 'see-opportunities'],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */

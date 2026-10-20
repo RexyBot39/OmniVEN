@@ -6,6 +6,7 @@
     @case('growth')<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>@break
     @case('search')<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2M11 8v6M8 11h6"/>@break
     @case('seo')<path d="M4 19h16"/><path d="M7 15l3-4 3 2 4-6"/><circle cx="17" cy="7" r="1.6"/>@break
+    @case('opportunities')<path d="M4 8h16v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M9 8V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3M4 13h16"/>@break
     @case('reputation')<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>@break
     @case('brands')<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>@break
     @case('guide')<path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h6M8 11h6"/>@break
