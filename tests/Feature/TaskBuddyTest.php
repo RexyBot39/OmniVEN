@@ -65,7 +65,7 @@ class TaskBuddyTest extends TestCase
     {
         config(['assistant.key' => null]);
         $this->actingAs($this->kay)->get('/assistant/taskbuddy')->assertForbidden();
-        $this->assertStringNotContainsString('<b>TaskBuddy AI</b>', $this->actingAs($this->kay)->get('/help')->getContent(), 'not in the menu until switched on');
+        $this->assertStringNotContainsString('>TaskBuddy AI</a>', $this->actingAs($this->kay)->get('/help')->getContent(), 'not in the menu until switched on');
 
         config(['assistant.key' => 'sk-test']);
         $html = $this->actingAs($this->kay)->get('/assistant')->assertOk()->getContent();
@@ -73,7 +73,7 @@ class TaskBuddyTest extends TestCase
         $html = $this->actingAs($this->kay)->get('/assistant/taskbuddy')->assertOk()->getContent();
         $this->assertStringContainsString('Make my task list', $html);
         $this->assertStringContainsString('enctype="multipart/form-data"', $html);
-        $this->assertStringContainsString('<b>TaskBuddy AI</b>', $html, 'in the Work menu');
+        $this->assertMatchesRegularExpression('#>TaskBuddy AI</a>#', $html, 'in the Work menu');
     }
 
     public function test_pasted_notes_become_questions_then_a_list_that_is_added_with_every_field(): void

@@ -810,38 +810,65 @@ document.querySelector('[data-scroll-here]')?.scrollIntoView({ block: 'center' }
   });
   const last = document.querySelector('.as-thread .as-msg:last-child');
   if (last && !location.hash) last.scrollIntoView({ block: 'start' });
-  // ---- Top menu: one panel open at a time; click outside or Esc closes; hamburger drawer on small screens ----
-  const appbar = document.getElementById('appbar');
-  if (appbar) {
-    const menus = [...document.querySelectorAll('details[data-menu]')];
+  const keep = (k, v) => { try { localStorage.setItem('omniven:' + k, v); } catch {} };
+  // ---- Sidebar (TailAdmin-style): collapses to icons on desktop, slides out on phones; account menu in the top bar ----
+  const shell = document.getElementById('shell');
+  if (shell) {
+    const root = document.documentElement;
     const toggle = document.getElementById('nav-toggle');
     const scrim = document.getElementById('nav-scrim');
-    const small = window.matchMedia('(max-width: 960px)');
-    const closeAll = (except) => menus.forEach((d) => { if (d !== except) d.open = false; });
-    const drawer = (open, keep) => {
-      appbar.classList.toggle('nav-open', open);
-      toggle.setAttribute('aria-expanded', String(open));
-      scrim.hidden = !open;
-      if (!open) closeAll(keep);
+    const sidebar = document.getElementById('sidebar');
+    const small = window.matchMedia('(max-width: 1023px)');
+    const me = document.querySelector('.me-menu');
+    const open = (on) => {
+      shell.classList.toggle('sb-open', on);
+      scrim.hidden = !on;
+      toggle.setAttribute('aria-expanded', String(on));
+      if (on) sidebar.querySelector('a, summary')?.focus();
     };
-    menus.forEach((d) => d.addEventListener('toggle', () => {
-      if (!d.open) return;
-      // In the drawer, sections work as an accordion; the account menu closes the drawer.
-      if (d.classList.contains('me-menu') && appbar.classList.contains('nav-open')) drawer(false, d);
-      else closeAll(d);
-    }));
-    toggle.addEventListener('click', () => drawer(!appbar.classList.contains('nav-open')));
-    scrim.addEventListener('click', () => drawer(false));
-    document.addEventListener('click', (e) => { if (!e.target.closest('#appbar')) { closeAll(); if (!small.matches) drawer(false); } });
+    toggle.addEventListener('click', () => {
+      if (small.matches) { open(!shell.classList.contains('sb-open')); return; }
+      const collapsed = root.classList.toggle('sb-collapsed');
+      keep('sidebar', collapsed ? 'collapsed' : 'open');
+      toggle.setAttribute('aria-expanded', String(!collapsed));
+    });
+    if (!small.matches) toggle.setAttribute('aria-expanded', String(!root.classList.contains('sb-collapsed')));
+    scrim.addEventListener('click', () => open(false));
+    sidebar.querySelector('[data-sidebar-close]')?.addEventListener('click', () => { open(false); toggle.focus(); });
+    small.addEventListener('change', () => open(false));
+    // Following a link (including a same-page dashboard tab) closes the phone menu.
+    sidebar.addEventListener('click', (e) => { if (e.target.closest('a') && small.matches) open(false); });
+    // Groups: one open at a time.
+    const groups = [...sidebar.querySelectorAll('details.sb-group')];
+    groups.forEach((g) => g.addEventListener('toggle', () => { if (g.open) groups.forEach((o) => { if (o !== g) o.open = false; }); }));
+    // Dashboard tab links light up for the tab on screen.
+    const markTab = () => {
+      const onDash = location.pathname === '/' || location.pathname === '';
+      const tab = onDash ? (location.hash.slice(1) || document.querySelector('.tab[aria-selected="true"]')?.dataset.tab || '') : '';
+      sidebar.querySelectorAll('[data-sb-hash]').forEach((a) => {
+        const on = onDash && a.dataset.sbHash === tab;
+        if (on) a.setAttribute('aria-current', 'page'); else if (a.getAttribute('aria-current') === 'page') a.removeAttribute('aria-current');
+        if (on && !groups.some((g) => g.open)) a.closest('details').open = true;
+      });
+    };
+    markTab();
+    window.addEventListener('hashchange', markTab);
+    document.addEventListener('click', (e) => { if (e.target.closest('.tab')) setTimeout(markTab, 0); });
+    // Account menu: click outside or Esc closes; Esc also closes the phone menu.
+    document.addEventListener('click', (e) => { if (me && me.open && !me.contains(e.target)) me.open = false; });
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
-      const open = menus.find((d) => d.open);
-      if (open) { open.open = false; open.querySelector('summary').focus(); } else if (appbar.classList.contains('nav-open')) { drawer(false); toggle.focus(); }
+      if (me && me.open) { me.open = false; me.querySelector('summary').focus(); } else if (shell.classList.contains('sb-open')) { open(false); toggle.focus(); }
     });
-    // Following a link (including a same-page tab link) closes everything.
-    appbar.addEventListener('click', (e) => { if (e.target.closest('.mainnav a, .mm-panel a')) drawer(false); });
-    small.addEventListener('change', () => drawer(false));
   }
+  // Light or dark: remembered on this device; with no choice it follows the device.
+  document.querySelectorAll('[data-theme-toggle]').forEach((b) => b.addEventListener('click', () => {
+    const root = document.documentElement;
+    const now = root.getAttribute('data-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = now === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    keep('theme', next);
+  }));
   // ---- Date range picker: a preset or comparison applies at once; editing a date switches to custom dates ----
   document.querySelectorAll('form[data-range-picker]').forEach((f) => {
     const preset = f.querySelector('[data-rp-preset]');
