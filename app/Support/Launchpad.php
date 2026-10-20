@@ -58,6 +58,7 @@ class Launchpad
         29 => ['Coverage', 'Which brands are missing which accounts', 'coverage', null, null],
         30 => ['Ask OmniVEN AI', 'Analysis and suggestions on any brand, number or task', 'assistant', null, 'use-assistant'],
         31 => ['TaskBuddy AI', 'Turn a document, file or notes into a task list', 'taskbuddy', null, 'use-assistant'],
+        32 => ['Staff guide', 'Every part of OmniVEN, in pictures', 'guide', null, null],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */

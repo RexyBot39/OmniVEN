@@ -22,7 +22,7 @@ class Menu
     ];
 
     /** Page ids that belong in the account menu instead of the main groups. */
-    public const ACCOUNT = [9, 11, 12, 13];
+    public const ACCOUNT = [32, 9, 11, 12, 13];
 
     /** Extra routes that light up a group (pages inside a section that aren't menu items themselves). */
     private const ALSO = [
