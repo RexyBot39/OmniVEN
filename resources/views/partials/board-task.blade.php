@@ -1,6 +1,6 @@
 {{-- One open task in a person's column, colored by brand. --}}
 @php($bc = $t->brand ? 'var(--c'.$t->brand->colorSlot().')' : 'var(--line)')
-<div class="bt task {{ $t->isOverdue() ? 'overdue' : '' }} {{ $t->hot ? 'is-hot' : '' }}" style="--bc:{{ $bc }}" data-assignee="{{ $t->assignee_id }}" data-brands="{{ $t->brand?->slug ?? 'all' }}" data-search="{{ strtolower($t->title.' '.$t->details.' '.$t->assignee?->name.' '.$t->brand?->name) }}">
+<div class="bt task {{ $t->isOverdue() ? 'overdue' : '' }} {{ $t->hot ? 'is-hot' : '' }}" style="--bc:{{ $bc }}" data-task="{{ $t->id }}" data-assignee="{{ $t->assignee_id }}" data-brands="{{ $t->brand?->slug ?? 'all' }}" data-search="{{ strtolower($t->title.' '.$t->details.' '.$t->assignee?->name.' '.$t->brand?->name) }}">
     @can('complete-task', $t)
         <form method="POST" action="{{ route('tasks.toggle', $t) }}">@csrf
             <button class="tick" type="submit" aria-pressed="false" aria-label="Mark done: {{ $t->title }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button>
@@ -20,5 +20,10 @@
         </div>
         @can('admin')@include('partials.stamps', ['assignedAt' => $t->assigned_at ?? $t->created_at, 'assignedBy' => $t->assigner ?? $t->creator, 'doneAt' => null, 'doneBy' => null])@endcan
     </div>
-    @can('admin')<a class="mini" href="{{ route('tasks.edit', $t) }}">Edit</a>@endcan
+    <div class="bt-acts">
+        @if(auth()->user()->is_admin || $t->assignee_id === auth()->id())
+            <button type="button" class="bt-grip" data-grip aria-label="Move “{{ $t->title }}”: drag, or use the arrow keys" title="Drag to move"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button>
+        @endif
+        @can('admin')<a class="mini" href="{{ route('tasks.edit', $t) }}">Edit</a>@endcan
+    </div>
 </div>

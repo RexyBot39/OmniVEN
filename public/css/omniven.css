@@ -2342,3 +2342,16 @@ tr.is-on td{background:var(--accent-soft)}
   .seo-share-bar{grid-column:1/-1;grid-row:2}
   .seo-search .btn{flex:1 1 100%;justify-content:center}
 }
+
+/* Task board drag and drop: the grip, the card being moved and the space it will drop into. */
+.bt-acts{display:flex;align-items:center;gap:2px}
+.bt-grip{border:0;background:transparent;color:var(--faint);cursor:grab;padding:3px;border-radius:4px;display:inline-flex;touch-action:none;opacity:0;transition:opacity .15s}
+.bt:hover .bt-grip,.bt-grip:focus-visible{opacity:1}
+.bt-grip:hover{color:var(--ink);background:var(--sunk)}
+.bt-grip:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+@media (hover:none){.bt-grip{opacity:1}}
+.bt-placeholder{opacity:.35;background:var(--accent-soft)!important}
+.bt-ghost{position:fixed;z-index:200;pointer-events:none;margin:0;box-shadow:var(--shadow-md);border:1px solid var(--teal)!important;border-left:3px solid var(--bc,var(--teal))!important;border-radius:4px!important;background:var(--surface);transform:rotate(1deg)}
+body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
+/* While dragging, every card in a column is reachable, not just the first six. */
+body.is-dragging:not(.is-filtering) .bcol-list:not(.show-all) > .bt:nth-child(n+7){display:grid}

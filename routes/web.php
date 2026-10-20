@@ -144,6 +144,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/work/new', [\App\Http\Controllers\WorkController::class, 'create'])->name('work.create');
     Route::post('/work', [\App\Http\Controllers\WorkController::class, 'store'])->name('work.store');
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::post('/tasks/reorder', [TaskController::class, 'reorder'])->middleware('throttle:120,1')->name('tasks.reorder');
     Route::post('/tasks/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
     Route::post('/tasks/{task}/outcome', [TaskController::class, 'outcome'])->middleware('throttle:60,1')->name('tasks.outcome');
 

@@ -158,8 +158,9 @@ class DashboardController extends Controller
 
         return $people->concat($others)->map(fn (User $u) => [
             'user' => $u,
+            // Tasks someone dragged into place keep that order; new ones go on top in the usual order (Hotlist, overdue, due date).
             'tasks' => $openTasks->where('assignee_id', $u->id)
-                ->sortBy(fn ($t) => [$t->hot ? 0 : 1, $t->isOverdue() ? 0 : 1, $t->due_on?->timestamp ?? PHP_INT_MAX, -$t->created_at->timestamp])->values(),
+                ->sortBy(fn ($t) => [$t->board_sort === null ? 0 : 1, $t->board_sort ?? 0, $t->hot ? 0 : 1, $t->isOverdue() ? 0 : 1, $t->due_on?->timestamp ?? PHP_INT_MAX, -$t->created_at->timestamp])->values(),
             'routines' => $routines->where('assignee_id', $u->id)
                 ->sortBy(fn ($r) => [$r->isDone() ? 1 : 0, $cadenceOrder[$r->cadence] ?? 9, $r->sort])->values(),
         ])->values();
