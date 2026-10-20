@@ -31,7 +31,12 @@
     <header class="help-head">
       <span class="eyebrow">Help · OmniVEN field guide</span>
       <h1>How to get the most out of OmniVEN @include('partials.star', ['key' => 'page:9', 'label' => 'Help'])</h1>
-      <p class="lede">Setup, every tab, shortcuts and the playbooks that save the most time{{ $isAdmin ? ', plus the admin pages for customizing and running OmniVEN' : '' }}. New here? Start with the <a href="{{ route('guide') }}">Staff guide</a>: every section of OmniVEN in pictures.</p>
+      <p class="lede">Setup, every tab, shortcuts and the playbooks that save the most time{{ $isAdmin ? ', plus the admin pages for customizing and running OmniVEN' : '' }}.</p>
+      <a class="help-guide" href="{{ route('guide') }}">
+        <img src="{{ asset('img/guide/home.jpg') }}" alt="" width="1440" height="900" loading="lazy">
+        <span><b>New here? Start with the Staff guide</b><span>Every section of OmniVEN in pictures: the five things to learn first, a day with OmniVEN, and an “I want to…” finder.</span></span>
+        <i aria-hidden="true">→</i>
+      </a>
       <div class="help-search" role="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="help-q" type="search" autocomplete="off" spellcheck="false" placeholder="Search help, e.g. star, boost, request access" aria-label="Search help" aria-describedby="help-count">
