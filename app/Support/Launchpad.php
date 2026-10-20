@@ -59,6 +59,13 @@ class Launchpad
         30 => ['Ask OmniVEN AI', 'Analysis and suggestions on any brand, number or task', 'assistant', null, 'use-assistant'],
         31 => ['TaskBuddy AI', 'Turn a document, file or notes into a task list', 'taskbuddy', null, 'use-assistant'],
         32 => ['Staff guide', 'Every part of OmniVEN, in pictures', 'guide', null, null],
+        33 => ['SEO overview', 'Rankings, traffic and site health by brand', 'seo-suite', null, 'use-seo'],
+        34 => ['Keyword research', 'Search volume, difficulty and ideas for any topic', 'seo-suite.keywords', null, 'use-seo'],
+        35 => ['Rank tracking', 'Where we rank in Google for the searches we track', 'seo-suite.rankings', null, 'use-seo'],
+        36 => ['SEO competitors', 'Who we compete with in Google, and keywords they win', 'seo-suite.competitors', null, 'use-seo'],
+        37 => ['Backlinks', 'Sites linking to us, new and lost links', 'seo-suite.backlinks', null, 'use-seo-backlinks'],
+        38 => ['Site audit', 'Technical SEO problems across each site', 'seo-suite.audit', null, 'use-seo'],
+        39 => ['AI visibility', 'How often AI answers mention us, against competitors', 'seo-suite.ai', null, 'use-seo'],
     ];
 
     /** The page id for a dashboard tab, e.g. "tools" => 6. */

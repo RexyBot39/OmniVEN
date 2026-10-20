@@ -101,3 +101,36 @@ Artisan::command('omniven:reddit-sync', function () {
     $ok = \App\Support\Reddit::refresh();
     $ok ? $this->info('Reddit threads updated.') : $this->error((string) \Illuminate\Support\Facades\Cache::get('reddit:error'));
 })->purpose('Find Reddit threads worth a reply');
+
+// The SEO suite: refresh any DataForSEO report that's due, collect and queue rank checks, and check site audits.
+// Pages refresh themselves when opened; run this daily (e.g. after omniven:check-links) to keep them current anyway.
+Artisan::command('omniven:seo-sync {--force : Refresh every report now, even if it is recent}', function () {
+    if (! \App\Support\Seo\DataForSeo::configured()) {
+        $this->warn('DataForSEO isn’t set up: add DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD.');
+
+        return 1;
+    }
+    $ok = true;
+    foreach (\App\Support\Seo\SeoSuite::brands() as $brand) {
+        foreach (\App\Support\Seo\SeoSuite::KINDS as $kind) {
+            if ($kind === 'backlinks' && ! \App\Support\Seo\DataForSeo::backlinks()) {
+                continue;
+            }
+            $r = \App\Support\Seo\SeoSuite::report($kind, $brand);
+            if ($this->option('force') || ! $r['at'] || $r['at']->lt(now()->subDays((int) config("dataforseo.{$kind}_days")))) {
+                $done = \App\Support\Seo\SeoSuite::refresh($kind, $brand);
+                $ok = $ok && $done;
+                $done ? $this->info("{$brand->name}: $kind updated.") : $this->error("{$brand->name}: $kind failed. ".\App\Support\Seo\SeoSuite::report($kind, $brand)['error']);
+            }
+        }
+    }
+    \App\Support\Seo\RankTracker::run();
+    \App\Support\Seo\SiteAudit::run();
+    if ($e = \App\Support\Seo\RankTracker::error()) {
+        $this->error('Rank tracking: '.$e);
+        $ok = false;
+    }
+    $this->info('DataForSEO spend this month: $'.number_format(\App\Support\Seo\DataForSeo::spentThisMonth(), 2).' of $'.number_format(\App\Support\Seo\DataForSeo::budget(), 2).'.');
+
+    return $ok ? 0 : 1;
+})->purpose('Refresh the SEO suite from DataForSEO');

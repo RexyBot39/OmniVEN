@@ -46,6 +46,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/my-day/toggle', [\App\Http\Controllers\MyDayController::class, 'toggle'])->name('my-day.toggle');
     Route::post('/my-day/send', [\App\Http\Controllers\MyDayController::class, 'send'])->middleware('throttle:5,10')->name('my-day.send');
     Route::get('/seo', [\App\Http\Controllers\SeoController::class, 'index'])->name('seo');
+    // SEO suite on DataForSEO: overview, keyword research, rank tracking, competitors, backlinks, site audit, AI visibility.
+    Route::middleware('can:use-seo')->prefix('seo-suite')->name('seo-suite')->controller(\App\Http\Controllers\SeoSuiteController::class)->group(function () {
+        Route::get('/', 'overview');
+        Route::get('/keywords', 'keywords')->name('.keywords');
+        Route::get('/rankings', 'rankings')->name('.rankings');
+        Route::post('/rankings', 'storeKeywords')->middleware('throttle:30,1')->name('.rankings.store');
+        Route::post('/rankings/check', 'checkNow')->middleware('throttle:10,1')->name('.rankings.check');
+        Route::delete('/rankings/{keyword}', 'destroyKeyword')->name('.rankings.destroy');
+        Route::get('/competitors', 'competitors')->name('.competitors');
+        Route::get('/backlinks', 'backlinks')->middleware('can:use-seo-backlinks')->name('.backlinks');
+        Route::get('/audit', 'audit')->name('.audit');
+        Route::post('/audit', 'startAudit')->middleware('throttle:10,1')->name('.audit.start');
+        Route::get('/ai', 'ai')->name('.ai');
+        Route::post('/refresh', 'refresh')->middleware(['can:admin', 'throttle:20,1'])->name('.refresh');
+    });
+
     Route::get('/content-gaps', [\App\Http\Controllers\ContentGapController::class, 'index'])->name('content-gaps');
     Route::post('/content-gaps/task', [\App\Http\Controllers\ContentGapController::class, 'task'])->middleware('throttle:60,1')->name('content-gaps.task');
     Route::post('/content-gaps/dismiss', [\App\Http\Controllers\ContentGapController::class, 'dismiss'])->middleware('throttle:60,1')->name('content-gaps.dismiss');
