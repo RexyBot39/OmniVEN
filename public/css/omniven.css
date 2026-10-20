@@ -2047,3 +2047,76 @@ input[type=text]:focus,input[type=search]:focus,input[type=date]:focus,input[typ
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo img.logo-dark{display:block}:root:not([data-theme="light"]) .logo img.logo-light{display:none}}
 :root[data-theme="dark"] .logo img.logo-dark{display:block}
 :root[data-theme="dark"] .logo img.logo-light{display:none}
+
+/* ============================================================================
+   Squared, panel-style boxes: crisp 4px corners on every content box, and the home
+   page laid out as framed panels with header bars and divided rows. Pills, badges
+   and avatars stay round.
+   ============================================================================ */
+:root{--box-r:4px}
+.card,.tool,.acct-card,.note,.tile,.trend,.tablewrap,.range-picker,.bcol-add,.more-pop,.mm-panel,.topbar .mm-panel,.empty,.bt,.today .hotlist,.rev-in,.sb-promo,.launcher,.tb-task,.tb-summary,.as-a .as-body,.as-q .as-body,.as-idea,.as-ask,.lp-chip{border-radius:var(--box-r)}
+.btn,.tb-toggle,.topbar .launch-btn,.topbar .ai-btn,.seg,.sb-item,.sb-sub a,input[type=text],input[type=search],input[type=date],input[type=email],input[type=url],input[type=number],input[type=password],select,textarea{border-radius:var(--box-r)}
+.seg-b{border-radius:2px}
+.rp-sum{border-radius:var(--box-r)}
+
+/* Sales: one line that opens to the detail */
+.rev{padding-bottom:12px}
+.rev-d{border:1px solid var(--line);border-radius:var(--box-r);background:var(--surface)}
+.rev-sum{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:12px 18px;cursor:pointer}
+.rev-sum::-webkit-details-marker{display:none}
+.rev-sum .rev-name{font-family:var(--f-display);font-weight:600;font-size:15px;color:var(--ink);padding-right:14px;border-right:1px solid var(--line)}
+.rev-sum .rev-l{font-size:13px;color:var(--muted)}
+.rev-big{font-family:var(--f-display);font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.rev-open{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--accent)}
+.rev-d[open] .rev-open .chev{transform:rotate(180deg)}
+.rev-d .rev-in{border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;padding:14px 18px}
+.rev-sum:hover{background:color-mix(in srgb,var(--sunk) 50%,transparent)}
+
+/* Home: Hotlist as a framed panel with rows */
+.today .hotlist{padding:0;overflow:hidden}
+.today .hot-head{margin:0;padding:12px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--sunk) 45%,var(--surface))}
+.today .hot-title{font-size:13px;letter-spacing:.04em}
+.today .hotlist .hot-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0}
+.today .hot-item{border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-left:0;border-radius:0;padding:12px 18px;margin:0}
+.today .hot-item::before{content:"";width:3px;align-self:stretch;background:var(--coral);margin:-12px 6px -12px -18px}
+.today .hot-item.overdue .hot-meta .late{font-weight:600}
+.hot-more{display:block;margin:0;padding:10px 18px}
+.today .hotlist:not(:has(.hot-items)) .hot-head{border-bottom:0}
+
+/* Home: launchpad and tabs */
+.launchpad{padding-block:0 6px}
+.lp-chip{border-radius:var(--box-r)}
+
+/* Home: each person's column is one panel; tasks are rows inside it */
+.board{gap:16px}
+.bcol{background:var(--surface);border:1px solid var(--line);border-radius:var(--box-r);padding:0;gap:0;overflow:hidden}
+.bcol.mine{border-color:color-mix(in srgb,var(--teal) 45%,var(--line))}
+.bcol-h{padding:12px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--sunk) 45%,var(--surface))}
+.bcol-h h3{font-size:15px;font-weight:600}
+.bcol-plus{width:28px;height:28px;border-radius:var(--box-r);box-shadow:none}
+.bcol-add{margin:10px 12px;border-radius:var(--box-r)}
+.bcol-list{display:flex;flex-direction:column;gap:0}
+.bcol-list .bt{border:0;border-bottom:1px solid var(--line);border-left:3px solid var(--bc,transparent);border-radius:0;box-shadow:none;padding:10px 12px;margin:0}
+.bcol-list .bt:last-child{border-bottom:0}
+.bcol-list .bt.routine{border-left-color:var(--routine);background:var(--surface)}
+.bcol-list .bt:hover{background:color-mix(in srgb,var(--sunk) 45%,transparent)}
+.bcol-empty{padding:14px}
+.bcol-more{padding:10px 14px;border-top:1px solid var(--line);width:100%}
+.tick{border-radius:3px}
+
+/* Completed list as a panel */
+.tb-done{border:1px solid var(--line);border-radius:var(--box-r);background:var(--surface);padding:0}
+.tb-done > .h2row{padding:12px 16px;margin:0;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--sunk) 45%,var(--surface))}
+.tb-done > .h2row h3{margin:0;font-size:15px;font-weight:600}
+.tb-done .done-range,.tb-done > .sub{margin:12px 16px}
+.tb-done-list{padding:4px 16px 12px}
+
+@media (max-width:640px){
+  .rev-sum{padding:12px 14px}
+  .rev-sum .rev-name{border-right:0;padding-right:0}
+  .rev-open{margin-left:0}
+  .today .hot-item{border-right:0}
+}
+@media (max-width:640px){.brandpick .chips{left:auto;right:0;max-width:calc(100vw - 32px)}}
+.tb-done{min-width:0;overflow:hidden}.tb-done > .h2row{flex-wrap:wrap}.tb-done-list{min-width:0;width:auto;max-width:100%}
+.tb-done-list{grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr))}
