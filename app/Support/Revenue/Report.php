@@ -91,20 +91,6 @@ class Report
         ];
     }
 
-    /** The dashboard strip: yesterday and month to date for all brands, and each brand's month. */
-    public static function strip(): array
-    {
-        $t = self::today();
-        $brands = Revenue::brands();
-
-        return [
-            'yesterday' => self::figures($t->subDay(), $t->subDay()),
-            'mtd' => $mtd = self::figures($t->startOfMonth(), $t),
-            'pace' => self::pace($mtd['cents']),
-            'brands' => $brands->map(fn ($b) => ['brand' => $b] + self::figures($t->startOfMonth(), $t, $b->id))->values(),
-        ];
-    }
-
     /**
      * Revenue by channel for a range: each channel's figures, share, change on last year, and
      * revenue for each of the last eight weeks (Monday to Sunday, the current week so far last).

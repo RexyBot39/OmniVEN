@@ -72,13 +72,9 @@ class DashboardController extends Controller
         $brokenLinks = $me->can('admin') ? \App\Models\LinkCheck::brokenKeys() : collect();
         $calWeek = \App\Models\CalendarWeek::current();
         $pulse = \App\Support\PulseToPost::card();
-        // Sales strip: admins and revenue viewers, once GA4 is connected.
-        $revenue = $revenueStatus = null;
+        // Sales isn't shown here, but home visits by revenue viewers keep the GA4 numbers fresh for the Sales page.
         if (\App\Support\Revenue\Revenue::configured() && \App\Support\Revenue\Revenue::canSee($me)) {
-            // The strip compares with last year, so make sure last year's month is loaded.
-            \App\Support\Revenue\Revenue::refreshIfStale(\App\Support\Revenue\Report::today()->startOfMonth()->subYear());
-            $revenue = \App\Support\Revenue\Report::strip();
-            $revenueStatus = \App\Support\Revenue\Revenue::status();
+            \App\Support\Revenue\Revenue::refreshIfStale();
         }
         $calProgress = $calWeek ? ['done' => $calWeek->checks()->count(), 'total' => $calWeek->items()->count()] : null;
 
@@ -89,7 +85,7 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'brands', 'tools', 'routines', 'notes', 'categories', 'uncategorized',
-            'openTasks', 'doneTasks', 'doneRange', 'taskBrands', 'board', 'hotlist', 'popup', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress', 'pulse', 'revenue', 'revenueStatus'
+            'openTasks', 'doneTasks', 'doneRange', 'taskBrands', 'board', 'hotlist', 'popup', 'postits', 'sessionEndsAt', 'goHome', 'accountGrid', 'gridPlatforms', 'launchpad', 'favKeys', 'myRequests', 'openRequests', 'brokenLinks', 'calWeek', 'calProgress', 'pulse'
         ));
     }
 
