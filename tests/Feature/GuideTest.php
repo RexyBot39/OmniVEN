@@ -69,7 +69,7 @@ class GuideTest extends TestCase
         $member = $this->member();
 
         $this->actingAs($member)->get('/')->assertOk()->assertSee('href="'.route('guide').'"', false);
-        $this->actingAs($member)->get('/help')->assertOk()->assertSee('href="'.route('guide').'"', false);
+        $this->actingAs($member)->get('/help')->assertOk()->assertSee('class="help-guide" href="'.route('guide').'"', false);
         $items = collect($this->actingAs($member)->getJson('/launcher.json')->assertOk()->json());
         $this->assertTrue($items->contains(fn ($i) => ($i['t'] ?? null) === 'Staff guide' && ($i['u'] ?? null) === route('guide')));
     }
