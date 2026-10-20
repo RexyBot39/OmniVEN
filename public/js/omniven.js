@@ -94,7 +94,7 @@
     // Highlight the section in view in the contents rail.
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver((entries) => entries.forEach((en) => {
-        if (en.isIntersecting) railLinks.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + en.target.id));
+        if (en.isIntersecting) railLinks.forEach((a) => a.classList.toggle('g-on', a.getAttribute('href') === '#' + en.target.id));
       }), { rootMargin: '-30% 0px -60% 0px' });
       sections.forEach((s) => io.observe(s));
     }
@@ -959,4 +959,51 @@ document.querySelector('[data-scroll-here]')?.scrollIntoView({ block: 'center' }
     f.addEventListener('submit', () => { btn.disabled = true; btn.textContent = 'Adding…'; });
     sync();
   });
+})();
+
+// Staff guide: bigger screenshots, the "I want to…" finder, copyable questions and the chapter in view.
+(function () {
+    var lb = document.getElementById('g-lb');
+    if (!lb) return;
+    var img = document.getElementById('g-lb-img'), cap = document.getElementById('g-lb-cap');
+    document.querySelectorAll('.guide [data-zoom]').forEach(function (b) {
+        b.addEventListener('click', function () {
+            img.src = b.dataset.zoom; img.alt = (b.querySelector('img') || {}).alt || ''; cap.textContent = b.dataset.cap || '';
+            if (lb.showModal) lb.showModal();
+        });
+    });
+    document.getElementById('g-lb-close').addEventListener('click', function () { lb.close(); });
+    lb.addEventListener('click', function (e) { if (e.target === lb) lb.close(); });
+
+    var q = document.getElementById('g-finder-q'), none = document.getElementById('g-finder-none');
+    var items = Array.prototype.slice.call(document.querySelectorAll('#g-finder-list li'));
+    q.addEventListener('input', function () {
+        var words = q.value.toLowerCase().split(/\s+/).filter(Boolean), shown = 0;
+        items.forEach(function (li) {
+            var text = li.textContent.toLowerCase();
+            li.hidden = !words.every(function (w) { return text.indexOf(w) !== -1; });
+            if (!li.hidden) shown++;
+        });
+        none.hidden = shown > 0;
+    });
+
+    document.querySelectorAll('.guide .g-copy').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var span = b.parentNode.querySelector('span');
+            var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); };
+            var select = function () { var r = document.createRange(); r.selectNodeContents(span); var s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(span.textContent).then(done, select);
+            else select();
+        });
+    });
+
+    var links = Array.prototype.slice.call(document.querySelectorAll('.guide .g-chapters a'));
+    if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (es) {
+            es.forEach(function (e) {
+                if (e.isIntersecting) links.forEach(function (a) { a.classList.toggle('g-on', a.getAttribute('href') === '#' + e.target.id); });
+            });
+        }, { rootMargin: '-40% 0px -55% 0px' });
+        document.querySelectorAll('.guide section.g-ch').forEach(function (s) { io.observe(s); });
+    }
 })();
