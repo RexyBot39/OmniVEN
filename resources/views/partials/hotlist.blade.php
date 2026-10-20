@@ -6,7 +6,7 @@
         @if($hotlist->count())<button type="button" class="mini" data-goto="tasks">See all tasks →</button>@endif
     </div>
     @if($hotlist->isNotEmpty())
-        <ul class="hot-items">
+        <ul class="hot-items" id="hot-items">
             @foreach($hotlist->take(8) as $t)
                 @php($mine = $t->assignee_id === auth()->id())
                 <li class="hot-item {{ $mine ? 'mine' : '' }} {{ $t->isOverdue() ? 'overdue' : '' }}">
@@ -25,6 +25,7 @@
                 </li>
             @endforeach
         </ul>
+        @if($hotlist->count() > 4)<button type="button" class="mini hot-more" data-showall="hot-items" data-less="Show fewer">Show all {{ min(8, $hotlist->count()) }}</button>@endif
         @if($hotlist->count() > 8)<p class="sub more">+ {{ $hotlist->count() - 8 }} more on the Tasks tab</p>@endif
     @endif
 </section>

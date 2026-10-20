@@ -152,8 +152,25 @@
     const el = document.getElementById(b.dataset.toggle);
     if (!el) return;
     el.hidden = !el.hidden;
-    if (!el.hidden) el.querySelector('input,textarea')?.focus();
+    document.querySelectorAll('[data-toggle="' + b.dataset.toggle + '"][aria-expanded]').forEach((t) => t.setAttribute('aria-expanded', String(!el.hidden)));
+    if (!el.hidden) el.querySelector('input:not([type=hidden]),textarea')?.focus();
   }));
+  // "Show all" buttons: reveal the rest of a trimmed list, and back.
+  document.querySelectorAll('[data-showall]').forEach((b) => {
+    const more = b.textContent;
+    b.addEventListener('click', () => {
+      const el = document.getElementById(b.dataset.showall);
+      if (!el) return;
+      const all = el.classList.toggle('show-all');
+      b.textContent = all ? (b.dataset.less || 'Show fewer') : more;
+    });
+  });
+  // Small ⋯ menus close when you click elsewhere or press Esc.
+  const lite = [...document.querySelectorAll('details[data-menu-lite]')];
+  if (lite.length) {
+    document.addEventListener('click', (e) => lite.forEach((d) => { if (d.open && !d.contains(e.target)) d.open = false; }));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') lite.forEach((d) => { if (d.open) { d.open = false; d.querySelector('summary').focus(); } }); });
+  }
 
   // Sign the page out on its own when the 16-hour session ends, even if left open.
   const exp = document.getElementById('session-expiry');
@@ -568,6 +585,8 @@
       return okBrand && okQ;
     };
     document.querySelectorAll('[data-brands]').forEach((el) => { el.hidden = !match(el); });
+    // While filtering, long columns show everything that matches.
+    document.body.classList.toggle('is-filtering', state.brand !== 'all' || !!state.q);
     document.querySelectorAll('[data-brand-row]').forEach((el) => {
       el.hidden = !(state.brand === 'all' || el.dataset.brandRow === state.brand);
     });

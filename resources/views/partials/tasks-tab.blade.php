@@ -6,18 +6,23 @@
 <section data-view="tasks">
     <div class="h2row">
         <h2>Tasks</h2>@include('partials.star', ['key' => 'page:2', 'label' => 'the Tasks tab'])
-        <div class="tb-legend" aria-label="Color key">
-            @foreach($taskBrands as $b)<span><i style="background:var(--c{{ $b->colorSlot() }})"></i>{{ $b->name }}</span>@endforeach
-            <span><i class="tb-routine"></i>Routine</span>
-        </div>
         <div class="h2-tools">
-            @can('admin')<button type="button" class="seg-b solo" data-stamps aria-pressed="false" title="Show when each task was assigned and finished">Show times</button>@endcan
             <div class="seg" role="group" aria-label="Show">
                 <button type="button" class="seg-b" data-taskfilter="mine" aria-pressed="false">Mine</button>
                 <button type="button" class="seg-b" data-taskfilter="all" aria-pressed="true">Everyone</button>
             </div>
-            <a class="btn" href="{{ route('templates.index') }}">From a template</a>
             <a class="btn primary" href="{{ route('work.create', ['type' => 'task']) }}">{{ $me->can('admin') ? '+ New task or routine' : '+ New task' }}</a>
+            <details class="more-menu" data-menu-lite>
+                <summary class="btn ghost icon-btn" aria-label="More task options" title="More"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></summary>
+                <div class="more-pop">
+                    <a href="{{ route('templates.index') }}">From a template</a>
+                    @can('admin')<button type="button" data-stamps aria-pressed="false" title="Show when each task was assigned and finished">Show times</button>@endcan
+                    <div class="tb-legend" aria-label="Color key">
+                        @foreach($taskBrands as $b)<span><i style="background:var(--c{{ $b->colorSlot() }})"></i>{{ $b->name }}</span>@endforeach
+                        <span><i class="tb-routine"></i>Routine</span>
+                    </div>
+                </div>
+            </details>
         </div>
     </div>
 
@@ -33,8 +38,9 @@
                         <span class="sub">{{ $col['tasks']->count() }} {{ \Illuminate\Support\Str::plural('task', $col['tasks']->count()) }} · {{ $due }} {{ \Illuminate\Support\Str::plural('routine', $due) }} due</span>
                         @if($u->is($me))<a class="mini myday-link" href="{{ route('my-day') }}">Morning Slack summary: {{ ($me->myday_slack ?? true) ? 'on' : 'off' }}</a>@endif
                     </div>
+                    <button type="button" class="bcol-plus" data-toggle="bcol-add-{{ $u->id }}" aria-expanded="false" aria-controls="bcol-add-{{ $u->id }}" title="Add a task for {{ $u->is($me) ? 'yourself' : $u->firstName() }}"><span aria-hidden="true">+</span><span class="sr">Add a task for {{ $u->is($me) ? 'yourself' : $u->firstName() }}</span></button>
                 </div>
-                <form method="POST" action="{{ route('tasks.store') }}" class="bcol-add">
+                <form method="POST" action="{{ route('tasks.store') }}" class="bcol-add" id="bcol-add-{{ $u->id }}" hidden>
                     @csrf
                     <input type="hidden" name="assignee_id" value="{{ $u->id }}">
                     <input type="text" name="title" required maxlength="200" placeholder="{{ $u->is($me) ? 'Add a task for yourself…' : 'Add a task for '.$u->firstName().'…' }}" aria-label="New task for {{ $u->name }}">
@@ -47,7 +53,7 @@
                         <button class="btn" type="submit">Add</button>
                     </div>
                 </form>
-                <div class="bcol-list">
+                <div class="bcol-list" id="bcol-list-{{ $u->id }}">
                     @foreach($col['tasks'] as $t)
                         @include('partials.board-task', ['t' => $t])
                     @endforeach
@@ -58,6 +64,8 @@
                         <p class="sub bcol-empty">Nothing open.</p>
                     @endif
                 </div>
+                @php($colCount = $col['tasks']->count() + $col['routines']->count())
+                @if($colCount > 6)<button type="button" class="mini bcol-more" data-showall="bcol-list-{{ $u->id }}" data-less="Show fewer">Show {{ $colCount - 6 }} more</button>@endif
             </div>
         @endforeach
     </div>
@@ -67,8 +75,9 @@
             <h3>{{ $doneRange['label'] }}</h3>
             <span class="sub">{{ $doneTasks->count() }}{{ $doneRange['more'] ? '+' : '' }} {{ \Illuminate\Support\Str::plural('task', $doneTasks->count()) }}, everyone’s</span>
             @if($doneRange['custom'])<a class="mini" href="{{ route('dashboard') }}#tasks">Back to the last 14 days</a>@endif
+            <button type="button" class="btn ghost sm" data-toggle="done-range" aria-expanded="{{ $doneRange['custom'] ? 'true' : 'false' }}" aria-controls="done-range">Other dates</button>
         </div>
-        <form class="done-range" method="GET" action="{{ route('dashboard') }}#tasks" aria-label="Show completed tasks from a date range">
+        <form class="done-range" id="done-range" @unless($doneRange['custom']) hidden @endunless method="GET" action="{{ route('dashboard') }}#tasks" aria-label="Show completed tasks from a date range">
             <label>From <input type="date" name="done_from" value="{{ $doneRange['custom'] ? $doneRange['from']->format('Y-m-d') : '' }}" max="{{ $doneRange['today'] }}"></label>
             <label>To <input type="date" name="done_to" value="{{ $doneRange['custom'] ? $doneRange['to']->format('Y-m-d') : '' }}" max="{{ $doneRange['today'] }}"></label>
             <button class="btn" type="submit">Show</button>
