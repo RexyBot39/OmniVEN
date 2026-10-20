@@ -46,6 +46,18 @@ Route::middleware('auth')->group(function () {
     Route::post('/my-day/toggle', [\App\Http\Controllers\MyDayController::class, 'toggle'])->name('my-day.toggle');
     Route::post('/my-day/send', [\App\Http\Controllers\MyDayController::class, 'send'])->middleware('throttle:5,10')->name('my-day.send');
     Route::get('/seo', [\App\Http\Controllers\SeoController::class, 'index'])->name('seo');
+    // Ocusafe opportunities: government bids for safety glasses, found daily through Tango.
+    Route::middleware('can:see-opportunities')->prefix('opportunities')->name('opportunities')->controller(\App\Http\Controllers\OpportunitiesController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::patch('/{opportunity}', 'update')->middleware('throttle:60,1')->name('.update');
+        Route::post('/{opportunity}/task', 'task')->middleware('throttle:30,1')->name('.task');
+        Route::middleware('can:admin')->group(function () {
+            Route::post('/terms', 'storeTerm')->name('.terms.store');
+            Route::delete('/terms/{term}', 'destroyTerm')->name('.terms.destroy');
+            Route::post('/refresh', 'refresh')->middleware('throttle:10,1')->name('.refresh');
+        });
+    });
+
     // Metabase (metrics.39dg.net): browse, view questions and dashboards, write and save queries. Admins and revenue viewers.
     Route::middleware('can:see-metabase')->prefix('metabase')->name('metabase')->controller(\App\Http\Controllers\MetabaseController::class)->group(function () {
         Route::get('/', 'index');

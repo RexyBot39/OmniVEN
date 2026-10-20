@@ -18,6 +18,7 @@ class Menu
         'growth' => ['Growth', 'Campaigns, publishers and the links that track them', 'campaigns', [28, 15, 26, 27]],
         'search' => ['Search & AI', 'Google, AI assistants and the content they need', 'search', [20, 23, 16, 24]],
         'seo' => ['SEO', 'Rankings, keywords, competitors, backlinks, audits and AI visibility', 'search', [33, 34, 35, 36, 37, 38, 39]],
+        'opportunities' => ['Opportunities', 'New business for Ocusafe: government bids and RFPs', 'campaigns', [41]],
         'reputation' => ['Reputation', 'What customers and communities say about us', 'reputation', [18, 25]],
         'brands' => ['Brands & tools', 'Brand hubs, accounts, tools and who has access', 'site', [5, 6, 7, 29]],
     ];
@@ -31,6 +32,7 @@ class Menu
         'growth' => ['campaigns.*', 'outreach.*', 'assets.*', 'links.*'],
         'search' => ['content-gaps', 'site-check*', 'ai-answers*'],
         'revenue' => ['metabase*'],
+        'opportunities' => ['opportunities*'],
         'seo' => ['seo-suite*'],
         'reputation' => ['reddit*', 'reviews*'],
         'brands' => ['brands.*', 'coverage*'],

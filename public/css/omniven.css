@@ -2410,3 +2410,47 @@ body.is-dragging:not(.is-filtering) .bcol-list:not(.show-all) > .bt:nth-child(n+
 @media (max-width:560px){.mb-bars li{grid-template-columns:minmax(0,1fr) auto}.mb-bar{grid-column:1/-1;grid-row:2}.mb-item{grid-template-columns:34px minmax(0,1fr)}.mb-kind{display:none}}
 .mb-usage{align-self:center}
 .mb-guard{margin-top:6px}
+
+/* Ocusafe opportunities: bid cards, match strength, deadlines and the search-phrase manager. */
+.opps{gap:20px}
+.opp-filter select{font:inherit;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink)}
+.opp-errs{margin:6px 0 0;padding-left:18px}
+.opp-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.opp{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:4px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.opp.opp-st-pursuing,.opp.opp-st-submitted{border-left-color:var(--teal)}
+.opp.opp-st-won{border-left-color:var(--good)}
+.opp.opp-st-passed,.opp.opp-st-lost{opacity:.7}
+.opp.is-focus{box-shadow:0 0 0 2px var(--teal)}
+.opp-top{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:12.5px}
+.opp-src{font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:11.5px}
+.opp-score,.opp-status{border-radius:4px;padding:1px 8px;font-weight:600}
+.opp-strong{background:color-mix(in srgb,var(--good) 16%,var(--surface));color:var(--good)}
+.opp-good{background:color-mix(in srgb,var(--teal) 14%,var(--surface));color:var(--accent)}
+.opp-weak{background:var(--sunk);color:var(--muted)}
+.opp-status{background:color-mix(in srgb,var(--build) 14%,var(--surface));color:var(--build)}
+.opp-due{margin-left:auto;color:var(--ink-2);font-weight:500}
+.opp-soon{color:var(--bad)!important;font-weight:700}
+.opp-gone{color:var(--muted)}
+.opp-t{font-family:var(--f-display);font-size:17px;font-weight:600;margin:0;line-height:1.35}
+.opp-t a{color:var(--navy);text-decoration:none}
+.opp-t a:hover{text-decoration:underline}
+.opp-m{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font-size:13.5px;color:var(--muted)}
+.opp-sum p{margin:6px 0 0;font-size:14px;color:var(--ink-2)}
+.opp-sum > summary{cursor:pointer;display:inline-block}
+.opp-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px}
+.opp-acts form{margin:0}
+.opp-more{position:relative}
+.opp-more > summary{cursor:pointer;list-style:none}
+.opp-more > summary::-webkit-details-marker{display:none}
+.opp-more-f{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:8px}
+.opp-more-f label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--muted)}
+.opp-more-f select{font:inherit;font-size:13.5px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+.opp-why{margin-left:auto}
+.opp-pages{display:flex;gap:12px;align-items:center;justify-content:center}
+.opp-terms > summary{list-style:none;display:inline-flex}
+.opp-terms > summary::-webkit-details-marker{display:none}
+.opp-terms-b{margin-top:10px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:4px;display:flex;flex-direction:column;gap:10px}
+.opp-term-list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.opp-term-list li{display:inline-flex;align-items:center;gap:4px;background:var(--sunk);border-radius:4px;padding:3px 4px 3px 10px;font-size:13.5px}
+.opp-term-list form{margin:0}
+@media (max-width:560px){.opp-due{margin-left:0}.opp-why{margin-left:0}}

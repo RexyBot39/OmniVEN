@@ -134,3 +134,20 @@ Artisan::command('omniven:seo-sync {--force : Refresh every report now, even if 
 
     return $ok ? 0 : 1;
 })->purpose('Refresh the SEO suite from DataForSEO');
+
+// Ocusafe opportunities: search Tango for new government bids for safety glasses. The page also refreshes itself
+// (every 12 hours when opened); run this daily (e.g. after omniven:check-links) so new bids arrive without a visit.
+Artisan::command('omniven:opportunities-sync', function () {
+    if (! \App\Support\Opportunities\Tango::configured()) {
+        $this->warn('Tango isn’t set up: add TANGO_API_KEY.');
+
+        return 1;
+    }
+    $r = \App\Support\Opportunities\OpportunityFinder::run();
+    $this->info("Found {$r['found']} bids, {$r['new']} new.");
+    foreach ($r['errors'] as $source => $error) {
+        $this->error("$source: $error");
+    }
+
+    return $r['errors'] ? 1 : 0;
+})->purpose('Search Tango for new government bids for safety glasses');
