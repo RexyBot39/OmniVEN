@@ -9,10 +9,10 @@
     @if($configured && $brand)
         <div class="seo-bar">
             @if($latest?->status === 'crawling')
-                <span class="sub"><b>Crawling now:</b> {{ number_format($latest->pages_crawled) }} of up to {{ number_format($latest->max_pages) }} pages. Refresh in a few minutes.</span>
+                <span class="sub"><b>Crawling now{{ ($latest->summary['browser'] ?? false) ? ' (second try, as a regular browser)' : '' }}:</b> {{ number_format($latest->pages_crawled) }} of up to {{ number_format($latest->max_pages) }} pages. Refresh in a few minutes.</span>
             @else
                 <form method="POST" action="{{ route('seo-suite.audit.start') }}">@csrf<input type="hidden" name="brand" value="{{ $brand->slug }}"><button class="btn primary" type="submit">{{ $audit ? 'Run a new audit' : 'Run the first audit' }}</button></form>
-                @if($latest?->status === 'failed')<span class="sub">The last crawl didn’t finish.@can('admin') {{ $latest->error }}@endcan</span>@endif
+                @if($latest?->status === 'failed')<span class="sub"><b>The last crawl didn’t work.</b> {{ $latest->error }}</span>@endif
             @endif
         </div>
 
