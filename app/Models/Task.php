@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
-    protected $fillable = ['title', 'details', 'brand_id', 'assignee_id', 'created_by', 'hot', 'due_on', 'completed_at', 'completed_by', 'assigned_at', 'assigned_by', 'template_run_id', 'outcome', 'outcome_url', 'campaign_id', 'board_sort'];
+    protected $fillable = ['title', 'details', 'brand_id', 'assignee_id', 'created_by', 'hot', 'due_on', 'completed_at', 'completed_by', 'assigned_at', 'assigned_by', 'template_run_id', 'outcome', 'outcome_url', 'campaign_id', 'board_sort', 'jira_key', 'jira_status', 'jira_synced_at'];
 
     protected function casts(): array
     {
-        return ['hot' => 'boolean', 'due_on' => 'date', 'completed_at' => 'datetime', 'assigned_at' => 'datetime'];
+        return ['hot' => 'boolean', 'due_on' => 'date', 'completed_at' => 'datetime', 'assigned_at' => 'datetime', 'jira_synced_at' => 'datetime'];
     }
 
     public function assignee(): BelongsTo

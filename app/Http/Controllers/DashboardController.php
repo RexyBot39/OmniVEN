@@ -24,6 +24,8 @@ class DashboardController extends Controller
     {
         $me = $request->user();
         Activity::visit($me);
+        // Tickets finished on the Jira board tick their tasks off here (checked at most every few minutes).
+        \App\Support\Jira\Jira::syncIfStale();
 
         $brands = Brand::orderBy('sort')->orderBy('name')->get();
         $tools = Tool::with('brands')->orderBy('sort')->orderBy('name')->get();
