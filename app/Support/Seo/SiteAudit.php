@@ -54,8 +54,21 @@ class SiteAudit
         return SeoAudit::where('brand_id', $brand->id)->where('status', 'done')->latest('id')->first();
     }
 
-    /** Start a crawl unless one is already running. */
-    public static function start(Brand $brand, ?int $userId): SeoAudit
+    /** Why DataForSEO couldn't crawl a site, from its extended_crawl_status. */
+    public const BLOCKED = [
+        'site_unreachable' => 'DataForSEO couldn’t reach the site. Its firewall or bot protection may be blocking crawlers, or the address didn’t answer.',
+        'invalid_page_status_code' => 'The home page answered DataForSEO’s crawler with an error code, which usually means a firewall or bot protection blocked it.',
+        'forbidden_robots' => 'The site’s robots.txt tells crawlers not to visit.',
+        'forbidden_meta_tag' => 'The home page has a robots meta tag telling crawlers not to follow it.',
+        'forbidden_http_header' => 'The site sends an X-Robots-Tag header telling crawlers not to follow it.',
+        'too_many_redirects' => 'The home page redirects too many times (often a loop between www and non-www, or http and https).',
+    ];
+
+    /** What a regular desktop browser sends, for a second try when the site turns DataForSEO's own crawler away. */
+    private const BROWSER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
+
+    /** Start a crawl unless one is already running. $asBrowser crawls as a regular browser would identify itself. */
+    public static function start(Brand $brand, ?int $userId, bool $asBrowser = false): SeoAudit
     {
         $running = SeoAudit::where('brand_id', $brand->id)->where('status', 'crawling')->latest('id')->first();
         if ($running) {
@@ -64,16 +77,29 @@ class SiteAudit
         $domain = SeoSuite::domain($brand) ?? throw new RuntimeException('No domain is set for '.$brand->name.'.');
         $pages = (int) config('dataforseo.audit_pages');
         $tasks = DataForSeo::postTasks('/v3/on_page/task_post', [[
-            'target' => $domain, 'max_crawl_pages' => $pages, 'load_resources' => false, 'enable_javascript' => false,
+            'target' => $domain,
+            // Start where the site really lives (usually www.), not the bare domain, which may not answer.
+            'start_url' => self::startUrl($brand, $domain),
+            'max_crawl_pages' => $pages, 'load_resources' => false, 'enable_javascript' => false,
             'respect_sitemap' => true, 'tag' => $brand->slug,
-        ]], $userId);
+        ] + ($asBrowser ? ['custom_user_agent' => self::BROWSER_AGENT] : [])], $userId);
         $t = $tasks[0] ?? [];
         if ((int) ($t['status_code'] ?? 0) !== 20100 || ! isset($t['id'])) {
             DataForSeo::task(['tasks' => [$t]]);
             throw new RuntimeException('DataForSEO didn’t start the crawl.');
         }
 
-        return SeoAudit::create(['brand_id' => $brand->id, 'task_id' => (string) $t['id'], 'status' => 'crawling', 'max_pages' => $pages, 'started_by' => $userId]);
+        return SeoAudit::create(['brand_id' => $brand->id, 'task_id' => (string) $t['id'], 'status' => 'crawling', 'max_pages' => $pages,
+            'started_by' => $userId, 'summary' => ['browser' => $asBrowser]]);
+    }
+
+    /** The brand's own web address when it's on the measured domain (https://www.39dollarglasses.com/), else https://domain/. */
+    public static function startUrl(Brand $brand, string $domain): string
+    {
+        $host = strtolower((string) parse_url((string) $brand->site, PHP_URL_HOST));
+        $same = $host === $domain || $host === 'www.'.$domain;
+
+        return 'https://'.($same ? $host : $domain).'/';
     }
 
     /** Check running crawls (free) and start the monthly one for brands that are due. */
@@ -98,6 +124,10 @@ class SiteAudit
                 self::poll($audit);
             } catch (Throwable $e) {
                 Log::warning('DataForSEO audit check failed', ['audit' => $audit->id, 'error' => $e->getMessage()]);
+                // Never leave an audit "crawling" for good: after a day it's marked failed, with the last error.
+                if ($audit->created_at->lt(now()->subDay())) {
+                    $audit->update(['status' => 'failed', 'error' => mb_substr('The crawl couldn’t be read back: '.$e->getMessage(), 0, 500), 'finished_at' => now()]);
+                }
             }
         }
         foreach (SeoSuite::brands() as $brand) {
@@ -118,7 +148,12 @@ class SiteAudit
         $code = (int) ($task['status_code'] ?? 0);
         $r = $task['result'][0] ?? null;
         if ($code !== 20000 || ! is_array($r)) {
-            if ($audit->created_at->lt(now()->subDay())) {
+            // Queued or handed to a crawler: wait. Anything else is DataForSEO saying the task failed: say why.
+            $waiting = in_array($code, [20100, 40601, 40602], true) || $code === 0;
+            if (! $waiting) {
+                $audit->update(['status' => 'failed', 'finished_at' => now(),
+                    'error' => mb_substr('DataForSEO couldn’t crawl the site: '.((string) ($task['status_message'] ?? 'no reason given')).' ('.$code.').', 0, 500)]);
+            } elseif ($audit->created_at->lt(now()->subDay())) {
                 $audit->update(['status' => 'failed', 'error' => 'The crawl didn’t finish within a day.', 'finished_at' => now()]);
             }
 
@@ -133,6 +168,22 @@ class SiteAudit
             return;
         }
 
+        // A site that turned the crawler away "finishes" with next to nothing crawled. Say why, and try once more as a browser.
+        $crawled = (int) ($r['crawl_status']['pages_crawled'] ?? 0);
+        $why = (string) ($r['domain_info']['extended_crawl_status'] ?? 'no_errors');
+        if ($crawled <= 1 && ($why !== 'no_errors' || $crawled === 0)) {
+            $asBrowser = (bool) ($audit->summary['browser'] ?? false);
+            $reason = self::BLOCKED[$why] ?? 'DataForSEO crawled '.$crawled.' '.($crawled === 1 ? 'page' : 'pages').' and stopped ('.str_replace('_', ' ', $why).').';
+            $audit->update(['status' => 'failed', 'finished_at' => now(), 'error' => mb_substr($reason.($asBrowser
+                ? ' A second try as a regular browser was blocked too: ask the developer to allow DataForSEO’s crawler (user agent “RSiteAuditor”) in the firewall or bot protection.'
+                : ' Trying again as a regular browser.'), 0, 500)]);
+            if (! $asBrowser) {
+                self::start($audit->brand, $audit->started_by, true);
+            }
+
+            return;
+        }
+
         $m = $r['page_metrics'] ?? [];
         $counts = [];
         foreach (self::ISSUES as $key => $_) {
@@ -141,13 +192,20 @@ class SiteAudit
                 $counts[$key] = (int) $n;
             }
         }
-        $pages = DataForSeo::post('/v3/on_page/pages', ['id' => $audit->task_id, 'limit' => 100, 'order_by' => ['onpage_score,asc'],
-            'filters' => [['resource_type', '=', 'html']]]);
+        // The page list is a bonus: if it can't be read, the audit still finishes with its score and issue counts.
+        try {
+            $pages = DataForSeo::post('/v3/on_page/pages', ['id' => $audit->task_id, 'limit' => 100, 'order_by' => ['onpage_score,asc'],
+                'filters' => [['resource_type', '=', 'html']]]);
+        } catch (RuntimeException $e) {
+            Log::warning('DataForSEO audit pages failed', ['audit' => $audit->id, 'error' => $e->getMessage()]);
+            $pages = [];
+        }
 
         $audit->update([
             'status' => 'done',
             'score' => isset($m['onpage_score']) ? round((float) $m['onpage_score'], 1) : null,
-            'summary' => ['issues' => $counts, 'pages' => (int) ($r['domain_info']['total_pages'] ?? $audit->pages_crawled), 'stop' => $r['crawl_stop_reason'] ?? null],
+            'summary' => ['issues' => $counts, 'pages' => (int) ($r['domain_info']['total_pages'] ?? $audit->pages_crawled), 'stop' => $r['crawl_stop_reason'] ?? null,
+                'browser' => (bool) ($audit->summary['browser'] ?? false)],
             'pages' => array_values(array_filter(array_map(fn ($p) => isset($p['url']) ? [
                 'url' => mb_substr((string) $p['url'], 0, 500),
                 'status' => (int) ($p['status_code'] ?? 0),

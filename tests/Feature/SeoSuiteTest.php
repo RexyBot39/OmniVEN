@@ -292,6 +292,69 @@ class SeoSuiteTest extends TestCase
         $this->actingAs($member)->post('/seo-suite/audit', ['brand' => 'ocusafe'])->assertSessionHas('error');
     }
 
+    public function test_audits_start_at_the_brands_real_address(): void
+    {
+        $this->connect();
+        Http::fake([self::API.'/v3/on_page/task_post' => Http::response(['status_code' => 20000, 'cost' => 0.06, 'tasks' => [['id' => 'c1', 'status_code' => 20100]]])]);
+
+        SiteAudit::start(Brand::where('slug', '39dg')->first(), null);
+        Http::assertSent(fn (Request $r) => $r[0]['target'] === '39dollarglasses.com' && $r[0]['start_url'] === 'https://www.39dollarglasses.com/' && ! isset($r[0]['custom_user_agent']));
+        $this->assertSame('https://ocusafe.com/', SiteAudit::startUrl(new Brand(['site' => 'https://shop.example.com']), 'ocusafe.com'));
+    }
+
+    public function test_a_site_that_blocks_the_crawler_is_explained_and_retried_once_as_a_browser(): void
+    {
+        $this->connect();
+        $blocked = self::ok(['crawl_progress' => 'finished', 'crawl_status' => ['pages_crawled' => 1], 'domain_info' => ['extended_crawl_status' => 'invalid_page_status_code']], 0);
+        Http::fake([
+            self::API.'/v3/on_page/task_post' => Http::sequence()
+                ->push(['status_code' => 20000, 'cost' => 0.06, 'tasks' => [['id' => 'first', 'status_code' => 20100]]])
+                ->push(['status_code' => 20000, 'cost' => 0.06, 'tasks' => [['id' => 'second', 'status_code' => 20100]]]),
+            self::API.'/v3/on_page/summary/*' => Http::response($blocked),
+        ]);
+        $brand = Brand::where('slug', 'ocusafe')->first();
+
+        $first = SiteAudit::start($brand, null);
+        SiteAudit::poll($first);
+        $this->assertSame('failed', $first->fresh()->status);
+        $this->assertStringContainsString('firewall or bot protection blocked it', $first->fresh()->error);
+        $second = SiteAudit::latest($brand);
+        $this->assertSame('second', $second->task_id);
+        $this->assertTrue($second->summary['browser']);
+        Http::assertSent(fn (Request $r) => str_ends_with($r->url(), 'task_post') && str_contains($r[0]['custom_user_agent'] ?? '', 'Chrome/'));
+
+        // Blocked again: stop, and say what the developer needs to allow.
+        SiteAudit::poll($second);
+        $this->assertSame('failed', $second->fresh()->status);
+        $this->assertStringContainsString('RSiteAuditor', $second->fresh()->error);
+        $this->assertSame(2, SeoAudit::count());
+        $this->actingAs($this->member())->get('/seo-suite/audit?brand=ocusafe')->assertOk()->assertSee('The last crawl didn’t work.')->assertSee('RSiteAuditor')->assertSee('Run the first audit');
+    }
+
+    public function test_an_audit_finishes_even_when_its_page_list_cant_be_read_and_failed_tasks_say_why(): void
+    {
+        $this->connect();
+        Http::fake([
+            self::API.'/v3/on_page/summary/ok' => Http::response(self::ok(['crawl_progress' => 'finished', 'crawl_status' => ['pages_crawled' => 480],
+                'domain_info' => ['extended_crawl_status' => 'no_errors', 'total_pages' => 480], 'page_metrics' => ['onpage_score' => 91, 'duplicate_title' => 4]], 0)),
+            self::API.'/v3/on_page/pages' => Http::response(['status_code' => 50000, 'status_message' => 'Internal Error.'], 500),
+            self::API.'/v3/on_page/summary/bad' => Http::response(['status_code' => 20000, 'cost' => 0, 'tasks' => [['id' => 'bad', 'status_code' => 40501, 'status_message' => 'Invalid Field: target.']]]),
+        ]);
+        $brand = Brand::where('slug', '39dg')->first();
+
+        $ok = SeoAudit::create(['brand_id' => $brand->id, 'task_id' => 'ok', 'status' => 'crawling', 'max_pages' => 500]);
+        SiteAudit::poll($ok);
+        $this->assertSame('done', $ok->fresh()->status);
+        $this->assertSame(91.0, $ok->fresh()->score);
+        $this->assertSame(['duplicate_title' => 4], $ok->fresh()->summary['issues']);
+        $this->assertSame([], $ok->fresh()->pages);
+
+        $bad = SeoAudit::create(['brand_id' => $brand->id, 'task_id' => 'bad', 'status' => 'crawling', 'max_pages' => 500]);
+        SiteAudit::poll($bad);
+        $this->assertSame('failed', $bad->fresh()->status);
+        $this->assertStringContainsString('Invalid Field: target. (40501)', $bad->fresh()->error);
+    }
+
     public function test_ai_visibility_reads_mentions_questions_and_share_of_voice(): void
     {
         $this->connect();
