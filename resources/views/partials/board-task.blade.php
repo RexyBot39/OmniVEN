@@ -17,12 +17,16 @@
             @if($t->dueLabel())<span class="{{ $t->isOverdue() ? 'late' : '' }}">{{ $t->dueLabel() }}</span>@endif
             @php($from = $t->assigner ?? $t->creator)
             @if($from && ! $from->is($t->assignee))<span>from {{ $from->firstName() }}</span>@endif
+            @if($t->jira_key)<a class="bt-jira" href="{{ \App\Support\Jira\Jira::link($t->jira_key) }}" target="_blank" rel="noopener noreferrer" title="On the Jira board">{{ $t->jira_key }}{{ $t->jira_status ? ' · '.$t->jira_status : '' }}</a>@endif
         </div>
         @can('admin')@include('partials.stamps', ['assignedAt' => $t->assigned_at ?? $t->created_at, 'assignedBy' => $t->assigner ?? $t->creator, 'doneAt' => null, 'doneBy' => null])@endcan
     </div>
     <div class="bt-acts">
         @if(auth()->user()->is_admin || $t->assignee_id === auth()->id())
             <button type="button" class="bt-grip" data-grip aria-label="Move “{{ $t->title }}”: drag, or use the arrow keys" title="Drag to move"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button>
+        @endif
+        @if(! $t->jira_key && \App\Support\Jira\Jira::configured())
+            <form method="POST" action="{{ route('tasks.jira', $t) }}">@csrf<button class="mini" type="submit" title="Create a ticket for this on the company Jira board">Send to Jira</button></form>
         @endif
         @can('admin')<a class="mini" href="{{ route('tasks.edit', $t) }}">Edit</a>@endcan
     </div>

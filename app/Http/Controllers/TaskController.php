@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\Activity;
+use App\Support\Jira\Jira;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -65,6 +67,26 @@ class TaskController extends Controller
         return response()->json(['ok' => true, 'moved' => $moving->count()]);
     }
 
+    /** Send an open task to the company Jira board as a ticket. Anyone can; the ticket links back here. */
+    public function jira(Request $request, Task $task): RedirectResponse
+    {
+        abort_unless(Jira::configured(), 404);
+        if ($task->isDone()) {
+            return $this->back('That task is already done.');
+        }
+        if ($task->jira_key) {
+            return $this->back("Already on the Jira board as {$task->jira_key}.");
+        }
+        try {
+            $key = Jira::send($task, $request->user());
+        } catch (\RuntimeException $e) {
+            return back()->with('error', 'Couldn’t send it to Jira. '.$e->getMessage());
+        }
+        Activity::log('task.jira', "Sent task “{$task->title}” to Jira as $key", $task);
+
+        return $this->back("Sent to Jira as $key.");
+    }
+
     public function edit(Task $task): View
     {
         return view('tasks.form', ['task' => $task, 'people' => $this->people(), 'taskBrands' => Task::brandChoices()]);
@@ -102,6 +124,17 @@ class TaskController extends Controller
             $msg = "Reopened “{$task->title}”.";
         } else {
             $task->update(['completed_at' => now(), 'completed_by' => $request->user()->id]);
+            // Done here means done on the Jira board too (after the page is sent, so a slow Jira doesn't hold it up).
+            if ($task->jira_key) {
+                $id = $task->id;
+                dispatch(function () use ($id) {
+                    try {
+                        Jira::finish(Task::findOrFail($id));
+                    } catch (\Throwable $e) {
+                        Log::warning('Moving the Jira ticket to Done failed', ['task' => $id, 'error' => $e->getMessage()]);
+                    }
+                })->afterResponse();
+            }
             $late = $task->due_on && $task->due_on->lt(today()) ? ' (late, due '.$task->due_on->format('M j').')' : '';
             Activity::log('task.completed', "Completed task “{$task->title}”".$late, $task);
             $msg = "Marked “{$task->title}” done. Add the link to what it produced under Finished.";

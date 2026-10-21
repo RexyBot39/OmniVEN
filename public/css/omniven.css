@@ -2454,3 +2454,11 @@ body.is-dragging:not(.is-filtering) .bcol-list:not(.show-all) > .bt:nth-child(n+
 .opp-term-list li{display:inline-flex;align-items:center;gap:4px;background:var(--sunk);border-radius:4px;padding:3px 4px 3px 10px;font-size:13.5px}
 .opp-term-list form{margin:0}
 @media (max-width:560px){.opp-due{margin-left:0}.opp-why{margin-left:0}}
+
+/* Tasks on the Jira board: the ticket and its column, and the Send to Jira button. */
+.bt-jira{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#0052CC;background:color-mix(in srgb,#0052CC 10%,var(--surface));border-radius:4px;padding:0 6px;text-decoration:none;white-space:nowrap}
+.bt-jira:hover{text-decoration:underline}
+:root[data-theme="dark"] .bt-jira{color:#7AB2FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .bt-jira{color:#7AB2FF}}
+.bt-acts form{margin:0}
+.bt-acts button.mini{border:0;background:transparent;cursor:pointer;font:inherit;font-size:12.5px}

@@ -151,3 +151,17 @@ Artisan::command('omniven:opportunities-sync', function () {
 
     return $r['errors'] ? 1 : 0;
 })->purpose('Search Tango for new government bids for safety glasses');
+
+// Jira: check the columns of tickets sent from OmniVEN and tick off tasks whose ticket is Done. The board also
+// does this by itself (every few minutes when opened); a cron can run it so tasks close without a visit.
+Artisan::command('omniven:jira-sync', function () {
+    if (! \App\Support\Jira\Jira::configured()) {
+        $this->warn('Jira isn’t set up: add JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN and JIRA_PROJECT.');
+
+        return 1;
+    }
+    $done = \App\Support\Jira\Jira::sync();
+    $this->info("Jira checked; $done ".($done === 1 ? 'task' : 'tasks').' ticked off.');
+
+    return 0;
+})->purpose('Sync task status with the company Jira board');
