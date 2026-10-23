@@ -128,4 +128,94 @@ class ReviewsTest extends TestCase
         $this->assertStringNotContainsString('tp-secret', $html);
         $this->assertSame(4.71, ReviewSnapshot::where('platform', 'shopperapproved')->first()->rating, 'Shopper Approved still updates');
     }
+
+    /** Shopper Approved pages by "from" and "page": the last 30 days, and a history of $history reviews, newest first. */
+    private function fakeHistory(int $history, bool $ignoresPage = false): void
+    {
+        Http::preventStrayRequests();
+        $old = collect(range(1, $history))->map(fn ($i) => ['review_id' => 7000 + $i, 'overall' => $i % 5 === 0 ? 1 : 5, 'name' => 'Jane Customer', 'email' => 'jane@example.com',
+            'comments' => 'Old review '.$i.'. '.str_repeat('Lovely frames and clear lenses. ', 12), 'date' => now()->subDays(40 + $i)->format('Y-m-d H:i:s')]);
+        Http::fake([
+            'api.shopperapproved.com/aggregates/*' => Http::response(['average_rating' => 4.71, 'total_reviews' => 21345]),
+            'api.shopperapproved.com/reviews/*' => function (Request $r) use ($old, $ignoresPage) {
+                if ($r['from'] === now()->subDays(30)->format('Y-m-d')) {
+                    return Http::response(['9001' => ['review_id' => 9001, 'overall' => 5, 'comments' => 'Great glasses, fast shipping.', 'date' => '2026-10-15 09:00:00']]);
+                }
+                $size = (int) $r['limit'];
+                $page = $ignoresPage ? 0 : (int) $r['page'];
+
+                return Http::response($old->slice($page * $size, $size)->keyBy('review_id')->all());
+            },
+        ]);
+    }
+
+    public function test_shopper_approved_history_is_read_back_a_few_pages_at_a_time(): void
+    {
+        config(['reviews.trustpilot.api_key' => null, 'reviews.shopperapproved.page_size' => 10, 'reviews.shopperapproved.history_pages_per_refresh' => 2]);
+        $this->fakeHistory(45);
+
+        ReviewSync::refresh();
+        $this->assertSame(21, Review::where('platform', 'shopperapproved')->count(), 'the last 30 days plus two pages of history');
+        $this->assertFalse(ReviewSync::history()['done']);
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), '/reviews/12345') && ($r->data()['page'] ?? null) == 1 && $r['from'] === now()->subDays(1095)->format('Y-m-d'));
+
+        ReviewSync::refresh();
+        ReviewSync::refresh();
+        $h = ReviewSync::history();
+        $this->assertSame(46, $h['stored']);
+        $this->assertTrue($h['done']);
+        $this->assertSame(now()->subDays(85)->format('Y-m-d'), $h['oldest']->format('Y-m-d'));
+
+        // The whole review is kept for analysis, but never the reviewer; old low reviews make no tasks.
+        $r = Review::where('external_id', '7001')->first();
+        $this->assertGreaterThan(300, mb_strlen($r->body));
+        $this->assertLessThanOrEqual(300, mb_strlen($r->excerpt));
+        $this->assertStringNotContainsString('Jane', json_encode(Review::all()->toArray()));
+        $this->assertSame(0, Task::where('title', 'like', 'Reply to a %')->count());
+
+        // Once it's all in, a refresh reads only the last 30 days.
+        $before = count(Http::recorded());
+        ReviewSync::refresh();
+        $this->assertSame(2, count(Http::recorded()) - $before);
+    }
+
+    public function test_history_stops_if_the_api_keeps_sending_the_same_page(): void
+    {
+        config(['reviews.trustpilot.api_key' => null, 'reviews.shopperapproved.page_size' => 10]);
+        $this->fakeHistory(45, ignoresPage: true);
+
+        ReviewSync::refresh(fullHistory: true);
+        $this->assertTrue(ReviewSync::history()['done']);
+        $this->assertSame(11, Review::count());
+        $this->assertLessThan(6, count(Http::recorded()));
+    }
+
+    public function test_ask_omniven_ai_reads_reviews_in_depth_and_the_page_links_to_it(): void
+    {
+        config(['reviews.trustpilot.api_key' => null, 'reviews.shopperapproved.page_size' => 10, 'assistant.key' => 'sk-test']);
+        $this->fakeHistory(30);
+        ReviewSync::refresh(fullHistory: true);
+
+        $tools = new \App\Support\Assistant\Tools($this->kay);
+        $this->assertContains('review_analysis', array_column($tools->definitions(), 'name'));
+        $best = $tools->call('review_analysis', ['stars_min' => 5, 'limit' => 5]);
+        $this->assertSame(25, $best['matching'], '30 old reviews, 6 of them 1★, plus one recent 5★');
+        $this->assertSame([5 => 25], $best['by_stars']);
+        $this->assertCount(5, $best['reviews']);
+        $this->assertStringStartsWith('Old review', $best['reviews'][0]['text'], 'longest first');
+        $this->assertGreaterThan(300, mb_strlen($best['reviews'][0]['text']));
+        $this->assertSame('Shopper Approved', $best['reviews'][0]['platform']);
+        $this->assertFalse($best['history']['still_loading']);
+        $this->assertSame(31, $best['history']['shopper_approved_stored']);
+
+        $worst = $tools->call('review_analysis', ['stars_max' => 2, 'contains' => 'OLD REVIEW 1']);
+        $this->assertSame(['10', '15'], collect($worst['reviews'])->map(fn ($r) => explode('.', substr($r['text'], 11))[0])->sort()->values()->all());
+        $this->assertSame(5, $tools->call('review_analysis', ['sort' => 'newest', 'days' => 30])['reviews'][0]['stars']);
+
+        $html = $this->actingAs($this->kay)->get('/reviews')->assertOk()->getContent();
+        $this->assertStringContainsString('31 Shopper Approved reviews stored for analysis, back to Aug 2026.', $html);
+        $this->assertStringContainsString('Analyze with Ask OmniVEN AI', $html);
+        $this->assertStringContainsString('focus=reputation', $html);
+        $this->actingAs($this->kay)->get(route('assistant', ['focus' => 'reputation', 'q' => 'Do a deep analysis']))->assertOk()->assertSee('Do a deep analysis');
+    }
 }

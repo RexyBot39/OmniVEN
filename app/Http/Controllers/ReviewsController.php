@@ -58,6 +58,7 @@ class ReviewsController extends Controller
             'trend' => collect(config('reviews.platforms'))->map(fn ($p, $key) => $months->map(fn ($m) => ReviewSnapshot::where('platform', $key)
                 ->whereBetween('day', [$m->format('Y-m-d'), $m->endOfMonth()->format('Y-m-d')])->orderByDesc('day')->value('rating'))->all()),
             'anyAuto' => ReviewSync::anyConfigured(),
+            'history' => ReviewSync::configured('shopperapproved') ? ReviewSync::history() : null,
         ]);
     }
 

@@ -165,3 +165,23 @@ Artisan::command('omniven:jira-sync', function () {
 
     return 0;
 })->purpose('Sync task status with the company Jira board');
+
+// Reviews: ratings and new reviews from Shopper Approved and Trustpilot, plus a few more pages of Shopper Approved
+// history each run. --history reads the whole history window now (for Ask OmniVEN AI's review analysis).
+Artisan::command('omniven:reviews-sync {--history : Read all of the Shopper Approved history now}', function () {
+    if (! \App\Support\Reviews\ReviewSync::anyConfigured()) {
+        $this->warn('Reviews aren’t set up: add SHOPPERAPPROVED_SITE_ID and SHOPPERAPPROVED_API_TOKEN (or the Trustpilot keys).');
+
+        return 1;
+    }
+    $ok = \App\Support\Reviews\ReviewSync::refresh((bool) $this->option('history'));
+    $h = \App\Support\Reviews\ReviewSync::history();
+    $this->info(number_format($h['stored']).' Shopper Approved reviews stored'.($h['oldest'] ? ', back to '.$h['oldest']->format('M j, Y') : '').($h['done'] ? ' (all of the history window).' : ' (more to read).'));
+    foreach (['shopperapproved', 'trustpilot'] as $p) {
+        if ($e = \App\Support\Reviews\ReviewSync::status($p)['error']) {
+            $this->error($e);
+        }
+    }
+
+    return $ok ? 0 : 1;
+})->purpose('Refresh reviews and read back Shopper Approved history');

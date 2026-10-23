@@ -17,10 +17,13 @@ use Throwable;
 
 /**
  * Reads ratings and recent reviews from Shopper Approved and Trustpilot (read-only keys, server
- * side), records a daily rating snapshot, and turns each new low review into a Hotlist task.
+ * side), records a daily rating snapshot, and turns each new low review into a Hotlist task. Shopper
+ * Approved's history is read back too (a few pages each refresh) for Ask OmniVEN AI's review analysis.
  */
 class ReviewSync
 {
+    private const HISTORY = 'reviews:shopperapproved:history';
+
     public static function configured(string $platform): bool
     {
         return match ($platform) {
@@ -35,7 +38,7 @@ class ReviewSync
         return self::configured('shopperapproved') || self::configured('trustpilot');
     }
 
-    public static function refresh(): bool
+    public static function refresh(bool $fullHistory = false): bool
     {
         $ok = true;
         foreach (['shopperapproved', 'trustpilot'] as $p) {
@@ -51,6 +54,9 @@ class ReviewSync
                 );
                 foreach ($reviews as $r) {
                     self::store($p, $brand, $r);
+                }
+                if ($p === 'shopperapproved') {
+                    self::shopperApprovedHistory($brand, $fullHistory);
                 }
                 Cache::forever("reviews:$p:last", now()->timestamp);
                 Cache::forget("reviews:$p:error");
@@ -77,6 +83,7 @@ class ReviewSync
             return;
         }
         dispatch(function () {
+            @set_time_limit(0);
             try {
                 self::refresh();
             } finally {
@@ -99,14 +106,24 @@ class ReviewSync
             Cache::forget("reviews:$p:error");
         }
         Cache::forget('reviews:refreshing');
+        Cache::forget(self::HISTORY);
+    }
+
+    /** How far back the Shopper Approved history has been read, and whether it's all in. */
+    public static function history(): array
+    {
+        $state = Cache::get(self::HISTORY);
+        $oldest = Review::where('platform', 'shopperapproved')->min('reviewed_at');
+
+        return ['stored' => Review::where('platform', 'shopperapproved')->count(), 'oldest' => $oldest ? CarbonImmutable::parse($oldest) : null,
+            'done' => is_array($state) && $state['done'], 'from' => is_array($state) ? $state['from'] : null];
     }
 
     /** @return array{0: ?float, 1: ?int, 2: list<array>} */
     private static function shopperApproved(): array
     {
         $c = config('reviews.shopperapproved');
-        $site = rawurlencode((string) $c['site_id']);
-        $agg = Http::acceptJson()->timeout(config('reviews.timeout'))->get("{$c['url']}/aggregates/reviews/{$site}", ['token' => $c['token'], 'xml' => 'false']);
+        $agg = Http::acceptJson()->timeout(config('reviews.timeout'))->get("{$c['url']}/aggregates/reviews/".rawurlencode((string) $c['site_id']), ['token' => $c['token'], 'xml' => 'false']);
         if (! $agg->successful() || ! is_array($agg->json())) {
             throw new RuntimeException(self::explain('Shopper Approved', $agg->status(), 'SHOPPERAPPROVED_API_TOKEN', 'SHOPPERAPPROVED_SITE_ID'));
         }
@@ -114,28 +131,77 @@ class ReviewSync
         $rating = self::num($a['average_rating'] ?? $a['average'] ?? $a['rating'] ?? null);
         $count = self::int($a['total_reviews'] ?? $a['reviews'] ?? $a['count'] ?? null);
 
-        $res = Http::acceptJson()->timeout(config('reviews.timeout'))->get("{$c['url']}/reviews/{$site}", [
-            'token' => $c['token'], 'xml' => 'false', 'limit' => 100, 'sort' => 'newest',
-            'from' => CarbonImmutable::now()->subDays(30)->format('Y-m-d'),
+        // The last 30 days, a few pages deep so a busy month is complete.
+        $reviews = [];
+        $from = CarbonImmutable::now()->subDays(30)->format('Y-m-d');
+        for ($page = 0; $page < 5; $page++) {
+            [$rows, $n] = self::shopperApprovedPage($from, $page);
+            array_push($reviews, ...$rows);
+            if ($n < (int) $c['page_size']) {
+                break;
+            }
+        }
+
+        return [$rating, $count, $reviews];
+    }
+
+    /**
+     * Older Shopper Approved reviews, so Ask OmniVEN AI has years of them to learn from: a few pages each refresh,
+     * carrying on where the last one stopped, until it reaches the start of the history window ($all reads it all now).
+     * Old reviews never become tasks.
+     */
+    private static function shopperApprovedHistory(?Brand $brand, bool $all): void
+    {
+        $floor = CarbonImmutable::now()->subDays((int) config('reviews.shopperapproved.history_days'))->format('Y-m-d');
+        $state = Cache::get(self::HISTORY);
+        // A longer window than the one already read starts over (pages are counted from its start date).
+        if (! is_array($state) || $floor < CarbonImmutable::parse($state['from'])->subDays(7)->format('Y-m-d')) {
+            $state = ['from' => $floor, 'page' => 0, 'done' => false, 'oldest' => null];
+        }
+        $size = (int) config('reviews.shopperapproved.page_size');
+        $pages = $all ? 1000 : (int) config('reviews.shopperapproved.history_pages_per_refresh');
+        for ($i = 0; ! $state['done'] && $i < $pages; $i++) {
+            [$rows, $n] = self::shopperApprovedPage($state['from'], $state['page']);
+            $added = 0;
+            $oldest = null;
+            foreach ($rows as $r) {
+                $review = self::store('shopperapproved', $brand, $r);
+                $added += $review->wasRecentlyCreated ? 1 : 0;
+                $oldest = $oldest === null || $review->reviewed_at->lt($oldest) ? $review->reviewed_at : $oldest;
+            }
+            $moved = $oldest && (! $state['oldest'] || $oldest->lt(CarbonImmutable::parse($state['oldest'])));
+            $state['page']++;
+            $state['oldest'] = $moved ? $oldest->toIso8601String() : $state['oldest'];
+            // Done at the last (short) page, or when a page brings nothing new and no older reviews (the same page again).
+            $state['done'] = $n < $size || ($added === 0 && ! $moved);
+            Cache::forever(self::HISTORY, $state);
+        }
+    }
+
+    /** One page of Shopper Approved reviews since a date, newest first: [reviews, rows on the page]. */
+    private static function shopperApprovedPage(string $from, int $page): array
+    {
+        $c = config('reviews.shopperapproved');
+        $res = Http::acceptJson()->timeout(config('reviews.timeout'))->get("{$c['url']}/reviews/".rawurlencode((string) $c['site_id']), [
+            'token' => $c['token'], 'xml' => 'false', 'limit' => (int) $c['page_size'], 'page' => $page, 'sort' => 'newest', 'from' => $from,
         ]);
         if (! $res->successful() || ! is_array($res->json())) {
             throw new RuntimeException(self::explain('Shopper Approved', $res->status(), 'SHOPPERAPPROVED_API_TOKEN', 'SHOPPERAPPROVED_SITE_ID'));
         }
+        $rows = array_filter($res->json(), 'is_array');
         $reviews = [];
-        foreach ($res->json() as $key => $r) {
-            if (! is_array($r)) {
-                continue;
-            }
+        foreach ($rows as $key => $r) {
             $stars = self::int($r['overall'] ?? $r['rating'] ?? $r['stars'] ?? null);
             $id = (string) ($r['review_id'] ?? $r['id'] ?? $key);
             if ($stars === null || $id === '') {
                 continue;
             }
+            // Only the review itself: the reviewer's name, email and order stay at Shopper Approved.
             $reviews[] = ['id' => $id, 'stars' => $stars, 'at' => $r['date'] ?? $r['review_date'] ?? null,
                 'text' => $r['comments'] ?? $r['review'] ?? $r['text'] ?? null, 'url' => config('reviews.platforms.shopperapproved.url')];
         }
 
-        return [$rating, $count, $reviews];
+        return [$reviews, count($rows)];
     }
 
     /** @return array{0: ?float, 1: ?int, 2: list<array>} */
@@ -169,7 +235,7 @@ class ReviewSync
         return [$rating, $count, $reviews];
     }
 
-    private static function store(string $platform, ?Brand $brand, array $r): void
+    private static function store(string $platform, ?Brand $brand, array $r): Review
     {
         try {
             // Store in the app timezone, like every other timestamp in OmniVEN.
@@ -179,17 +245,21 @@ class ReviewSync
         }
         $review = Review::firstOrNew(['platform' => $platform, 'external_id' => mb_substr($r['id'], 0, 100)]);
         $isNew = ! $review->exists;
+        $text = $r['text'] ? trim(preg_replace('/\s+/', ' ', strip_tags((string) $r['text']))) : '';
         $review->fill([
             'brand_id' => $brand?->id,
             'stars' => max(1, min(5, $r['stars'])),
             'reviewed_at' => $at,
-            'excerpt' => $r['text'] ? Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags((string) $r['text']))), 290) : null,
+            'excerpt' => $text !== '' ? Str::limit($text, 290) : null,
+            'body' => $text !== '' ? mb_substr($text, 0, 5000) : null,
             'url' => $r['url'],
         ])->save();
 
         if ($isNew && $review->stars <= config('reviews.task_max_stars') && $at->gte(CarbonImmutable::now()->subDays(config('reviews.task_max_age_days')))) {
             self::taskFor($review);
         }
+
+        return $review;
     }
 
     /** A Hotlist task, due tomorrow, for the review owner (or the first admin). */

@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** A public review from Shopper Approved or Trustpilot: stars, date, a short excerpt and a link. */
+/** A public review from Shopper Approved or Trustpilot: stars, date, its text (a short excerpt and the whole review) and a link. */
 class Review extends Model
 {
-    protected $fillable = ['platform', 'external_id', 'brand_id', 'stars', 'reviewed_at', 'excerpt', 'url', 'task_id'];
+    protected $fillable = ['platform', 'external_id', 'brand_id', 'stars', 'reviewed_at', 'excerpt', 'body', 'url', 'task_id'];
 
     protected function casts(): array
     {
