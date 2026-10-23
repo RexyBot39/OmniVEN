@@ -218,4 +218,56 @@ class ReviewsTest extends TestCase
         $this->assertStringContainsString('focus=reputation', $html);
         $this->actingAs($this->kay)->get(route('assistant', ['focus' => 'reputation', 'q' => 'Do a deep analysis']))->assertOk()->assertSee('Do a deep analysis');
     }
+
+    public function test_a_review_saved_by_another_sync_at_the_same_moment_is_updated_not_an_error(): void
+    {
+        config(['reviews.trustpilot.api_key' => null, 'reviews.shopperapproved.page_size' => 10]);
+        $this->fakeHistory(3);
+        // The page's refresh and the console command both reach review 7002 at once: the other one inserts it first.
+        $raced = false;
+        Review::creating(function (Review $r) use (&$raced) {
+            if (! $raced && $r->external_id === '7002') {
+                $raced = true;
+                \Illuminate\Support\Facades\DB::table('reviews')->insert(['platform' => 'shopperapproved', 'external_id' => '7002', 'stars' => 5,
+                    'reviewed_at' => now(), 'excerpt' => 'old', 'created_at' => now(), 'updated_at' => now()]);
+            }
+        });
+
+        $this->assertTrue(ReviewSync::refresh(fullHistory: true));
+        $this->assertTrue($raced);
+        $this->assertNull(ReviewSync::status('shopperapproved')['error']);
+        $this->assertSame(1, Review::where('external_id', '7002')->count());
+        $this->assertStringStartsWith('Old review 2.', Review::where('external_id', '7002')->value('body'));
+        $this->assertSame(4, Review::count());
+    }
+
+    public function test_html_entities_become_plain_text_and_database_errors_hide_the_sql(): void
+    {
+        config(['reviews.trustpilot.api_key' => null]);
+        Http::preventStrayRequests();
+        Http::fake([
+            'api.shopperapproved.com/aggregates/*' => Http::response(['average_rating' => 4.7, 'total_reviews' => 10]),
+            'api.shopperapproved.com/reviews/*' => Http::response(['1' => ['review_id' => 1, 'overall' => 4, 'comments' => 'You don&rsquo;t explain if a second pair must be the same Rx &amp; frame.', 'date' => '2026-10-15 09:00:00']]),
+        ]);
+        ReviewSync::refresh();
+        $this->assertSame('You don’t explain if a second pair must be the same Rx & frame.', Review::first()->body);
+
+        Review::saving(fn () => throw new \Illuminate\Database\QueryException('pgsql', 'insert into "reviews" values (secret text)', [], new \Exception('boom')));
+        Review::query()->delete();
+        $this->assertFalse(ReviewSync::refresh());
+        $this->assertSame('Reading Shopper Approved failed (QueryException).', ReviewSync::status('shopperapproved')['error']);
+    }
+
+    public function test_the_console_command_shows_its_progress_and_holds_off_the_page_refresh(): void
+    {
+        config(['reviews.trustpilot.api_key' => null, 'reviews.shopperapproved.page_size' => 10]);
+        $this->fakeHistory(25);
+
+        $this->artisan('omniven:reviews-sync --history')
+            ->expectsOutputToContain('Page 1: 10 new')
+            ->expectsOutputToContain('Page 3: 5 new, back to')
+            ->expectsOutputToContain('26 Shopper Approved reviews stored')
+            ->assertExitCode(0);
+        $this->assertFalse(\Illuminate\Support\Facades\Cache::has('reviews:refreshing'), 'the page can refresh again afterwards');
+    }
 }

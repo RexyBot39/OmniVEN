@@ -174,7 +174,25 @@ Artisan::command('omniven:reviews-sync {--history : Read all of the Shopper Appr
 
         return 1;
     }
-    $ok = \App\Support\Reviews\ReviewSync::refresh((bool) $this->option('history'));
+    // One sync at a time: the Reviews page starts one by itself, so wait for it and hold it off while this runs.
+    for ($i = 0; ! \Illuminate\Support\Facades\Cache::add('reviews:refreshing', 1, 7200); $i++) {
+        if ($i === 0) {
+            $this->line('A review sync is already running; waiting for it to finish…');
+        }
+        if ($i >= 60) {
+            $this->error('Still running after 5 minutes. Try again shortly.');
+
+            return 1;
+        }
+        sleep(5);
+    }
+    @set_time_limit(0);
+    $this->line($this->option('history') ? 'Reading the Shopper Approved history (100 reviews a page)…' : 'Refreshing reviews…');
+    try {
+        $ok = \App\Support\Reviews\ReviewSync::refresh((bool) $this->option('history'), fn (string $line) => $this->line('  '.$line));
+    } finally {
+        \Illuminate\Support\Facades\Cache::forget('reviews:refreshing');
+    }
     $h = \App\Support\Reviews\ReviewSync::history();
     $this->info(number_format($h['stored']).' Shopper Approved reviews stored'.($h['oldest'] ? ', back to '.$h['oldest']->format('M j, Y') : '').($h['done'] ? ' (all of the history window).' : ' (more to read).'));
     foreach (['shopperapproved', 'trustpilot'] as $p) {
