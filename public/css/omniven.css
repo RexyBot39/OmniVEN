@@ -1184,6 +1184,7 @@ td .delta-w{display:none}
 .rv-card .tv small{color:var(--warn)}
 .rv-when{font-size:11.5px}
 .rv-err{font-size:12px;color:var(--bad)}
+.rv-history{margin:4px 0 0}
 .rv-update summary{list-style:none;cursor:pointer;width:max-content;padding:0}
 .rv-update summary::-webkit-details-marker{display:none}
 .rv-update form{display:flex;flex-wrap:wrap;gap:6px;align-items:end;margin-top:6px}

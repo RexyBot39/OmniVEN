@@ -6,7 +6,15 @@
         <div>
             <div class="eyebrow"><span>Reputation</span><span>Shopper Approved and Trustpilot update by themselves</span></div>
             <h1 class="form-h">Reviews @include('partials.star', ['key' => 'page:18', 'label' => 'Reviews'])</h1>
+            @if($history)
+                <p class="sub rv-history">{{ number_format($history['stored']) }} Shopper Approved reviews stored for analysis{{ $history['oldest'] ? ', back to '.$history['oldest']->format('M Y') : '' }}{{ $history['done'] ? '.' : '. Older ones are still loading (about a thousand an hour).' }}</p>
+            @endif
         </div>
+        @if($history && $history['stored'] > 0)
+            @can('use-assistant')@if(\App\Support\Assistant\Assistant::configured())
+                <a class="btn primary" href="{{ route('assistant', ['focus' => 'reputation', 'q' => 'Do a deep analysis of our Shopper Approved reviews from the last year. Start with the best ones (5★): what customers love most, in their own words, and which themes come up most. Then the 1–2★ ones: what goes wrong. Give key learnings and a prioritized list of action items (ad and email copy to use the praise, fixes for the complaints), each as a task title with an owner.']) }}">Analyze with Ask OmniVEN AI</a>
+            @endif @endcan
+        @endif
     </div>
 
     <section class="rv-cards" aria-label="Ratings">

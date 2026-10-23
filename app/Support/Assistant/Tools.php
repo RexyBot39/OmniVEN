@@ -20,6 +20,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\UtmLink;
 use App\Support\Email\Klaviyo;
+use App\Support\Reviews\ReviewSync;
 use App\Support\Revenue\Report;
 use App\Support\Revenue\Revenue;
 use App\Support\Seo\ContentGaps;
@@ -60,6 +61,15 @@ class Tools
             ['search', 'Google Search Console for a brand: last 28 days vs the 28 before, clicks, impressions, CTR, position, branded share, rising and falling searches and pages.', ['brand' => $brand]],
             ['content_gaps', 'Open content gaps: searches and AI questions that need a page, a better page or a better title, most promising first.', ['brand' => $brand]],
             ['reviews', 'Ratings per review platform and recent reviews (stars, date, short excerpt), including low ones.', []],
+            ['review_analysis', 'For deep review analysis (what customers love, what goes wrong, themes, key learnings, action items): the full text of up to 300 stored reviews matching the filters, plus star and month breakdowns for every match. Shopper Approved history goes back up to three years. Call it more than once to compare (e.g. 5★ vs 1–2★, this year vs last, a keyword like "shipping" or "prescription").', [
+                'stars_min' => ['type' => 'integer', 'description' => '1–5, default 1. Use 5 (or 4) for the best reviews.'],
+                'stars_max' => ['type' => 'integer', 'description' => '1–5, default 5. Use 2 for the worst reviews.'],
+                'days' => ['type' => 'integer', 'description' => 'How far back, default 365, up to 1825.'],
+                'platform' => ['type' => 'string', 'enum' => ['shopperapproved', 'trustpilot', 'all'], 'description' => 'Default all.'],
+                'contains' => ['type' => 'string', 'description' => 'Only reviews mentioning this word or phrase (not case-sensitive).'],
+                'sort' => ['type' => 'string', 'enum' => ['longest', 'newest'], 'description' => 'Longest first (most detail, the default) or newest first.'],
+                'limit' => ['type' => 'integer', 'description' => 'Reviews to read, default 150, up to 300.'],
+            ]],
             ['ai_answers', 'Monthly AI-assistant visibility checks: how often ChatGPT, Perplexity and others mention or recommend us, per question and month.', []],
             ['outreach', 'Publisher outreach pipeline: counts by stage, follow-ups due, recently live placements.', []],
             ['site_check', 'Structured data issues on key pages and product feed problems.', []],
@@ -251,6 +261,40 @@ class Tools
         return ['ratings' => $ratings->all(),
             'last_60_days' => ['count' => $recent->count(), 'average_stars' => $recent->avg('stars') ? round($recent->avg('stars'), 2) : null, 'two_stars_or_less' => $recent->where('stars', '<=', 2)->count()],
             'recent' => $recent->map(fn ($r) => ['platform' => $r->platform, 'stars' => $r->stars, 'date' => $this->d($r->reviewed_at), 'excerpt' => Str::limit((string) $r->excerpt, 200)])->all()];
+    }
+
+    private function toolReviewAnalysis(array $a): array
+    {
+        $min = max(1, min(5, (int) ($a['stars_min'] ?? 1)));
+        $max = max($min, min(5, (int) ($a['stars_max'] ?? 5)));
+        $days = max(1, min(1825, (int) ($a['days'] ?? 365)));
+        $limit = max(1, min(300, (int) ($a['limit'] ?? 150)));
+        $platform = array_key_exists((string) ($a['platform'] ?? ''), config('reviews.platforms')) ? $a['platform'] : null;
+        $words = trim(str_replace(['%', '_', '\\'], ' ', mb_strtolower((string) ($a['contains'] ?? ''))));
+        $since = $this->today()->subDays($days);
+        $q = fn () => Review::where('reviewed_at', '>=', $since)->whereBetween('stars', [$min, $max])
+            ->when($platform, fn ($q) => $q->where('platform', $platform))
+            ->when($words !== '', fn ($q) => $q->whereRaw("lower(coalesce(body, excerpt, '')) like ?", ['%'.$words.'%']));
+
+        $all = $q()->toBase()->get(['reviewed_at', 'stars']);
+        $months = $all->groupBy(fn ($r) => substr((string) $r->reviewed_at, 0, 7))->sortKeysDesc()
+            ->map(fn ($g) => ['reviews' => $g->count(), 'average_stars' => round($g->avg('stars'), 2)]);
+        $read = $q()->whereNotNull('excerpt')
+            ->when(($a['sort'] ?? 'longest') === 'newest', fn ($q) => $q->orderByDesc('reviewed_at'), fn ($q) => $q->orderByRaw("length(coalesce(body, excerpt, '')) desc")->orderByDesc('reviewed_at'))
+            ->limit($limit)->get();
+        $h = ReviewSync::history();
+
+        return [
+            'filters' => ['stars' => $min === $max ? "$min" : $min.'–'.$max, 'since' => $since->format('Y-m-d'), 'platform' => $platform ?? 'all', 'contains' => $words ?: null],
+            'matching' => $all->count(),
+            'average_stars' => $all->isNotEmpty() ? round($all->avg('stars'), 2) : null,
+            'by_stars' => $all->countBy('stars')->sortKeysDesc()->all(),
+            'by_month' => $months->all(),
+            'with_text_read_here' => $read->count(),
+            'history' => ['shopper_approved_stored' => $h['stored'], 'oldest' => $this->d($h['oldest']), 'still_loading' => ReviewSync::configured('shopperapproved') && ! $h['done']],
+            'reviews' => $read->map(fn ($r) => ['platform' => $r->platformLabel(), 'stars' => $r->stars, 'date' => $this->d($r->reviewed_at), 'text' => Str::limit((string) ($r->body ?: $r->excerpt), 700)])->all(),
+            'note' => 'Public review text only; reviewers aren’t stored. Quote short phrases, not whole reviews.',
+        ];
     }
 
     private function toolAiAnswers(array $a): array

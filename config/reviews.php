@@ -16,6 +16,11 @@ return [
         'site_id' => env('SHOPPERAPPROVED_SITE_ID'),
         'token' => env('SHOPPERAPPROVED_API_TOKEN'),
         'url' => 'https://api.shopperapproved.com',
+        // History for Ask OmniVEN AI's review analysis: how far back, and how many pages of 100 each refresh reads
+        // (the next refresh carries on where the last stopped; `omniven:reviews-sync --history` reads it all now).
+        'history_days' => (int) env('SHOPPERAPPROVED_HISTORY_DAYS', 1095),
+        'history_pages_per_refresh' => 10,
+        'page_size' => 100,
     ],
     'trustpilot' => [
         'api_key' => env('TRUSTPILOT_API_KEY'),
