@@ -8,6 +8,7 @@ use App\Models\ReviewSnapshot;
 use App\Models\Task;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -38,7 +39,8 @@ class ReviewSync
         return self::configured('shopperapproved') || self::configured('trustpilot');
     }
 
-    public static function refresh(bool $fullHistory = false): bool
+    /** @param  ?callable(string): void  $progress  told about each page of history (for the console command) */
+    public static function refresh(bool $fullHistory = false, ?callable $progress = null): bool
     {
         $ok = true;
         foreach (['shopperapproved', 'trustpilot'] as $p) {
@@ -56,14 +58,15 @@ class ReviewSync
                     self::store($p, $brand, $r);
                 }
                 if ($p === 'shopperapproved') {
-                    self::shopperApprovedHistory($brand, $fullHistory);
+                    self::shopperApprovedHistory($brand, $fullHistory, $progress);
                 }
                 Cache::forever("reviews:$p:last", now()->timestamp);
                 Cache::forget("reviews:$p:error");
             } catch (Throwable $e) {
                 $ok = false;
                 $label = config("reviews.platforms.$p.label");
-                $msg = $e instanceof RuntimeException ? $e->getMessage() : "Reading $label failed (".class_basename($e).').';
+                // Database errors carry the SQL (and review text), so they get a plain message instead.
+                $msg = $e instanceof RuntimeException && ! $e instanceof \PDOException ? $e->getMessage() : "Reading $label failed (".class_basename($e).').';
                 Cache::forever("reviews:$p:error", $msg);
                 Log::warning('Review sync failed', ['platform' => $p, 'error' => $msg]);
             }
@@ -150,7 +153,7 @@ class ReviewSync
      * carrying on where the last one stopped, until it reaches the start of the history window ($all reads it all now).
      * Old reviews never become tasks.
      */
-    private static function shopperApprovedHistory(?Brand $brand, bool $all): void
+    private static function shopperApprovedHistory(?Brand $brand, bool $all, ?callable $progress = null): void
     {
         $floor = CarbonImmutable::now()->subDays((int) config('reviews.shopperapproved.history_days'))->format('Y-m-d');
         $state = Cache::get(self::HISTORY);
@@ -175,6 +178,9 @@ class ReviewSync
             // Done at the last (short) page, or when a page brings nothing new and no older reviews (the same page again).
             $state['done'] = $n < $size || ($added === 0 && ! $moved);
             Cache::forever(self::HISTORY, $state);
+            if ($progress) {
+                $progress('Page '.$state['page'].': '.$added.' new'.($state['oldest'] ? ', back to '.CarbonImmutable::parse($state['oldest'])->format('M j, Y') : '').($state['done'] ? '. That’s all of it.' : ''));
+            }
         }
     }
 
@@ -243,9 +249,11 @@ class ReviewSync
         } catch (Throwable) {
             $at = CarbonImmutable::now();
         }
-        $review = Review::firstOrNew(['platform' => $platform, 'external_id' => mb_substr($r['id'], 0, 100)]);
+        $key = ['platform' => $platform, 'external_id' => mb_substr($r['id'], 0, 100)];
+        $review = Review::firstOrNew($key);
         $isNew = ! $review->exists;
-        $text = $r['text'] ? trim(preg_replace('/\s+/', ' ', strip_tags((string) $r['text']))) : '';
+        // Shopper Approved sends HTML entities (&rsquo;, &amp;): store plain text.
+        $text = $r['text'] ? trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags((string) $r['text']), ENT_QUOTES | ENT_HTML5, 'UTF-8'))) : '';
         $review->fill([
             'brand_id' => $brand?->id,
             'stars' => max(1, min(5, $r['stars'])),
@@ -253,7 +261,15 @@ class ReviewSync
             'excerpt' => $text !== '' ? Str::limit($text, 290) : null,
             'body' => $text !== '' ? mb_substr($text, 0, 5000) : null,
             'url' => $r['url'],
-        ])->save();
+        ]);
+        try {
+            $review->save();
+        } catch (UniqueConstraintViolationException) {
+            // Another sync saved it a moment ago: update that one instead.
+            $review = Review::where($key)->firstOrFail()->fill($review->only(['brand_id', 'stars', 'reviewed_at', 'excerpt', 'body', 'url']));
+            $review->save();
+            $isNew = false;
+        }
 
         if ($isNew && $review->stars <= config('reviews.task_max_stars') && $at->gte(CarbonImmutable::now()->subDays(config('reviews.task_max_age_days')))) {
             self::taskFor($review);
